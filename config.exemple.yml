@@ -1,0 +1,7 @@
+discord:
+  token: <token bot discord>
+  ffmpeg: <path to ffmpeg.exe>
+
+deezer:
+  folder: ./songs/
+  arl: <deezer arl of an account>
