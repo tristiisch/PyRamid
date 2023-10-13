@@ -18,7 +18,6 @@ class DeezerDownloader:
 		if not tracks_found:
 			print(f"Track '{name}' not found")
 			return None
-		# title = tracksFound[0]['title']
 		track = TrackMinimal(tracks_found[0])
 		return track
 
@@ -27,19 +26,27 @@ class DeezerDownloader:
 		if not track_to_dl:
 			print('Error')
 		file_name = sanitize_filepath(f"{track_to_dl['info']['DATA']['ART_NAME']} - {track_to_dl['info']['DATA']['SNG_TITLE']}")
-		track_to_dl['download'](self.folder_path, filename=file_name, quality=self.music_format, with_lyrics=False)
-		# self.__rename_song(title.replace("%20", " "), id)
-		# print('Done')
+
+		if not os.path.exists(file_name):
+			track_to_dl['download'](self.folder_path, filename=file_name, quality=self.music_format, with_lyrics=False)
+
 		track_downloaded = Track(track_to_dl['info']['DATA'], os.path.join(self.folder_path, file_name) + ".mp3")
 		return track_downloaded
 
 	def dl_track_by_name(self, name) -> Track:
+		track : TrackMinimal = self.get_track_by_name(name)
+
+		track_downloaded = self.dl_track_by_id(track.id)
+		return track_downloaded
+
+	def test(self, name) -> list[TrackMinimal]:
 		tracks_found = self.deezer_api.search_tracks(name)
 		if not tracks_found:
-			return print('Error')
-		# title = tracksFound[0]['title']
-		track_downloaded = self.dl_track_by_id(tracks_found[0]['id'])
-		return track_downloaded
+			print(f"Track '{name}' not found")
+			return None
+		tracks = [TrackMinimal(item) for item in tracks_found[:10]]
+		tracks_dl = [self.dl_track_by_id(item.id) for item in tracks]
+		return tracks_dl
 
 	def __rename_song(self, song_title, song_id):
 		formated_name = "".join(re.split("[œÆæŒ]+", song_title))

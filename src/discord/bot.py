@@ -20,7 +20,13 @@ class DiscordBot:
 
 		bot = commands.Bot(command_prefix="$$", intents=intents)
 		self.bot = bot
-		pass
+		self.track_list = TrackList()
+		self.voice_client: VoiceClient = None
+
+	def __del__(self):
+		if self.voice_client != None:
+			self.voice_client.disconnect().send()
+		
 
 	def create(self):
 		print(f"Discord v{discord.__version__} bot creating ...")
@@ -72,9 +78,27 @@ class DiscordBot:
 			await ctx.edit_original_response(content=f"**{track_searched.get_full_name()}** found ! Downloading ...")
 
 			track_downloaded : Track | None = self.deezer_dl.dl_track_by_id(track_searched.id)
-			await self.__play_song(voice_channel, ctx, track_downloaded.file_local, self.ffmpeg)
+			resp : bool = await self.__play_song(voice_channel, ctx, track_downloaded.file_local, self.ffmpeg)
+			if resp == False:
+				return
 			# await ctx.edit_original_response(content=f"Playing **{track_downloaded.get_full_name()}**.")
 			await ctx.edit_original_response(content=f"", embed = self.__embed_track(track_downloaded))
+
+		@bot.tree.command(name="test", description="Testing things")
+		async def cmd_test(ctx: Interaction, input : str):
+			voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
+			if not voice_channel:
+				return
+			
+			await ctx.response.send_message(f"Searching **{input}**")
+			tracks : list[Track] | None = self.deezer_dl.test(input)
+			if not tracks:
+				await ctx.edit_original_response(content=f"**{input}** not found.")
+				return
+			await ctx.edit_original_response(content=f"**{input}** found ! Downloading ...")
+			track_list : TrackList = TrackList(tracks)
+
+			self.track_list.add_songs(track_list)
 
 		@bot.command()
 		async def ignore_none_slash_cmd(ctx: discord.Interaction):
@@ -98,22 +122,30 @@ class DiscordBot:
 		return voice_channel
 
 	async def __play_song(self, channel: VoiceChannel, ctx: Interaction, path_to_play: str, ffmpeg):
-		# Connect into voice channel
-		vc: VoiceClient = await channel.connect()
+		if self.voice_client != None:
+			if self.voice_client.is_playing():
+				self.voice_client.stop()
+			if (self.voice_client.channel.id != channel.id):
+				await self.voice_client.move_to(channel)
+		else:
+			# Connect into voice channel
+			self.voice_client: VoiceClient = await channel.connect(self_deaf = True)
 
 		# Called after song played
 		def song_end(err: Exception | None):
 			if err is not None:
-				asyncio.run_coroutine_threadsafe(ctx.followup.send(f"An error occurred while playing song: {err}"), vc.loop).result()
+				asyncio.run_coroutine_threadsafe(ctx.followup.send(f"An error occurred while playing song: {err}"), self.voice_client.loop).result()
 
-			asyncio.run_coroutine_threadsafe(vc.disconnect(), vc.loop).result()
-			asyncio.run_coroutine_threadsafe(ctx.edit_original_response(content=f"Bye bye"), vc.loop).result()
+			asyncio.run_coroutine_threadsafe(self.voice_client.disconnect(), self.voice_client.loop).result()
+			asyncio.run_coroutine_threadsafe(ctx.edit_original_response(content = f"Bye bye"), self.voice_client.loop).result()
 
 		# Prepare codex to play song
 		source = discord.FFmpegPCMAudio(path_to_play, executable=ffmpeg)
 
 		# Play song into discord
-		vc.play(source, after=song_end)
+		self.voice_client.play(source, after=song_end)
+
+		return True
 
 	def __embed_track(self, track : Track) -> Embed :
 		track.actual_seconds = round(track.duration_seconds * 0.75)
@@ -140,3 +172,15 @@ class DiscordBot:
 
 		sequence = blue_blocks + red_block + white_blocks
 		return sequence
+
+class TrackList():
+	def __init__(self):
+		self.tracks : list[Track] = []
+		self.voice_client: VoiceClient = None
+
+	def add_song(self, track : Track):
+		self.tracks.append(track)
+
+	def add_songs(self, tracks : list[Track]):
+		# self.tracks : list[Track] = tracks
+		self.tracks.extends(tracks)
