@@ -1,6 +1,6 @@
 import yaml
-from discord_bot import DiscordBot
-from deezer_downloader import DeezerDownloader
+from discord.bot import DiscordBot
+from deezer.downloader import DeezerDownloader
 
 config_file_path = "config.yml"
 

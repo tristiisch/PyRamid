@@ -4,7 +4,8 @@ import discord
 from discord.ext import commands
 from discord import *
 
-from deezer_downloader import *
+from deezer.downloader import *
+from object import *
 
 class DiscordBot:
 	def __init__(self, token, ffmpeg, deezer_dl):
