@@ -72,6 +72,9 @@ class TrackList:
 	def add_songs(self, tracks : list[Track]):
 		self.__tracks.extend(tracks)
 
+	def clear(self):
+		self.__tracks.clear()
+
 	def is_empty(self) -> bool:
 		return len(self.__tracks) == 0
 	

@@ -66,6 +66,24 @@ class DiscordBot:
 			
 			await guild_cmd.play(ctx, input)
 
+		@bot.tree.command(name="pause", description="Pause music")
+		async def cmd_pause(ctx: Interaction):
+			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			
+			await guild_cmd.pause(ctx)
+
+		@bot.tree.command(name="resume", description="Resume music")
+		async def cmd_resume(ctx: Interaction):
+			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			
+			await guild_cmd.resume(ctx)
+
+		@bot.tree.command(name="stop", description="Stop music and exit channel")
+		async def cmd_stop(ctx: Interaction):
+			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			
+			await guild_cmd.stop(ctx)
+
 		@bot.tree.command(name="test", description="Testing things")
 		async def cmd_test(ctx: Interaction, input : str):
 			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)

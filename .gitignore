@@ -161,3 +161,4 @@ cython_debug/
 
 songs/
 config.yml
+logs/

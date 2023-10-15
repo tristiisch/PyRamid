@@ -43,6 +43,10 @@ class GuildSongs:
 		if vc.is_playing():
 			return False
 
+		if vc.is_paused():
+			vc.resume()
+			return True
+
 		track : Track = tl.get_song()
 
 		# Prepare codex to play song
@@ -56,6 +60,40 @@ class GuildSongs:
 		await msg_sender.edit_message(content=f"", embed = self.__embed_track(track))
 
 		return True
+	
+	def stop(self) -> bool:
+		vc : VoiceClient = self.guild_data.voice_client
+		if vc == None:
+			return False
+		if vc.is_playing() or vc.is_paused():
+			vc.stop()
+
+	def exit(self) -> bool:
+		vc : VoiceClient = self.guild_data.voice_client
+		if self.stop() == False:
+			return False
+		if vc.is_connected():
+			vc.disconnect()
+			return True
+		return False
+
+	def pause(self) -> bool:
+		vc : VoiceClient = self.guild_data.voice_client
+		if vc == None:
+			return False
+		if vc.is_playing():
+			vc.pause()
+			return True
+		return False
+
+	def resume(self) -> bool:
+		vc : VoiceClient = self.guild_data.voice_client
+		if vc == None:
+			return False
+		if vc.is_paused():
+			vc.resume()
+			return True
+		return False
 	
 	# Called after song played
 	async def __song_end(self, err: Exception | None, msg_sender: MessageSender):
