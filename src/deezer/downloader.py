@@ -4,6 +4,7 @@ import asyncio
 import os
 import re
 import pydeezer.util
+import tools.utils
 
 from pydeezer import Deezer
 from pydeezer.constants import track_formats

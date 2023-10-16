@@ -6,6 +6,7 @@ from discord import AllowedMentions, Attachment, Embed, File, Guild, Interaction
 from discord.ui import View
 from discord.abc import Snowflake
 from discord.utils import MISSING
+from datetime import datetime
 
 class TrackMinimal:
 	def __init__(self, data):
@@ -65,6 +66,7 @@ class Track(TrackMinimal):
 class TrackList:
 	def __init__(self):
 		self.__tracks : list[Track] = []
+		# self.obs_clear()
 
 	def add_song(self, track : Track):
 		self.__tracks.append(track)
@@ -77,12 +79,35 @@ class TrackList:
 
 	def is_empty(self) -> bool:
 		return len(self.__tracks) == 0
+
+	def has_next(self) -> bool:
+		return len(self.__tracks) >= 2
 	
 	def get_song(self) -> Track:
 		return self.__tracks[0]
+
+	def get_songs(self) -> list[Track]:
+		return self.__tracks
 	
 	def remove_song(self):
 		self.__tracks.pop(0)
+
+	# def obs_start(self):
+	# 	self.last_start = datetime.now()
+	# 	self.last_duration = 0
+
+	# def obs_clear(self):
+	# 	self.last_start = None
+	# 	self.last_duration = None
+
+	# def obs_pause(self):
+	# 	self.last_duration = self.last_duration + (datetime.now() - self.last_start).total_seconds()
+
+	# def obs_resume(self):
+	# 	self.last_start = datetime.now()
+
+	# def get_current_duration(self):
+	# 	return self.last_duration + (datetime.now() - self.last_start).total_seconds()
 
 class GuildData:
 	def __init__(self, guild : Guild):
@@ -110,23 +135,28 @@ class MessageSender:
         view: View = MISSING,
         thread: Snowflake = MISSING,
         thread_name: str = MISSING,
-        wait: Literal[True],
+        wait: Literal[True] = True,
         suppress_embeds: bool = MISSING,
         silent: bool = MISSING,
     ):
 		self.ctx.followup.send(content, username = username, avatar_url = avatar_url, tts = tts,
 						 ephemeral = ephemeral, file = file, files = files, embed = embed, embeds = embeds,
-						 allowed_mention = allowed_mentions, view = view, thread = thread, thread_name = thread_name,
+						 allowed_mentions = allowed_mentions, view = view, thread = thread, thread_name = thread_name,
 						 wait = wait, suppress_embeds = suppress_embeds, silent = silent)
 
-	async def edit_message(self, 
+	async def response_message(self, 
         *,
         content: Optional[str] = MISSING,
         embeds: Sequence[Embed] = MISSING,
         embed: Optional[Embed] = MISSING,
-        attachments: Sequence[Union[Attachment, File]] = MISSING,
+        # attachments: Sequence[Union[Attachment, File]] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> Coroutine[Any, Any, InteractionMessage] :
-		return await self.ctx.edit_original_response(content = content, embeds = embeds, embed = embed,
-											   attachments = attachments, view = view, allowed_mentions = allowed_mentions)
+		
+		if self.ctx.response.is_done():
+			return await self.ctx.edit_original_response(content = content, embeds = embeds, embed = embed,
+											   view = view, allowed_mentions = allowed_mentions)
+		else:
+			return await self.ctx.response.send_message(content = content, embeds = embeds, embed = embed,
+											   view = view, allowed_mentions = allowed_mentions)

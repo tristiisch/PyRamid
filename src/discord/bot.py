@@ -7,7 +7,7 @@ from discord import *
 from typing import Dict
 from deezer.downloader import *
 from discord.guild_cmd import GuildCmd
-from discord.guild_songs import GuildSongs
+from discord.guild_queue import GuildQueue
 from tools.object import *
 
 class DiscordBot:
@@ -84,6 +84,18 @@ class DiscordBot:
 			
 			await guild_cmd.stop(ctx)
 
+		@bot.tree.command(name="next", description="Next music")
+		async def cmd_next(ctx: Interaction):
+			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			
+			await guild_cmd.next(ctx)
+
+		@bot.tree.command(name="queue", description="List musique in queue")
+		async def cmd_queue(ctx: Interaction):
+			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			
+			await guild_cmd.queue_list(ctx)
+
 		@bot.tree.command(name="test", description="Testing things")
 		async def cmd_test(ctx: Interaction, input : str):
 			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
@@ -107,5 +119,5 @@ class DiscordBot:
 class GuildInstances:
 	def __init__(self, guild : Guild, deezer_downloader : DeezerDownloader, ffmpeg_path : str):
 		self.data = GuildData(guild)
-		self.songs = GuildSongs(self.data, ffmpeg_path)
+		self.songs = GuildQueue(self.data, ffmpeg_path)
 		self.cmds = GuildCmd(self.data, self.songs, deezer_downloader)
