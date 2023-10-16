@@ -31,3 +31,24 @@ def create_parent_directories(file_path):
 	directory = os.path.dirname(file_path)
 	if not os.path.exists(directory):
 		os.makedirs(directory)
+
+def keep_latest_files(directory, num_to_keep=10):
+    files = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    files.sort(key=os.path.getctime, reverse=True)
+
+    for file in files[num_to_keep:]:
+        try:
+            os.remove(file)
+            print(f"Removed {file}")
+        except OSError as e:
+            print(f"Error: {e}")
+
+def clear_directory(directory):
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+                print(f"Deleted {file_path}")
+        except Exception as e:
+            print(f"Failed to delete {file_path} due to {e}")
