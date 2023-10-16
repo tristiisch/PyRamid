@@ -3,5 +3,5 @@ discord:
   ffmpeg: <path to ffmpeg.exe>
 
 deezer:
-  folder: ./songs/
+  folder: ./songs
   arl: <deezer arl of an account>
