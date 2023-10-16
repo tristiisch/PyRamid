@@ -7,7 +7,8 @@ from discord.bot import DiscordBot
 from deezer.downloader import DeezerDownloader
 
 current_datetime = datetime.now()
-file_name = f"logs\{current_datetime.strftime('%Y_%m_%d %H_%M')}.log"
+
+file_name = f"./logs/{current_datetime.strftime('%Y_%m_%d %H_%M')}.log"
 logs_handler = tools.utils.create_logger(file_name)
 
 config = Config()
