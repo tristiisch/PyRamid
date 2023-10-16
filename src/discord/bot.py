@@ -107,7 +107,11 @@ class DiscordBot:
 
 	def start(self, log_handler: Optional[logging.Handler] = MISSING):
 		print(f"Discord v{discord.__version__} bot starting")
-		self.bot.run(self.token, log_handler=log_handler)
+		try:
+			self.bot.run(self.token, log_handler=log_handler)
+		except PrivilegedIntentsRequired as ex:
+			raise ex
+
 
 	def __get_guild_cmd(self, guild: Guild) -> GuildCmd:
 		if not guild.id in self.guilds_instances:

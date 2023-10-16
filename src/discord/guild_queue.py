@@ -52,7 +52,10 @@ class GuildQueue:
 		track : Track = tl.get_song()
 
 		# Prepare codex to play song
-		source = discord.FFmpegPCMAudio(track.file_local, executable=self.ffmpeg, stderr = sys.stderr)
+		# original_source = discord.FFmpegPCMAudio(track.file_local, executable=self.ffmpeg, stderr = sys.stderr, before_options=f"-af volume=0.25")
+		original_source = discord.FFmpegPCMAudio(track.file_local, executable=self.ffmpeg, stderr = sys.stderr)
+		source = discord.PCMVolumeTransformer(original_source)
+		source.volume = float(0.025)
 
 		# Play song into discord
 		# tl.obs_start()
