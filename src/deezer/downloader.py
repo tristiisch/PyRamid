@@ -17,7 +17,7 @@ class DeezerDownloader:
 		self.folder_path = folder
 		self.music_format = track_formats.MP3_128
 
-	def get_track_by_name(self, name) -> TrackMinimal:
+	def get_track_by_name(self, name) -> TrackMinimal | None:
 		tracks_found = self.deezer_api.search_tracks(name)
 		if not tracks_found:
 			print(f"Track '{name}' not found")
@@ -43,13 +43,15 @@ class DeezerDownloader:
 		track_downloaded = Track(track_info['DATA'], file_path)
 		return track_downloaded
 
-	async def dl_track_by_name(self, name) -> Track:
-		track : TrackMinimal = self.get_track_by_name(name)
+	async def dl_track_by_name(self, name) -> Track | None:
+		track : TrackMinimal | None = self.get_track_by_name(name)
+		if track == None:
+			return None
 
 		track_downloaded = await self.dl_track_by_id(track.id)
 		return track_downloaded
 
-	async def test(self, name) -> list[Track]:
+	async def test(self, name) -> list[Track] | None:
 		tracks_found = self.deezer_api.search_tracks(name)
 		if not tracks_found:
 			print(f"Track '{name}' not found")

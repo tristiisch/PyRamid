@@ -3,7 +3,7 @@ import asyncio
 import sys
 import discord
 
-from discord import *
+from discord import VoiceChannel, VoiceClient
 from discord.music_player_interface import *
 from tools.object import GuildData, MessageSender, Track, TrackList
 
@@ -80,12 +80,12 @@ class GuildQueue:
 		# tl.obs_clear()
 		return True
 
-	def exit(self) -> bool:
+	async def exit(self) -> bool:
 		vc : VoiceClient = self.data.voice_client
 		if self.stop() == False:
 			return False
 		if vc.is_connected():
-			vc.disconnect()
+			await vc.disconnect()
 			return True
 		return False
 

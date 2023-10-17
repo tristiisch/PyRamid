@@ -3,7 +3,7 @@ import discord
 import logging
 
 from discord.ext import commands
-from discord import *
+from discord import PrivilegedIntentsRequired, Role, Status
 from typing import Dict
 from deezer.downloader import *
 from discord.guild_cmd import GuildCmd
@@ -34,18 +34,28 @@ class DiscordBot:
 		@bot.event
 		async def on_ready():
 			await bot.tree.sync()
-			await bot.change_presence(status=Status.do_not_disturb)
-			print(f"Discord bot name '{bot.user.name}'")
-			print('------ GUILDS ------')
+			await bot.change_presence(status=Status.idle)
+			
+			if bot.user == None:
+				print(f"\\!/ Unable to get discord bot name")
+			else:
+				print(f"Discord bot name '{bot.user.name}'")
+			print("------ GUILDS ------")
 
 			for guild in bot.guilds:
-				print(f"'{guild.name}' has {guild.member_count} members {guild.owner}.")
+				print(f"'{guild.name}' has {guild.member_count} members. Created is {guild.owner}.")
 
-				bot_member = guild.get_member(bot.user.id)
-				print('  Bot roles :')
-				for r in bot_member.roles:
-					role: Role = r
-					print(f"    '{role.name}' ID {role.id}")
+				if bot.user == None:
+					print(f"\\!/ Enable to get discord bot - Unable to get his roles")
+				else:
+					bot_member = guild.get_member(bot.user.id)
+					if bot_member == None:
+						print(f"  \\!/ Enable to get discord bot role on {guild.name}")
+					else:
+						print("  Bot roles :")
+						for r in bot_member.roles:
+							role: Role = r
+							print(f"    '{role.name}' ID {role.id}")
 
 				print('----------------------')
 			print(f"Discord bot ready")
@@ -62,43 +72,65 @@ class DiscordBot:
 
 		@bot.tree.command(name="play", description="Play a song in the voice channel")
 		async def cmd_play(ctx: Interaction, input : str):
-			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			if (await self.__use_on_guild_only(ctx)) == False:
+				return
+			guild: Guild = ctx.guild # type: ignore
+			guild_cmd : GuildCmd = self.__get_guild_cmd(guild)
 			
 			await guild_cmd.play(ctx, input)
 
 		@bot.tree.command(name="pause", description="Pause music")
 		async def cmd_pause(ctx: Interaction):
-			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			if (await self.__use_on_guild_only(ctx)) == False:
+				return
+			guild: Guild = ctx.guild # type: ignore
+			guild_cmd : GuildCmd = self.__get_guild_cmd(guild)
 			
 			await guild_cmd.pause(ctx)
 
 		@bot.tree.command(name="resume", description="Resume music")
 		async def cmd_resume(ctx: Interaction):
-			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			if (await self.__use_on_guild_only(ctx)) == False:
+				return
+			guild: Guild = ctx.guild # type: ignore
+			guild_cmd : GuildCmd = self.__get_guild_cmd(guild)
 			
 			await guild_cmd.resume(ctx)
 
 		@bot.tree.command(name="stop", description="Stop music and exit channel")
 		async def cmd_stop(ctx: Interaction):
-			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			if (await self.__use_on_guild_only(ctx)) == False:
+				return
+			guild: Guild = ctx.guild # type: ignore
+			guild_cmd : GuildCmd = self.__get_guild_cmd(guild)
 			
 			await guild_cmd.stop(ctx)
 
 		@bot.tree.command(name="next", description="Next music")
 		async def cmd_next(ctx: Interaction):
-			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			if (await self.__use_on_guild_only(ctx)) == False:
+				return
+			guild: Guild = ctx.guild # type: ignore
+			guild_cmd : GuildCmd = self.__get_guild_cmd(guild)
 			
 			await guild_cmd.next(ctx)
 
 		@bot.tree.command(name="queue", description="List musique in queue")
 		async def cmd_queue(ctx: Interaction):
-			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			if (await self.__use_on_guild_only(ctx)) == False:
+				return
+			guild: Guild = ctx.guild # type: ignore
+			guild_cmd : GuildCmd = self.__get_guild_cmd(guild)
 			
 			await guild_cmd.queue_list(ctx)
 
 		@bot.tree.command(name="test", description="Testing things")
 		async def cmd_test(ctx: Interaction, input : str):
-			guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
+			if (await self.__use_on_guild_only(ctx)) == False:
+				return
+			guild: Guild = ctx.guild # type: ignore
+			guild_cmd : GuildCmd = self.__get_guild_cmd(guild)
+
 			await guild_cmd.test(ctx, input)
 
 		# @bot.command()
@@ -111,7 +143,12 @@ class DiscordBot:
 			self.bot.run(self.token, log_handler=log_handler)
 		except PrivilegedIntentsRequired as ex:
 			raise ex
-
+		
+	async def __use_on_guild_only(self, ctx: Interaction) -> bool:
+		if ctx.guild == None:
+			await ctx.response.send_message(f"You can use this command only on a guild")
+			return False
+		return True
 
 	def __get_guild_cmd(self, guild: Guild) -> GuildCmd:
 		if not guild.id in self.guilds_instances:

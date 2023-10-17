@@ -1,4 +1,4 @@
-from discord import *
+from discord import Interaction, Member, VoiceChannel, VoiceClient, VoiceState
 from deezer.downloader import DeezerDownloader
 from discord.guild_queue import GuildQueue
 
@@ -38,7 +38,7 @@ class GuildCmd:
 			return False
 
 		self.data.track_list.clear()
-		if self.queue.exit() == False:
+		if (await self.queue.exit()) == False:
 			await ctx.response.send_message("The bot does not currently play music")
 			return False
 
@@ -122,17 +122,21 @@ class GuildCmd:
 		await self.queue.goto_channel(voice_channel)
 		await self.queue.play(MessageSender(ctx))
 
-	async def __verify_voice_channel(self, ctx: Interaction) -> VoiceChannel | None : 
-		user: User | Member = ctx.user
+	async def __verify_voice_channel(self, ctx: Interaction) -> VoiceChannel | None :
+
+		if not isinstance(ctx.user, Member):
+			raise Exception("Can be only used by member - user in guild")
+
+		user: Member = ctx.user
 
 		# only play music if user is in a voice channel
-		voice_state: VoiceState | None = user.voice
-		if voice_state is None:
+		if user.voice is None:
 			await ctx.response.send_message("You're not in a channel.")
 			return
+		voice_state: VoiceState = user.voice
 
 		# grab user's voice channel
-		voice_channel: VoiceChannel | None = voice_state.channel
+		voice_channel: VoiceChannel | None = voice_state.channel # type: ignore
 		return voice_channel
 
 	async def __verify_bot_channel(self, ctx: Interaction, channel: VoiceChannel) -> bool :

@@ -1,6 +1,6 @@
 import discord
 
-from discord import *
+from discord import Embed
 from tools.object import Track
 
 class MusicPlayerInterface:
