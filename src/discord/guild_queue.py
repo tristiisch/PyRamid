@@ -2,10 +2,14 @@
 import asyncio
 import sys
 import discord
+import tools.utils
+import tools.format_list
 
 from discord import VoiceChannel, VoiceClient
 from discord.music_player_interface import *
-from tools.object import GuildData, MessageSender, Track, TrackList
+from tools.object import Track, TrackList
+from tools.message_sender import MessageSender
+from tools.guild_data import GuildData
 
 class GuildQueue:
 
@@ -127,11 +131,16 @@ class GuildQueue:
 			return True
 		return False
 
-	def queue_list(self) -> str:
+	def queue_list(self) -> str | None:
 		tl : TrackList = self.data.track_list
-		
-		queue_list: str = "\n".join([f"n°{i+1}\t{s.author_name} - {s.name} ({s.duration})" for i, s in enumerate(tl.get_songs())])
-		return queue_list
+
+		queue = tl.get_songs()
+		if len(queue) == 0:
+			return None
+
+		hsa = tools.format_list.tracks(queue)
+
+		return hsa
 	
 	# Called after song played
 	async def __song_end(self, err: Exception | None, msg_sender: MessageSender):

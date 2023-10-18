@@ -3,18 +3,28 @@ import discord
 import logging
 
 from discord.ext import commands
-from discord import PrivilegedIntentsRequired, Role, Status
-from typing import Dict
-from deezer.downloader import *
+from discord import Guild, Interaction, PrivilegedIntentsRequired, Role, Status
+from typing import Dict, Optional
+from deezer_api.downloader import DeezerDownloader
+from discord.utils import MISSING
+from deezer_api.search import DeezerSearch
 from discord.guild_cmd import GuildCmd
 from discord.guild_queue import GuildQueue
+from spotify.search import SpotifySearch
+from tools.config import Config
 from tools.object import *
+from tools.guild_data import GuildData
+from tools.abc import ASearch
 
 class DiscordBot:
-	def __init__(self, token, ffmpeg, deezer_dl):
-		self.token = token
-		self.ffmpeg = ffmpeg
-		self.deezer_dl : DeezerDownloader = deezer_dl
+	def __init__(self, config: Config, deezer_dl: DeezerDownloader):
+		self.token = config.discord_token
+		self.ffmpeg = config.discord_ffmpeg
+		self.deezer_dl = deezer_dl
+		self.search_engines: Dict[str, ASearch] = dict({
+			"spotify": SpotifySearch(config.spotify_client_id, config.spotify_client_secret),
+			"deezer": DeezerSearch()
+		})
 
 		intents = discord.Intents.default()
 		# intents.members = True
@@ -28,7 +38,7 @@ class DiscordBot:
 		
 
 	def create(self):
-		print(f"Discord v{discord.__version__} bot creating ...")
+		print(f"Discord bot creating with discord.py v{discord.__version__} ...")
 		bot = self.bot
 
 		@bot.event
@@ -124,6 +134,15 @@ class DiscordBot:
 			
 			await guild_cmd.queue_list(ctx)
 
+		@bot.tree.command(name="search", description="Search musique", )
+		async def cmd_search(ctx: Interaction, input: str, engine : str | None):
+			if (await self.__use_on_guild_only(ctx)) == False:
+				return
+			guild: Guild = ctx.guild # type: ignore
+			guild_cmd : GuildCmd = self.__get_guild_cmd(guild)
+			
+			await guild_cmd.search(ctx, input, engine)
+
 		@bot.tree.command(name="test", description="Testing things")
 		async def cmd_test(ctx: Interaction, input : str):
 			if (await self.__use_on_guild_only(ctx)) == False:
@@ -138,7 +157,7 @@ class DiscordBot:
 		# 	pass
 
 	def start(self, log_handler: Optional[logging.Handler] = MISSING):
-		print(f"Discord v{discord.__version__} bot starting")
+		print(f"Discord bot starting")
 		try:
 			self.bot.run(self.token, log_handler=log_handler)
 		except PrivilegedIntentsRequired as ex:
@@ -152,13 +171,13 @@ class DiscordBot:
 
 	def __get_guild_cmd(self, guild: Guild) -> GuildCmd:
 		if not guild.id in self.guilds_instances:
-			self.guilds_instances[guild.id] = GuildInstances(guild, self.deezer_dl, self.ffmpeg)
+			self.guilds_instances[guild.id] = GuildInstances(guild, self.deezer_dl, self.ffmpeg, self.search_engines)
 
 		return self.guilds_instances[guild.id].cmds
 	
 
 class GuildInstances:
-	def __init__(self, guild : Guild, deezer_downloader : DeezerDownloader, ffmpeg_path : str):
-		self.data = GuildData(guild)
+	def __init__(self, guild : Guild, deezer_downloader : DeezerDownloader, ffmpeg_path : str, search_engines: Dict[str, ASearch]):
+		self.data = GuildData(guild, search_engines)
 		self.songs = GuildQueue(self.data, ffmpeg_path)
 		self.cmds = GuildCmd(self.data, self.songs, deezer_downloader)

@@ -52,3 +52,22 @@ def clear_directory(directory):
                 print(f"Deleted {file_path}")
         except Exception as e:
             print(f"Failed to delete {file_path} due to {e}")
+            
+def split_string_by_length(string, max_length) -> typing.Generator[str, None, None]:
+    n = len(string)
+    start = 0
+    while start < n:
+        end = min(n, start + max_length)
+        if end < n:
+            while end > start and string[end] != '\n':
+                end -= 1
+        yield string[start:end]
+        start = end
+        
+def human_string_array(data, columns):
+    col_widths = [max(len(str(x)) for x in column) for column in zip(*data, columns)]
+    lines = [' | '.join((col.ljust(width) for col, width in zip(columns, col_widths)))]
+    lines.append('-' * (sum(col_widths) + 3 * len(columns) - 1))
+    for row in data:
+        lines.append(' | '.join((str(col).ljust(width) for col, width in zip(row, col_widths))))
+    return '\n'.join(lines)

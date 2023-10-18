@@ -18,3 +18,5 @@ class Config:
 		self.deezer_folder = config_data['deezer']['folder']
 		self.discord_token = config_data['discord']['token']
 		self.discord_ffmpeg = config_data['discord']['ffmpeg']
+		self.spotify_client_id= config_data['spotify']['client_id']
+		self.spotify_client_secret = config_data['spotify']['client_secret']

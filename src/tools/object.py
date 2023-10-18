@@ -1,12 +1,4 @@
 from datetime import datetime
-from typing import Any, Coroutine, Literal, Optional, Sequence, Union
-
-from discord import AllowedMentions, Attachment, Embed, File, Guild, Interaction, InteractionMessage, VoiceClient
-
-from discord.ui import View
-from discord.abc import Snowflake
-from discord.utils import MISSING
-from datetime import datetime
 
 class TrackMinimal:
 	def __init__(self, data):
@@ -14,9 +6,9 @@ class TrackMinimal:
 		self.author_name : str = data['artist']['name']
 		self.author_picture : str = data['artist']['picture_medium']
 		# self.authors =  [element['ART_NAME'] for element in data["ARTISTS"]]
-		self.name : str = data['title_short']
+		self.name : str = data['title']
 		self.album_title : str = data['album']['title']
-		self.album_picture : str = data['album']['cover_big']
+		self.album_picture : str = data['album']['cover_xl']
 		# self.duration_seconds = data['DURATION']
 		# self.duration = self.__format_duration(data['DURATION'])
 		# self.file_size = data['FILESIZE']
@@ -47,6 +39,31 @@ class TrackMinimal:
 		date_object = datetime.strptime(input, "%Y-%m-%d")
 
 		return date_object.strftime("%x")
+
+	def __str__(self):
+		# return f"{self.author_name} - {self.name} - {self.album_title}, Author Picture : {self.author_picture}, Album Picture : {self.album_picture}"
+		return f"{self.author_name} - {self.name} - {self.album_title}"
+
+class TrackMinimalSpotify(TrackMinimal):
+	def __init__(self, data):
+		# author_picture = data['artists'][0]['images'][0]['url'] if data['artists'][0]['images'] else ""
+		# author_picture : str = "" # Todo Fix it
+		album_picture = data['album']['images'][0]['url'] if data['album']['images'] else ""
+		self.id : str = data['id']
+		self.author_name : str = data['artists'][0]['name']
+		self.author_picture : str = ""
+		self.name : str = data['name']
+		self.album_title : str = data['album']['name']
+		self.album_picture : str = album_picture
+
+class TrackMinimalDeezer(TrackMinimal):
+	def __init__(self, data):
+		self.id : str = str(data.id)
+		self.author_name : str = data.artist.name
+		self.author_picture : str = data.artist.picture_medium
+		self.name : str = data.title
+		self.album_title : str = data.album.title
+		self.album_picture : str = data.album.cover_xl
 
 class Track(TrackMinimal):
 	def __init__(self, data, file_path):
@@ -109,54 +126,3 @@ class TrackList:
 	# def get_current_duration(self):
 	# 	return self.last_duration + (datetime.now() - self.last_start).total_seconds()
 
-class GuildData:
-	def __init__(self, guild : Guild):
-		self.guild : Guild = guild
-		self.track_list: TrackList = TrackList()
-		self.voice_client: VoiceClient = None
-
-class MessageSender:
-	def __init__(self, ctx: Interaction):
-		self.ctx = ctx
-
-	async def add_message(
-        self,
-        content: str = MISSING,
-        *,
-        username: str = MISSING,
-        avatar_url: Any = MISSING,
-        tts: bool = MISSING,
-        ephemeral: bool = MISSING,
-        file: File = MISSING,
-        files: Sequence[File] = MISSING,
-        embed: Embed = MISSING,
-        embeds: Sequence[Embed] = MISSING,
-        allowed_mentions: AllowedMentions = MISSING,
-        view: View = MISSING,
-        thread: Snowflake = MISSING,
-        thread_name: str = MISSING,
-        wait: Literal[True] = True,
-        suppress_embeds: bool = MISSING,
-        silent: bool = MISSING,
-    ):
-		self.ctx.followup.send(content, username = username, avatar_url = avatar_url, tts = tts,
-						 ephemeral = ephemeral, file = file, files = files, embed = embed, embeds = embeds,
-						 allowed_mentions = allowed_mentions, view = view, thread = thread, thread_name = thread_name,
-						 wait = wait, suppress_embeds = suppress_embeds, silent = silent)
-
-	async def response_message(self, 
-        *,
-        content: Optional[str] = MISSING,
-        embeds: Sequence[Embed] = MISSING,
-        embed: Optional[Embed] = MISSING,
-        # attachments: Sequence[Union[Attachment, File]] = MISSING,
-        view: Optional[View] = MISSING,
-        allowed_mentions: Optional[AllowedMentions] = None,
-    ) -> Coroutine[Any, Any, InteractionMessage] :
-		
-		if self.ctx.response.is_done():
-			return await self.ctx.edit_original_response(content = content, embeds = embeds, embed = embed,
-											   view = view, allowed_mentions = allowed_mentions)
-		else:
-			return await self.ctx.response.send_message(content = content, embeds = embeds, embed = embed,
-											   view = view, allowed_mentions = allowed_mentions)

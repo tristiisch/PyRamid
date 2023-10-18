@@ -1,9 +1,13 @@
+from spotify.search import SpotifySearch
+import tools.utils
+import tools.format_list
+
 from discord import Interaction, Member, VoiceChannel, VoiceClient, VoiceState
-from deezer.downloader import DeezerDownloader
+from deezer_api.downloader import DeezerDownloader
 from discord.guild_queue import GuildQueue
-
-from tools.object import GuildData, MessageSender, Track, TrackMinimal
-
+from tools.object import Track, TrackMinimal
+from tools.message_sender import MessageSender
+from tools.guild_data import GuildData
 
 class GuildCmd:
 
@@ -12,16 +16,17 @@ class GuildCmd:
 		self.data: GuildData = guild_data
 		self.queue: GuildQueue = guild_queue
 
-	async def play(self, ctx: Interaction, input : str):
+	async def play(self, ctx: Interaction, input : str) -> bool:
 		voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
 		if not voice_channel:
-			return
+			return False
 		
 		await ctx.response.send_message(f"Searching **{input}**")
-		track_searched : TrackMinimal | None = self.deezer_dl.get_track_by_name(input)
+
+		track_searched : TrackMinimal | None = self.data.search_engine.search_track(input)
 		if not track_searched:
 			await ctx.edit_original_response(content=f"**{input}** not found.")
-			return
+			return False
 		await ctx.edit_original_response(content=f"**{track_searched.get_full_name()}** found ! Downloading ...")
 
 		track_downloaded : Track | None = await self.deezer_dl.dl_track_by_id(track_searched.id)
@@ -31,6 +36,7 @@ class GuildCmd:
 		
 		if await self.queue.play(MessageSender(ctx)) == False:
 			await ctx.edit_original_response(content=f"**{track_searched.get_full_name()}** is added to the queue")
+		return True
 
 	async def stop(self, ctx: Interaction) -> bool:
 		voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
@@ -89,13 +95,38 @@ class GuildCmd:
 		await ctx.response.send_message("Skip musique")
 		return True
 	
-	async def queue_list(self, ctx: Interaction):
-		queue: str = self.queue.queue_list()
-		if len(queue) == 0:
+	async def queue_list(self, ctx: Interaction) -> bool:
+		queue: str | None = self.queue.queue_list()
+		if queue == None:
 			await ctx.response.send_message(f"Queue is empty")
 			return False
 
-		await ctx.response.send_message(f"```{queue}```")
+		ms = MessageSender(ctx)
+		await ms.add_code_message(queue, prefix="Here's the music in the queue :")
+		return True
+	
+	async def search(self, ctx: Interaction, input: str, engine : str | None) -> bool:
+		if engine == None:
+			search_engine = self.data.search_engine
+		else:
+			test_value = self.data.search_engines.get(engine.lower())
+			if not test_value:
+				await ctx.response.send_message(content=f"Search engine **{engine}** not found.")
+				return False
+			else:
+				search_engine = test_value
+
+		result: list[TrackMinimal] | None = search_engine.search_tracks(input)
+		
+		if not result:
+			await ctx.response.send_message(content=f"**{input}** not found.")
+			return False
+
+		hsa = tools.format_list.tracks(result)
+
+		ms = MessageSender(ctx)
+		await ms.add_code_message(hsa, prefix="Here are the results of your search :")
+
 		return True
 
 	# async def vuvuzela(self, ctx: Interaction):
@@ -116,7 +147,6 @@ class GuildCmd:
 		if not tracks:
 			await ctx.edit_original_response(content=f"**{input}** not found.")
 			return
-		# await ctx.edit_original_response(content=f"**{input}** found ! Downloading ...")
 
 		self.data.track_list.add_songs(tracks)
 		await self.queue.goto_channel(voice_channel)
