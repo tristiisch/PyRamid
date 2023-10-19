@@ -12,6 +12,8 @@ COPY ./config.exemple.yml /app/config.exemple.yml
 
 COPY ./requirements.txt /app/requirements.txt
 
+COPY ./git_info.json /app/git_info.json
+
 # Install any necessary dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt

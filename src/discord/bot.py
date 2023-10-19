@@ -41,7 +41,7 @@ class DiscordBot:
 		
 
 	def create(self):
-		self.logger.info(f"Discord bot creating with discord.py v%s ...", {discord.__version__})
+		self.logger.info(f"Discord bot creating with discord.py v%s ...", discord.__version__)
 		bot = self.bot
 
 		@bot.event

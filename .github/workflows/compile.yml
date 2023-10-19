@@ -16,9 +16,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+            path: ~/.cache/pip
+            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+            restore-keys: |
+              ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
@@ -37,6 +45,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Get Git Commit Details
+        run: |
+          echo "{
+            \"commit_id\": \"$(git log -1 --pretty=%H)\",
+            \"branch\": \"$(git rev-parse --abbrev-ref HEAD)\",
+            \"last_author\": \"$(git log -1 --pretty=%an)\"
+          }" > git_info.json
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

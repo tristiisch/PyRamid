@@ -11,4 +11,4 @@ spotify:
   client_secret: <client secret of your spotify application>
 
 mode: production
-version: 0.
+version: 0.1

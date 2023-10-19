@@ -19,6 +19,9 @@ def create_parent_directories(file_path):
 		os.makedirs(directory)
 
 def keep_latest_files(directory, num_to_keep=10, except_prefixed=None):
+	if not os.path.exists(directory):
+		return
+
 	files = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 	files.sort(key=os.path.getctime, reverse=True)
 

@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$Name = "tristiisch/pyramid"
+$Name = "pyramid-local"
 $Tag = "latest"
 
 function Install-Requirement() {
@@ -12,7 +12,9 @@ function Add-Lib($lib) {
 }
 
 function Create-Docker() {
+	python src/main.py --git > git_info.json
 	docker build -t ${Name}:${Tag} .
+	Remove-Item -r git_info.json
 }
 
 function Run-Docker() {

@@ -1,4 +1,5 @@
 import logging
+from tools.git import GitInfo
 import tools.utils
 import argparse
 
@@ -20,11 +21,15 @@ class Main:
 	def args(self):
 		parser = argparse.ArgumentParser(description="Music Bot Discord using Deezer.")
 		parser.add_argument("--version", action="store_true", help="Print version", required=False)
+		parser.add_argument("--git", action="store_true", help="Print git informations", required=False)
 		args = parser.parse_args()
 
 		if args.version:
-			print(f"{self._info.name} v{self._info.version}")
-			exit(1)
+			print(f"{self._info.to_json()}")
+			exit(0)
+		elif args.git:
+			print(f"{self._info.git_info.to_json()}")
+			exit(0)
 
 	# Logs management
 	def logs(self):
@@ -80,6 +85,15 @@ class Main:
 			return
 		for track in res:
 			print(track)
+
+	def test_git(self):
+		t = GitInfo()
+		t.get()
+		t.save()
+
+		t2 = GitInfo.read()
+		if t2:
+			print(vars(t2))
 
 main = Main()
 
