@@ -125,4 +125,3 @@ class TrackList:
 
 	# def get_current_duration(self):
 	# 	return self.last_duration + (datetime.now() - self.last_start).total_seconds()
-

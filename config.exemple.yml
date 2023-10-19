@@ -5,3 +5,10 @@ discord:
 deezer:
   folder: ./songs
   arl: <deezer arl of an account>
+
+spotify:
+  client_id: <client id of your spotify application>
+  client_secret: <client secret of your spotify application>
+
+mode: production
+version: 0.

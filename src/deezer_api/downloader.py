@@ -19,15 +19,14 @@ class DeezerDownloader:
 	def get_track_by_name(self, name) -> TrackMinimal | None:
 		tracks_found = self.deezer_api.search_tracks(name)
 		if not tracks_found:
-			print(f"Track '{name}' not found")
 			return None
 		track = TrackMinimal(tracks_found[0])
 		return track
 
-	async def dl_track_by_id(self, track_id) -> Track:
+	async def dl_track_by_id(self, track_id) -> Track | None:
 		track_to_dl = self.deezer_api.get_track(track_id)
 		if not track_to_dl:
-			print('Error')
+			return None
 
 		track_info = track_to_dl['info']
 		file_name = pydeezer.util.clean_filename(f"{track_info['DATA']['ART_NAME']} - {track_info['DATA']['SNG_TITLE']}")
@@ -53,33 +52,11 @@ class DeezerDownloader:
 	async def test(self, name) -> list[Track] | None:
 		tracks_found = self.deezer_api.search_tracks(name)
 		if not tracks_found:
-			print(f"Track '{name}' not found")
 			return None
 		tracks = [TrackMinimal(item) for item in tracks_found[:10]]
 		tracks_dl = [await self.dl_track_by_id(item.id) for item in tracks]
-		return tracks_dl
-
-	def __rename_song(self, song_title, song_id):
-		formated_name = "".join(re.split("[œÆæŒ]+", song_title))
-		file_name = sanitize_filepath(formated_name)
-		files = os.listdir(self.folder_path)
-
-		renamed = False
-
-		for file in files:
-			if file.startswith(file_name) and file.endswith('.mp3'):
-				os.rename(os.path.join(self.folder_path, file), f"{self.folder_path}{song_id}.mp3")
-				renamed = True
-			if file.startswith(file_name) and file.endswith('.lrc'):
-				os.rename(os.path.join(self.folder_path, file), f"{self.folder_path}{song_id}.lrc")
-		if not renamed:
-			print("Error: failed to rename")
-
-	def __map_tracks(self, tracks):
-		result = []
-		for track in tracks:
-			result.append(track['id'])
-		return result
+		tracks_dl_filtered = [track for track in tracks_dl if track is not None]  # Filter out None values
+		return tracks_dl_filtered
 
 async def cli():
 	folder_path = "./songs/"

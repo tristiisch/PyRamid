@@ -12,12 +12,15 @@ from discord.guild_cmd import GuildCmd
 from discord.guild_queue import GuildQueue
 from spotify.search import SpotifySearch
 from tools.config import Config
+from tools.information import ProgramInformation
 from tools.object import *
 from tools.guild_data import GuildData
 from tools.abc import ASearch
 
 class DiscordBot:
-	def __init__(self, config: Config, deezer_dl: DeezerDownloader):
+	def __init__(self, logger: logging.Logger, information: ProgramInformation, config: Config, deezer_dl: DeezerDownloader):
+		self.logger = logger
+		self.information = information
 		self.token = config.discord_token
 		self.ffmpeg = config.discord_ffmpeg
 		self.deezer_dl = deezer_dl
@@ -38,37 +41,38 @@ class DiscordBot:
 		
 
 	def create(self):
-		print(f"Discord bot creating with discord.py v{discord.__version__} ...")
+		self.logger.info(f"Discord bot creating with discord.py v%s ...", {discord.__version__})
 		bot = self.bot
 
 		@bot.event
 		async def on_ready():
 			await bot.tree.sync()
-			await bot.change_presence(status=Status.idle)
+			await bot.change_presence(status=Status.online,
+							 activity=discord.Activity(type=discord.ActivityType.listening, name=f"{self.information.get_version()}"))
 			
 			if bot.user == None:
-				print(f"\\!/ Unable to get discord bot name")
+				self.logger.warning(f"Unable to get discord bot name")
 			else:
-				print(f"Discord bot name '{bot.user.name}'")
-			print("------ GUILDS ------")
+				self.logger.info(f"Discord bot name '{bot.user.name}'")
+			self.logger.info("------ GUILDS ------")
 
 			for guild in bot.guilds:
-				print(f"'{guild.name}' has {guild.member_count} members. Created is {guild.owner}.")
+				self.logger.info(f"'{guild.name}' has {guild.member_count} members. Created is {guild.owner}.")
 
 				if bot.user == None:
-					print(f"\\!/ Enable to get discord bot - Unable to get his roles")
+					self.logger.warning(f"Enable to get discord bot - Unable to get his roles")
 				else:
 					bot_member = guild.get_member(bot.user.id)
 					if bot_member == None:
-						print(f"  \\!/ Enable to get discord bot role on {guild.name}")
+						self.logger.warning(f"  Enable to get discord bot role on {guild.name}")
 					else:
-						print("  Bot roles :")
+						self.logger.info("  Bot roles :")
 						for r in bot_member.roles:
 							role: Role = r
-							print(f"    '{role.name}' ID {role.id}")
+							self.logger.info(f"    '{role.name}' ID {role.id}")
 
-				print('----------------------')
-			print(f"Discord bot ready")
+				self.logger.info('----------------------')
+			self.logger.info(f"Discord bot ready")
 			# await client.close()
 
 		@bot.tree.command(name="ping", description="Get time between Bot and Discord")
@@ -156,10 +160,10 @@ class DiscordBot:
 		# async def ignore_none_slash_cmd():
 		# 	pass
 
-	def start(self, log_handler: Optional[logging.Handler] = MISSING):
-		print(f"Discord bot starting")
+	def start(self):
+		self.logger.info(f"Discord bot starting")
 		try:
-			self.bot.run(self.token, log_handler=log_handler)
+			self.bot.run(self.token, log_handler=None)
 		except PrivilegedIntentsRequired as ex:
 			raise ex
 		
