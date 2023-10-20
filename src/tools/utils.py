@@ -33,6 +33,9 @@ def keep_latest_files(directory, num_to_keep=10, except_prefixed=None):
 				logging.warning(f"Error occurred while removing {file} due to {e}", exc_info=True)
 
 def clear_directory(directory):
+	if not os.path.exists(directory):
+		return
+
 	for filename in os.listdir(directory):
 		file_path = os.path.join(directory, filename)
 		try:

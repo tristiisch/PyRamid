@@ -8,8 +8,9 @@ class ProgramInformation:
 	def __init__(self):
 		self.name = "pyramid"
 		self.os = get_os().lower()
-		self.version = "0.1.0"
+		self.version = "0.1.1"
 
+	def load_git_info(self):
 		git_info = GitInfo.read()
 		if git_info != None:
 			self.git_info = git_info
@@ -43,7 +44,7 @@ def get_os() -> str:
 					for line in lines:
 						if line.startswith("PRETTY_NAME"):
 							dist_info = line.split("=")[1].strip().strip('"')
-							return f"Linux Distribution: {dist_info}"
+							return dist_info
 					return "Linux distribution information not available."
 			except FileNotFoundError:
 				return "Linux distribution information not available."

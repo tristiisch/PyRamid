@@ -1,5 +1,4 @@
 import logging
-from tools.git import GitInfo
 import tools.utils
 import argparse
 
@@ -11,6 +10,7 @@ from spotify.search import SpotifySearch
 from deezer_api.search import DeezerSearch
 from tools.information import ProgramInformation
 from tools.logs import Logger
+from tools.git import GitInfo
 
 class Main:
 	def __init__(self):
@@ -28,6 +28,7 @@ class Main:
 			print(f"{self._info.to_json()}")
 			exit(0)
 		elif args.git:
+			self._info.load_git_info()
 			print(f"{self._info.git_info.to_json()}")
 			exit(0)
 
@@ -37,12 +38,15 @@ class Main:
 		log_dir = "./logs"
 		log_name = f"./{current_datetime.strftime('%Y_%m_%d %H_%M')}.log"
 
-		# Deletion of log files over 10 
-		tools.utils.keep_latest_files(log_dir, 10, "error")
-
 		self._logs_handler = Logger(self._info, log_dir, log_name, "error.log")
 		self.logger = logging.getLogger()
 
+		# Deletion of log files over 10
+		tools.utils.keep_latest_files(log_dir, 10, "error")
+
+	# Logs management
+	def git_info(self):
+		self._info.load_git_info()
 		logging.info(self._info)
 	
 	def config(self):
@@ -99,6 +103,7 @@ main = Main()
 
 main.args()
 main.logs()
+main.git_info()
 main.config()
 main.clean_data()
 main.init()

@@ -48,11 +48,15 @@ jobs:
 
       - name: Get Git Commit Details
         run: |
+          commit_id=$(git log -1 --pretty=%H)
+          commit_id_short=$(echo "$commit_id" | cut -c1-8)
           echo "{
-            \"commit_id\": \"$(git log -1 --pretty=%H)\",
+            \"commit_id\": \"$commit_id_short\",
             \"branch\": \"$(git rev-parse --abbrev-ref HEAD)\",
             \"last_author\": \"$(git log -1 --pretty=%an)\"
           }" > git_info.json
+          echo "commit_id=$commit_id" >> $GITHUB_OUTPUT
+        id: set_git_info
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -80,4 +84,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.set_tag.outputs.tag }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.set_tag.outputs.tag }}, ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.set_git_info.outputs.commit_id }}

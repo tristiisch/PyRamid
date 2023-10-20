@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import pathlib
 
@@ -51,18 +52,19 @@ class GitInfo:
 			json.dump(data, f, indent=4)
 
 	@classmethod
-	def read(cls, file_name="git_info.json"):
+	def read(cls, file_name="git_info.json", max_length = 8):
 		if not os.path.exists(file_name):
 			return None
 		try:
 			with open(file_name, "r") as f:
 				data = json.load(f)
-			# return cls(**data)
 			git_info = cls()
-			git_info.commit_id = data["commit_id"]
+
+			git_info.commit_id = data["commit_id"][:max_length]
 			git_info.branch = data["branch"]
 			git_info.last_author = data["last_author"]
 			return git_info
 
-		except (FileNotFoundError, json.JSONDecodeError, TypeError) as e:
+		except (FileNotFoundError, json.JSONDecodeError, UnicodeDecodeError, TypeError) as e:
+			logging.warning(f"Error occurred while read {file_name} due to {e}")
 			return None
