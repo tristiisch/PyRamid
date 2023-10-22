@@ -77,4 +77,4 @@ def human_string_array(data, columns) -> str:
 class Mode(Enum):
 	PRODUCTION = 1
 	PRE_PRODUCTION = 2
-	DEVELOPEMENT = 3
+	DEVELOPMENT = 3

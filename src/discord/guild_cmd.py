@@ -141,7 +141,7 @@ class GuildCmd:
 	# 	await ctx.response.send_message(f"Im comming into {voice_channel.name}")
 	# 	await self.__play_song(voice_channel, ctx, "songs_test\Vuvuzela.mp3", self.ffmpeg)
 
-	async def test(self, ctx: Interaction, input: str):
+	async def play_multiple(self, ctx: Interaction, input: str):
 		voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
 		if not voice_channel:
 			return

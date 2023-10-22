@@ -4,8 +4,9 @@ import discord
 import logging
 
 from discord.ext import commands
+from discord.user import BaseUser
 from discord.ext.commands.errors import CommandNotFound
-from discord import Guild, Interaction, PrivilegedIntentsRequired, Role, Status
+from discord import AppInfo, ClientUser, Guild, Interaction, PrivilegedIntentsRequired, Role, Status, User
 from typing import Dict, Optional
 from deezer_api.downloader import DeezerDownloader
 from discord.utils import MISSING
@@ -18,6 +19,7 @@ from tools.information import ProgramInformation
 from tools.object import *
 from tools.guild_data import GuildData
 from tools.abc import ASearch
+from tools.utils import Mode
 
 class DiscordBot:
 	def __init__(self, logger: logging.Logger, information: ProgramInformation, config: Config, deezer_dl: DeezerDownloader):
@@ -25,6 +27,7 @@ class DiscordBot:
 		self.information = information
 		self.token = config.discord_token
 		self.ffmpeg = config.discord_ffmpeg
+		self.environment: Mode = config.mode
 		self.deezer_dl = deezer_dl
 		self.search_engines: Dict[str, ASearch] = dict({
 			"spotify": SpotifySearch(config.spotify_client_id, config.spotify_client_secret),
@@ -33,7 +36,6 @@ class DiscordBot:
 
 		intents = discord.Intents.default()
 		# intents.members = True
-		intents.guilds = True
 		intents.message_content = True
 
 		bot = commands.Bot(command_prefix="$$", intents=intents)
@@ -80,6 +82,51 @@ class DiscordBot:
 		@bot.tree.command(name="ping", description="Get time between Bot and Discord")
 		async def cmd_ping(ctx: Interaction):
 			await ctx.response.send_message(f"Pong ! ({math.trunc(bot.latency * 1000)}ms)")
+
+		@bot.tree.command(name="about", description="About the bot")
+		async def about(ctx: Interaction):
+			bot_user: ClientUser | None
+			if bot.user != None:
+				bot_user = bot.user
+			else:
+				bot_user = None
+				self.logger.warning(f"Unable to get self user instance")
+
+			info = self.information
+			embed = discord.Embed(
+				title=info.name.capitalize(),
+				color=discord.Color.gold()
+			)
+			if bot_user != None and bot_user.avatar != None:
+				embed.set_thumbnail(url = bot_user.avatar.url)
+
+			owner_id: int | None = bot.owner_id
+			if owner_id == None and bot.owner_ids != None and len(bot.owner_ids) > 0:
+				owner_id = next(iter(bot.owner_ids))
+			else:
+				owner_id = None
+
+			owner: BaseUser | None
+			if owner_id != None:
+				owner = await bot.fetch_user(owner_id)
+			else:
+				owner = None
+
+			if owner == None:
+				t: AppInfo = await bot.application_info()
+				if t.team != None:
+					team = t.team
+					if team.owner != None:
+						owner = team.owner
+
+			if owner != None:
+				embed.set_footer(text = f"Owned by {owner.display_name}", icon_url=owner.avatar.url if owner.avatar is not None else None)
+
+			embed.add_field(name="Version", value=info.get_full_version(), inline=True)
+			embed.add_field(name="OS", value=info.os, inline=True)
+			embed.add_field(name="Environment", value=self.environment.name.capitalize(), inline=True)
+
+			await ctx.response.send_message(embed=embed)
 
 		# @bot.tree.command(name="vuvuzela", description="Plays an awful vuvuzela in the voice channel")
 		# async def cmd_vuvuzela(ctx: Interaction):
@@ -149,14 +196,14 @@ class DiscordBot:
 			
 			await guild_cmd.search(ctx, input, engine)
 
-		@bot.tree.command(name="test", description="Testing things")
-		async def cmd_test(ctx: Interaction, input : str):
+		@bot.tree.command(name="play_multiple", description="Plays the first 10 songs of the search")
+		async def play_multiple(ctx: Interaction, input : str):
 			if (await self.__use_on_guild_only(ctx)) == False:
 				return
 			guild: Guild = ctx.guild # type: ignore
 			guild_cmd : GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.test(ctx, input)
+			await guild_cmd.play_multiple(ctx, input)
 
 		# @bot.command()
 		# async def ignore_none_slash_cmd():
@@ -173,7 +220,7 @@ class DiscordBot:
 		async def on_error(event, *args, **kwargs):
 			message = args[0] # Message object
 			# traceback.extract_stack
-			logging.error(traceback.format_exc())
+			logging.error("on_error", traceback.format_exc())
 			# await bot.send_message(message.channel, "You caused an error!")
 
 	def start(self):

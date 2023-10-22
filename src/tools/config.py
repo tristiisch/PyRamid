@@ -24,8 +24,9 @@ class Config:
 		self.spotify_client_secret = config_data["spotify"]["client_secret"]
 		self.spotify_client_secret = config_data["spotify"]["client_secret"]
 
+		mode_upper = str(config_data["mode"]).upper()
 		for mode in Mode:
-			if mode.name == config_data["mode"]:
+			if mode.name == mode_upper:
 				self.mode = mode
 				break
 		else:

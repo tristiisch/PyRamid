@@ -20,9 +20,12 @@ class ProgramInformation:
 
 	def get_version(self):
 		return f"v{self.version}"
+
+	def get_full_version(self):
+		return f"v{self.version}-{self.git_info.commit_id}"
 	 
 	def __str__(self):
-		return f"{self.name.capitalize()} v{self.version}-{self.git_info.commit_id} on {self.os} by {self.git_info.last_author}"
+		return f"{self.name.capitalize()} {self.get_full_version()} on {self.os} by {self.git_info.last_author}"
 
 	def to_json(self):
 		data = vars(self)
