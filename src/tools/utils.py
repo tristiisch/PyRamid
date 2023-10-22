@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 import asyncio
 import functools
@@ -18,7 +19,7 @@ def create_parent_directories(file_path):
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
-def keep_latest_files(directory, num_to_keep=10, except_prefixed=None):
+def keep_latest_files(directory: str, num_to_keep: int = 10, except_prefixed: Optional[str] = None) -> None:
 	if not os.path.exists(directory):
 		return
 
@@ -26,7 +27,8 @@ def keep_latest_files(directory, num_to_keep=10, except_prefixed=None):
 	files.sort(key=os.path.getctime, reverse=True)
 
 	for file in files[num_to_keep:]:
-		if except_prefixed != None and not file.startswith(except_prefixed):
+		basename = os.path.basename(file)
+		if except_prefixed is not None and not basename.startswith(except_prefixed):
 			try:
 				os.remove(file)
 			except OSError as e:
