@@ -29,6 +29,7 @@ class Main:
 		args = parser.parse_args()
 
 		if args.version:
+			self._info.load_git_info()
 			print(f"{self._info.to_json()}")
 			sys.exit(0)
 		elif args.git:

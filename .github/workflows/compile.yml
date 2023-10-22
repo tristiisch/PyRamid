@@ -1,16 +1,24 @@
-name: Python 3.11 CI
+name: Python CI
 
 on:
   push:
     branches:
-      - '*'
+      - "*"
   pull_request:
     branches:
-      - '*'
+      - "*"
 
 jobs:
+
   compile:
+    name: "Compile Python 3.11"
     runs-on: ubuntu-latest
+    outputs:
+      json: ${{ steps.version.outputs.json }}
+      version: ${{ steps.version.outputs.version }}
+      commit_id: ${{ steps.version.outputs.commit_id }}
+      last_author: ${{ steps.version.outputs.last_author }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,15 +26,15 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Cache dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
             path: ~/.cache/pip
             key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
             restore-keys: |
-              ${{ runner.os }}-pip-
+              ${{ runner.os }}-pip
 
       - name: Install dependencies
         run: |
@@ -35,9 +43,54 @@ jobs:
 
       - name: Test compilation
         run: |
-          python -m compileall .
+          python -m compileall ./src
+
+      - name: Save version
+        run: |
+          FULL_JSON=$(python src/main.py --version)
+          echo "json=$(echo $FULL_JSON | jq -c)" >> $GITHUB_OUTPUT
+          echo "version=$(echo $FULL_JSON | jq -r '.version')" >> $GITHUB_OUTPUT
+          echo "commit_id=$(echo $FULL_JSON | jq -r '.git_info.commit_id')" >> $GITHUB_OUTPUT
+          echo "last_author=$(echo $FULL_JSON | jq -r '.git_info.last_author')" >> $GITHUB_OUTPUT
+        id: version
+
+  version_compatibility:
+    name: "Compile Python"
+    runs-on: ubuntu-latest
+    needs: compile
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+            path: ~/.cache/pip
+            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ matrix.python-version }}
+            restore-keys: |
+              ${{ runner.os }}-pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Test compilation
+        run: |
+          python -m compileall ./src
 
   docker_push:
+    name: "Docker Push"
     needs: compile
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
@@ -46,17 +99,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get Git Commit Details
+      - name: Set git info
         run: |
-          commit_id=$(git log -1 --pretty=%H)
-          commit_id_short=$(echo "$commit_id" | cut -c1-8)
-          echo "{
-            \"commit_id\": \"$commit_id_short\",
-            \"branch\": \"$(git rev-parse --abbrev-ref HEAD)\",
-            \"last_author\": \"$(git log -1 --pretty=%an)\"
-          }" > git_info.json
-          echo "commit_id=$commit_id" >> $GITHUB_OUTPUT
-        id: set_git_info
+          echo $(${{ needs.compile.outputs.json }} | jq -r '.git_info') > git_info.json
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -71,17 +116,36 @@ jobs:
         run: |
           if [ ${{ github.ref }} = 'refs/heads/main' ]; then
             echo "tag=latest" >> $GITHUB_OUTPUT
-          elif [ ${{ github.ref }} = 'refs/heads/dev' ]; then
+          elif [ ${{ github.ref }} = 'refs/heads/pre-prod' ]; then
             echo "tag=pre-prod" >> $GITHUB_OUTPUT
           else
-            echo "tag=skip" >> $GITHUB_OUTPUT
+            echo "tag=dev" >> $GITHUB_OUTPUT
           fi
         id: set_tag
 
-      - name: Build and push
-        if: steps.set_tag.outputs.tag != 'skip'
+      - name: Build and push PROD
+        if: steps.set_tag.outputs.tag == 'latest'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.set_tag.outputs.tag }}, ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.set_git_info.outputs.commit_id }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.set_tag.outputs.tag }},
+            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }},
+            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
+
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push DEV
+        if: steps.set_tag.outputs.tag != 'latest'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.set_tag.outputs.tag }},
+            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
+
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

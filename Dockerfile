@@ -1,5 +1,4 @@
-# Use the official Python 3.11 image as the base image
-FROM python:3.11
+FROM python:3.11-alpine
 
 # Set the working directory in the container
 WORKDIR /app
@@ -19,7 +18,8 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Install multimedia framework that can decode, encode, transcode, mux, demux, stream, filter, and play a wide variety of multimedia files
-RUN apt update
-RUN apt install ffmpeg -y
+RUN apk update
+RUN apk upgrade
+RUN apk add --no-cache ffmpeg
 
 CMD ["python", "src/main.py"]

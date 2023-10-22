@@ -1,0 +1,94 @@
+name: Pull Request Action
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  modify_and_commit:
+    if: github.event_name == 'push' && !startsWith(github.head_ref, 'pull')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fix code quality
+        uses: chartboost/ruff-action@v1
+        with:
+          src: "./src"
+          args: check --fix
+      - name: Commit code quality
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add **/*.py
+          git commit -m "[ruff] Improve code quality"
+
+      - name: Fix code format
+        uses: chartboost/ruff-action@v1
+        with:
+          src: "./src"
+          args: format
+      - name: Commit code format
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add **/*.py
+          git commit -m "[ruff] Improve code format"
+
+      - name: Check for existing pull request
+        id: check_pr
+        run: |
+          if [[ $(gh pr list -s open -H auto-improve/${{ github.ref }}) ]]; then
+            gh pr close auto-improve/${{ github.ref }} -c "An other PR has been created"
+          fi
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Auto improve format"
+          title: "[ruff] Auto improve format"
+          body: "This is an automatically generated pull request to improve the format."
+          branch: auto-improve/${{ github.ref }}
+        #   author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+  commit_to_pr:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fix code quality
+        uses: chartboost/ruff-action@v1
+        with:
+          src: "./src"
+          args: check --fix
+      - name: Commit code quality
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add **/*.py
+          git commit -m "[ruff] Improve code quality"
+
+      - name: Fix code format
+        uses: chartboost/ruff-action@v1
+        with:
+          src: "./src"
+          args: format
+      - name: Commit code format
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add **/*.py
+          git commit -m "[ruff] Improve code format"
+
+      - name: Push changes for pull request
+        run: |
+          git push origin HEAD:refs/heads/${{ github.head_ref }}
