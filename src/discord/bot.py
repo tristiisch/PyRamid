@@ -1,8 +1,10 @@
 import math
+import traceback
 import discord
 import logging
 
 from discord.ext import commands
+from discord.ext.commands.errors import CommandNotFound
 from discord import Guild, Interaction, PrivilegedIntentsRequired, Role, Status
 from typing import Dict, Optional
 from deezer_api.downloader import DeezerDownloader
@@ -159,6 +161,20 @@ class DiscordBot:
 		# @bot.command()
 		# async def ignore_none_slash_cmd():
 		# 	pass
+
+		@bot.event
+		async def on_command_error(ctx, error):
+			if isinstance(error, CommandNotFound):
+				await ctx.send("That command didn't exists !")
+				return
+			logging.debug("on_command_error", error)
+
+		@bot.event
+		async def on_error(event, *args, **kwargs):
+			message = args[0] # Message object
+			# traceback.extract_stack
+			logging.error(traceback.format_exc())
+			# await bot.send_message(message.channel, "You caused an error!")
 
 	def start(self):
 		self.logger.info(f"Discord bot starting")

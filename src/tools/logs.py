@@ -17,18 +17,16 @@ class Logger:
 		self.log_filename = log_filename
 		self.error_filename = error_filename
 		
+		self.date = "%d/%m/%Y %H:%M:%S"
 		self.console_format = "%(asctime)s %(levelname)s %(message)s"
-		self.console_date = "%H:%M:%S"
-
 		self.file_format = "[{asctime}] [{levelname:<8}] {name}: {message}"
-		self.file_date = "%d/%m/%Y %H:%M:%S"
 
 		self.log_to_console()
 		self.log_to_file()
 		self.log_to_file_unhandled_exception()
 
 	def log_to_console(self):
-		coloredlogs.install(fmt=self.console_format, datefmt=self.console_date)
+		coloredlogs.install(fmt=self.console_format, datefmt=self.date)
 
 	def log_to_file(self):
 		log_filename = os.path.join(self.logs_dir, self.log_filename)
@@ -41,7 +39,7 @@ class Logger:
 			backupCount=10
 		)
 
-		formatter = logging.Formatter(self.file_format, self.file_date, style='{')
+		formatter = logging.Formatter(self.file_format, self.date, style='{')
 		file_handler.setFormatter(formatter)
 
 		logging.getLogger().addHandler(file_handler)
@@ -57,7 +55,7 @@ class Logger:
 			encoding="utf-8"
 		)
 
-		formatter = logging.Formatter(self.file_format, self.file_date, style='{')
+		formatter = logging.Formatter(self.file_format, self.date, style='{')
 		file_handler.setFormatter(formatter)
 		
 		self.logger_unhandled_exception = logging.getLogger("Unhandled Exception")

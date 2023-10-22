@@ -30,6 +30,9 @@ class GuildCmd:
 		await ctx.edit_original_response(content=f"**{track_searched.get_full_name()}** found ! Downloading ...")
 
 		track_downloaded : Track | None = await self.deezer_dl.dl_track_by_id(track_searched.id)
+		if not track_downloaded:
+			await ctx.edit_original_response(content=f"**{input}** can't be downloaded.")
+			return False
 		
 		self.data.track_list.add_song(track_downloaded)
 		await self.queue.goto_channel(voice_channel)
