@@ -3,26 +3,26 @@ import logging
 import os
 import pathlib
 
-class GitInfo:
 
+class GitInfo:
 	def __init__(self):
 		self.commit_id: str | None = None
 		self.branch: str | None = None
 		self.last_author: str | None = None
 
-	def get(self, base_path = None, max_length = 8):
+	def get(self, base_path=None, max_length=8) -> bool:
 		if not base_path:
-			dir = pathlib.Path()
+			directory = pathlib.Path()
 		else:
-			dir = pathlib.Path(base_path)
+			directory = pathlib.Path(base_path)
 
-		git_dir = dir / ".git"
+		git_dir = directory / ".git"
 		if not git_dir.exists():
-			return None
-		
+			return False
+
 		git_head = git_dir / "HEAD"
 		if not git_head.exists():
-			return None
+			return False
 
 		with (git_head).open("r") as head:
 			ref = head.readline().split(" ")[-1].strip()
@@ -39,8 +39,10 @@ class GitInfo:
 
 		git_log_head = git_dir / "logs" / "HEAD"
 		if git_log_head.exists():
-			log_lines = git_log_head.read_text().strip().split('\n')
-			self.last_author = log_lines[-1].split(' ')[2]
+			log_lines = git_log_head.read_text().strip().split("\n")
+			self.last_author = log_lines[-1].split(" ")[2]
+
+		return True
 
 	def to_json(self):
 		data = vars(self)
@@ -52,7 +54,7 @@ class GitInfo:
 			json.dump(data, f, indent=4)
 
 	@classmethod
-	def read(cls, file_name="git_info.json", max_length = 8):
+	def read(cls, file_name="git_info.json", max_length=8):
 		if not os.path.exists(file_name):
 			return None
 		try:
@@ -65,6 +67,11 @@ class GitInfo:
 			git_info.last_author = data["last_author"]
 			return git_info
 
-		except (FileNotFoundError, json.JSONDecodeError, UnicodeDecodeError, TypeError) as e:
-			logging.warning(f"Error occurred while read {file_name} due to {e}")
+		except (
+			FileNotFoundError,
+			json.JSONDecodeError,
+			UnicodeDecodeError,
+			TypeError,
+		) as e:
+			logging.warning("Error occurred while read %s due to %s", file_name, e)
 			return None

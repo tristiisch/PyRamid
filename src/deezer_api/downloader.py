@@ -1,14 +1,12 @@
 import argparse
-from asyncio import to_thread
 import asyncio
 import os
-import re
 import pydeezer.util
 
 from pydeezer import Deezer
 from pydeezer.constants import track_formats
-from pathvalidate import sanitize_filepath
-from tools.object import *
+from tools.object import Track, TrackMinimal
+
 
 class DeezerDownloader:
 	def __init__(self, arl, folder):
@@ -28,22 +26,34 @@ class DeezerDownloader:
 		if not track_to_dl:
 			return None
 
-		track_info = track_to_dl['info']
-		file_name = pydeezer.util.clean_filename(f"{track_info['DATA']['ART_NAME']} - {track_info['DATA']['SNG_TITLE']}")
+		track_info = track_to_dl["info"]
+		file_name = pydeezer.util.clean_filename(
+			f"{track_info['DATA']['ART_NAME']} - {track_info['DATA']['SNG_TITLE']}"
+		)
 		file_path = os.path.join(self.folder_path, file_name) + ".mp3"
 
-		if os.path.exists(file_path) == False:
-			await asyncio.get_event_loop().run_in_executor(None,
-				self.deezer_api.download_track, track_info, self.folder_path, self.music_format, True, file_name, False, True, False)
+		if os.path.exists(file_path) is False:
+			await asyncio.get_event_loop().run_in_executor(
+				None,
+				self.deezer_api.download_track,
+				track_info,
+				self.folder_path,
+				self.music_format,
+				True,
+				file_name,
+				False,
+				True,
+				False,
+			)
 			# track_to_dl['download'](self.folder_path, filename = file_name, quality = self.music_format, with_lyrics = False)
 			# self.deezer_api.download_track(track_info, self.folder_path, filename = file_name, quality = self.music_format, with_lyrics = False)
 
-		track_downloaded = Track(track_info['DATA'], file_path)
+		track_downloaded = Track(track_info["DATA"], file_path)
 		return track_downloaded
 
 	async def dl_track_by_name(self, name) -> Track | None:
-		track : TrackMinimal | None = self.get_track_by_name(name)
-		if track == None:
+		track: TrackMinimal | None = self.get_track_by_name(name)
+		if track is None:
 			return None
 
 		track_downloaded = await self.dl_track_by_id(track.id)
@@ -55,16 +65,19 @@ class DeezerDownloader:
 			return None
 		tracks = [TrackMinimal(item) for item in tracks_found[:10]]
 		tracks_dl = [await self.dl_track_by_id(item.id) for item in tracks]
-		tracks_dl_filtered = [track for track in tracks_dl if track is not None]  # Filter out None values
+		tracks_dl_filtered = [
+			track for track in tracks_dl if track is not None
+		]  # Filter out None values
 		return tracks_dl_filtered
+
 
 async def cli():
 	folder_path = "./songs/"
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-t', help='song title', metavar='title')
-	parser.add_argument('-id', help='id of the track', metavar='id')
-	parser.add_argument('-arl', help='arl deezer account', metavar='arl')
+	parser.add_argument("-t", help="song title", metavar="title")
+	parser.add_argument("-id", help="id of the track", metavar="id")
+	parser.add_argument("-arl", help="arl deezer account", metavar="arl")
 
 	args = parser.parse_args()
 

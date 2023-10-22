@@ -1,36 +1,40 @@
 import logging
-import tools.utils
+import sys
 import argparse
+import tools.utils
 
 from datetime import datetime
-from tools.config import Config
-from discord.bot import DiscordBot
-from deezer_api.downloader import DeezerDownloader
 from spotify.search import SpotifySearch
+from deezer_api.downloader import DeezerDownloader
 from deezer_api.search import DeezerSearch
+from discord.bot import DiscordBot
+from tools.config import Config
 from tools.information import ProgramInformation
 from tools.logs import Logger
 from tools.git import GitInfo
+
 
 class Main:
 	def __init__(self):
 		# Program information
 		self._info = ProgramInformation()
-    
+
 	# Argument management
 	def args(self):
 		parser = argparse.ArgumentParser(description="Music Bot Discord using Deezer.")
 		parser.add_argument("--version", action="store_true", help="Print version", required=False)
-		parser.add_argument("--git", action="store_true", help="Print git informations", required=False)
+		parser.add_argument(
+			"--git", action="store_true", help="Print git informations", required=False
+		)
 		args = parser.parse_args()
 
 		if args.version:
 			print(f"{self._info.to_json()}")
-			exit(0)
+			sys.exit(0)
 		elif args.git:
 			self._info.load_git_info()
 			print(f"{self._info.git_info.to_json()}")
-			exit(0)
+			sys.exit(0)
 
 	# Logs management
 	def logs(self):
@@ -48,7 +52,7 @@ class Main:
 	def git_info(self):
 		self._info.load_git_info()
 		logging.info(self._info)
-	
+
 	def config(self):
 		# Config load
 		self._config = Config()
@@ -68,16 +72,20 @@ class Main:
 		deezer_dl = DeezerDownloader(self._config.deezer_arl, self._config.deezer_folder)
 
 		# Discord Bot Instance
-		discord_bot = DiscordBot(logging.getLogger("Discord Global"), self._info, self._config, deezer_dl)
+		discord_bot = DiscordBot(
+			logging.getLogger("Discord Global"), self._info, self._config, deezer_dl
+		)
 		# Create bot
 		discord_bot.create()
 		# Connect bot to Discord servers
 		discord_bot.start()
 
 	def test_spotify(self, input):
-		spotify_search = SpotifySearch(self._config.spotify_client_id, self._config.spotify_client_secret)
+		spotify_search = SpotifySearch(
+			self._config.spotify_client_id, self._config.spotify_client_secret
+		)
 		res = spotify_search.search_tracks(input, limit=10)
-		if res == None:
+		if res is None:
 			return
 		for track in res:
 			print(track)
@@ -85,7 +93,7 @@ class Main:
 	def test_deezer(self, input):
 		deezer_search = DeezerSearch()
 		res = deezer_search.search_tracks(input, limit=10)
-		if res == None:
+		if res is None:
 			return
 		for track in res:
 			print(track)
@@ -98,6 +106,7 @@ class Main:
 		t2 = GitInfo.read()
 		if t2:
 			print(vars(t2))
+
 
 main = Main()
 

@@ -3,22 +3,23 @@ import discord
 from discord import Embed
 from tools.object import Track
 
+
 class MusicPlayerInterface:
 	def __init__(self):
 		pass
 
-	def embed_track(self, track : Track) -> Embed :
+	def embed_track(self, track: Track) -> Embed:
 		# track.actual_seconds = round(track.duration_seconds * 0.75)
 		track.actual_seconds = int(0)
 		embed = discord.Embed(
 			# title=f"{track.authors}",
 			title=f"{track.name}",
-			description = f"{track.format_duration(track.actual_seconds)} {self.__generate_color_sequence(track.actual_seconds / track.duration_seconds * 100)} {track.duration}",
-			color = discord.Color.blue(),
+			description=f"{track.format_duration(track.actual_seconds)} {self.__generate_color_sequence(track.actual_seconds / track.duration_seconds * 100)} {track.duration}",
+			color=discord.Color.blue(),
 		)
-		embed.set_author(name = ", ".join(track.authors), icon_url = track.author_picture)
-		embed.set_thumbnail(url = track.album_picture)
-		embed.set_footer(text = f"Release {track.date}")
+		embed.set_author(name=", ".join(track.authors), icon_url=track.author_picture)
+		embed.set_thumbnail(url=track.album_picture)
+		embed.set_footer(text=f"Release {track.date}")
 
 		return embed
 

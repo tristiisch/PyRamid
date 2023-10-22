@@ -3,6 +3,7 @@ import deezer
 from tools.abc import ASearch
 from tools.object import TrackMinimalDeezer
 
+
 class DeezerSearch(ASearch):
 	def __init__(self):
 		self.client = deezer.Client()
@@ -13,7 +14,7 @@ class DeezerSearch(ASearch):
 			return None
 		return TrackMinimalDeezer(search_results[0])
 
-	def search_tracks(self, search, limit = 10) -> list[TrackMinimalDeezer] | None:
+	def search_tracks(self, search, limit=10) -> list[TrackMinimalDeezer] | None:
 		search_results = self.client.search(query=search)
 
 		if not search_results or len(search_results) == 0:
