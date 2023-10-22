@@ -21,24 +21,25 @@ class GuildCmd:
 		if not voice_channel:
 			return False
 		
-		await ctx.response.send_message(f"Searching **{input}**")
+		ms = MessageSender(ctx)
+		await ms.response_message(content=f"Searching **{input}**")
 
 		track_searched : TrackMinimal | None = self.data.search_engine.search_track(input)
 		if not track_searched:
-			await ctx.edit_original_response(content=f"**{input}** not found.")
+			await ms.response_message(content=f"**{input}** not found.")
 			return False
-		await ctx.edit_original_response(content=f"**{track_searched.get_full_name()}** found ! Downloading ...")
+		await ms.response_message(content=f"**{track_searched.get_full_name()}** found ! Downloading ...")
 
 		track_downloaded : Track | None = await self.deezer_dl.dl_track_by_id(track_searched.id)
 		if not track_downloaded:
-			await ctx.edit_original_response(content=f"**{input}** can't be downloaded.")
+			await ms.response_message(content=f"**{input}** can't be downloaded.")
 			return False
 		
 		self.data.track_list.add_song(track_downloaded)
 		await self.queue.goto_channel(voice_channel)
 		
 		if await self.queue.play(MessageSender(ctx)) == False:
-			await ctx.edit_original_response(content=f"**{track_searched.get_full_name()}** is added to the queue")
+			await ms.response_message(content=f"**{track_searched.get_full_name()}** is added to the queue")
 		return True
 
 	async def stop(self, ctx: Interaction) -> bool:
@@ -109,12 +110,14 @@ class GuildCmd:
 		return True
 	
 	async def search(self, ctx: Interaction, input: str, engine : str | None) -> bool:
+		ms = MessageSender(ctx)
+
 		if engine == None:
 			search_engine = self.data.search_engine
 		else:
 			test_value = self.data.search_engines.get(engine.lower())
 			if not test_value:
-				await ctx.response.send_message(content=f"Search engine **{engine}** not found.")
+				await ms.response_message(content=f"Search engine **{engine}** not found.")
 				return False
 			else:
 				search_engine = test_value
@@ -122,12 +125,11 @@ class GuildCmd:
 		result: list[TrackMinimal] | None = search_engine.search_tracks(input)
 		
 		if not result:
-			await ctx.response.send_message(content=f"**{input}** not found.")
+			await ms.response_message(content=f"**{input}** not found.")
 			return False
 
 		hsa = tools.format_list.tracks(result)
 
-		ms = MessageSender(ctx)
 		await ms.add_code_message(hsa, prefix="Here are the results of your search :")
 
 		return True
@@ -144,11 +146,12 @@ class GuildCmd:
 		if not voice_channel:
 			return
 		
-		await ctx.response.send_message(f"Searching **{input}**")
+		ms = MessageSender(ctx)
+		await ms.response_message(content = f"Searching **{input}**")
 		
 		tracks : list[Track] | None = await self.deezer_dl.test(input)
 		if not tracks:
-			await ctx.edit_original_response(content=f"**{input}** not found.")
+			await ms.response_message(content=f"**{input}** not found.")
 			return
 
 		self.data.track_list.add_songs(tracks)

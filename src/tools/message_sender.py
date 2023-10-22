@@ -7,6 +7,8 @@ from discord.ui import View
 from discord.abc import Snowflake
 from discord.utils import MISSING
 
+MAX_MSG_LENGTH = 2000
+
 class MessageSender:
 	def __init__(self, ctx: Interaction):
 		self.ctx = ctx
@@ -45,6 +47,11 @@ class MessageSender:
 		view: Optional[View] = MISSING,
 		allowed_mentions: Optional[AllowedMentions] = None,
 	) :
+		if content != MISSING and content != "":
+			new_content, is_used = tools.utils.substring_with_end_msg(content, MAX_MSG_LENGTH, "{} more...")
+			if is_used:
+				content = new_content
+
 		if self.ctx.response.is_done():
 			await self.ctx.edit_original_response(content = content, embeds = embeds, embed = embed,
 											   view = view, allowed_mentions = allowed_mentions)
@@ -53,7 +60,7 @@ class MessageSender:
 											   view = view, allowed_mentions = allowed_mentions) # type: ignore
 
 	async def add_code_message(self, content: str, prefix = None, suffix = None) :
-		max_length = 2000
+		max_length = MAX_MSG_LENGTH
 		if prefix == None:
 			prefix = "```"
 		else:
