@@ -1,3 +1,5 @@
+import tools.utils
+
 from datetime import datetime
 
 
@@ -35,11 +37,6 @@ class TrackMinimal:
 			time_format = "{:02}:{:02}".format(minutes, seconds)
 
 		return time_format
-
-	def _format_date(self, input: str) -> str:
-		date_object = datetime.strptime(input, "%Y-%m-%d")
-
-		return date_object.strftime("%x")
 
 	def __str__(self):
 		# return f"{self.author_name} - {self.name} - {self.album_title}, Author Picture : {self.author_picture}, Album Picture : {self.album_picture}"
@@ -81,9 +78,13 @@ class Track(TrackMinimal):
 		self.duration_seconds: int = int(data["DURATION"])
 		self.duration: str = self.format_duration(int(data["DURATION"]))
 		self.file_size: int = int(data["FILESIZE"])
-		self.date: str = self._format_date(data["PHYSICAL_RELEASE_DATE"])
+		self.date: datetime = datetime.strptime(data["PHYSICAL_RELEASE_DATE"], "%Y-%m-%d")
 		self.file_local: str = file_path
 
+
+	def get_date(self, locale: str = "en-US") -> str:
+		date_formatted = tools.utils.format_date_by_country(self.date, locale)
+		return date_formatted
 
 class TrackList:
 	def __init__(self):

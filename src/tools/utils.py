@@ -1,18 +1,19 @@
-from enum import Enum
-from typing import Optional
-
 # import asyncio
 # import functools
+import locale
 import logging
 import typing
 import os
 
+from enum import Enum
+from typing import Optional
+from datetime import datetime
+from contextlib import contextmanager
 # def to_thread(func: typing.Callable) -> typing.Coroutine:
 #     @functools.wraps(func)
 #     async def wrapper(*args, **kwargs):
 #         return await asyncio.to_thread(func, *args, **kwargs)
 #     return wrapper
-
 
 def create_parent_directories(file_path):
 	directory = os.path.dirname(file_path)
@@ -84,6 +85,58 @@ def human_string_array(data, columns) -> str:
 		lines.append(" | ".join((str(col).ljust(width) for col, width in zip(row, col_widths))))
 	return "\n".join(lines)
 
+@contextmanager
+def temp_locale(name):
+	saved_locale = locale.setlocale(locale.LC_TIME)
+	try:
+		yield locale.setlocale(locale.LC_TIME, name)
+	finally:
+		locale.setlocale(locale.LC_TIME, saved_locale)
+
+def format_date_by_country(date: datetime, country_code: str):
+	country_codes = {
+		'en-US': 'american_english',
+		'en-GB': 'british_english',
+		'bg': 'bulgarian',
+		'zh-CN': 'chinese',
+		'zh-TW': 'taiwan_chinese',
+		'hr': 'croatian',
+		'cs': 'czech',
+		'id': 'indonesian',
+		'da': 'danish',
+		'nl': 'dutch',
+		'fi': 'finnish',
+		'fr': 'french',
+		'de': 'german',
+		'el': 'greek',
+		'hi': 'hindi',
+		'hu': 'hungarian',
+		'it': 'italian',
+		'ja': 'japanese',
+		'ko': 'korean',
+		'lt': 'lithuanian',
+		'no': 'norwegian',
+		'pl': 'polish',
+		'pt-BR': 'brazil_portuguese',
+		'ro': 'romanian',
+		'ru': 'russian',
+		'es-ES': 'spain_spanish',
+		'sv-SE': 'swedish',
+		'th': 'thai',
+		'tr': 'turkish',
+		'uk': 'ukrainian',
+		'vi': 'vietnamese'
+	}
+
+	try:
+		with temp_locale(country_code):
+			formatted_date = date.strftime('%x')
+			return formatted_date
+	except locale.Error:
+		logging.warning('Locale not available for %s (%s). Using default (en_US.utf8)', country_codes.get(country_code, "Unknown"), country_code)
+		with temp_locale('en_US.utf8'):
+			formatted_date = date.strftime('%x')
+			return formatted_date
 
 class Mode(Enum):
 	PRODUCTION = 1
