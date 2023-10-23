@@ -15,7 +15,6 @@ from tools.git import GitInfo
 
 
 class Main:
-
 	def __init__(self):
 		# Program information
 		self._info = ProgramInformation()
