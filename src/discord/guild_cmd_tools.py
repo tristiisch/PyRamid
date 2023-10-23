@@ -5,8 +5,8 @@ from tools.guild_data import GuildData
 from tools.message_sender import MessageSender
 from tools.object import Track, TrackMinimal
 
-class GuildCmdTools:
 
+class GuildCmdTools:
 	def __init__(
 		self,
 		guild_data: GuildData,
@@ -17,7 +17,9 @@ class GuildCmdTools:
 		self.data = guild_data
 		self.queue = guild_queue
 
-	async def _verify_voice_channel(self, ms: MessageSender, user: User | Member) -> VoiceChannel | None:
+	async def _verify_voice_channel(
+		self, ms: MessageSender, user: User | Member
+	) -> VoiceChannel | None:
 		if not isinstance(user, Member):
 			raise Exception("Can be only used by member - user in guild")
 
@@ -41,11 +43,11 @@ class GuildCmdTools:
 			return False
 		return True
 
-	async def _execute_play_multiple(self, ms: MessageSender, voice_channel: VoiceChannel, tracks: list[TrackMinimal]) -> bool:
+	async def _execute_play_multiple(
+		self, ms: MessageSender, voice_channel: VoiceChannel, tracks: list[TrackMinimal]
+	) -> bool:
 		length = len(tracks)
-		await ms.response_message(
-			content=f"Downloading ... 0/{length}"
-		)
+		await ms.response_message(content=f"Downloading ... 0/{length}")
 
 		cant_dl = 0
 		for i, track in enumerate(tracks):
@@ -59,22 +61,18 @@ class GuildCmdTools:
 				content=f"Downloading ... {i + 1 - cant_dl}/{length - cant_dl}"
 			)
 		if length == 0:
-			await ms.response_message(
-				content="None of the music could be downloaded"
-			)
+			await ms.response_message(content="None of the music could be downloaded")
 			return False
 
 		await self.queue.goto_channel(voice_channel)
 		if await self.queue.play(ms) is False:
-			await ms.response_message(
-				content=f"**{length}** tracks are added to the queue"
-			)
+			await ms.response_message(content=f"**{length}** tracks are added to the queue")
 		return True
 
-	async def _execute_play(self, ms: MessageSender, voice_channel: VoiceChannel, track: TrackMinimal) -> bool:
-		await ms.response_message(
-			content=f"**{track.get_full_name()}** found ! Downloading ..."
-		)
+	async def _execute_play(
+		self, ms: MessageSender, voice_channel: VoiceChannel, track: TrackMinimal
+	) -> bool:
+		await ms.response_message(content=f"**{track.get_full_name()}** found ! Downloading ...")
 
 		track_downloaded: Track | None = await self.deezer_dl.dl_track_by_id(track.id)
 		if not track_downloaded:
@@ -85,8 +83,5 @@ class GuildCmdTools:
 		await self.queue.goto_channel(voice_channel)
 
 		if await self.queue.play(ms) is False:
-			await ms.response_message(
-				content=f"**{track.get_full_name()}** is added to the queue"
-			)
+			await ms.response_message(content=f"**{track.get_full_name()}** is added to the queue")
 		return True
- 

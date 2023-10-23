@@ -10,6 +10,7 @@ from tools.object import TrackMinimal
 from tools.message_sender import MessageSender
 from tools.guild_data import GuildData
 
+
 class GuildCmd(GuildCmdTools):
 	def __init__(
 		self,
@@ -167,7 +168,7 @@ class GuildCmd(GuildCmdTools):
 		if not tracks:
 			await ms.response_message(content=f"**{url}** not found.")
 			return False
-		
+
 		if isinstance(tracks, TrackMinimal):
 			return await self._execute_play(ms, voice_channel, tracks)
 		else:

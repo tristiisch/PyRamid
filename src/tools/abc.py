@@ -26,5 +26,5 @@ class ASearch(ABC):
 		pass
 
 	@abc.abstractmethod
-	def get_by_url(self, url) -> (list[TrackMinimal] | TrackMinimal | None):
+	def get_by_url(self, url) -> list[TrackMinimal] | TrackMinimal | None:
 		pass

@@ -28,7 +28,7 @@ class SpotifySearch(ASearch):
 
 		if not results or not results.get("tracks") or not results["tracks"].get("items"):
 			return None
-		
+
 		tracks = results["tracks"]["items"]
 		track = tracks[0]
 
@@ -61,5 +61,5 @@ class SpotifySearch(ASearch):
 		tracks = results["tracks"]["items"]
 		return [TrackMinimalSpotify(element) for element in tracks]
 
-	def get_by_url(self, url) -> (list[TrackMinimalSpotify] | TrackMinimalSpotify | None):
-			raise NotImplementedError("Get by url for spotify is not implemted")
+	def get_by_url(self, url) -> list[TrackMinimalSpotify] | TrackMinimalSpotify | None:
+		raise NotImplementedError("Get by url for spotify is not implemted")

@@ -28,7 +28,7 @@ class DeezerDownloader:
 			track_to_dl = self.deezer_api.get_track(track_id)
 		except APIRequestError as err:
 			logging.warn(f"Unable to download deezer song {track_id} : {err}", exc_info=True)
-			return None # Track unvailable in this country
+			return None  # Track unvailable in this country
 
 		if not track_to_dl:
 			logging.error(f"Unable to download deezer song {track_id} : Unknown error")

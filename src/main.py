@@ -72,8 +72,6 @@ class Main:
 		# Create Deezer player instance
 		deezer_dl = DeezerDownloader(self._config.deezer_arl, self._config.deezer_folder)
 
-		
-
 		# Discord Bot Instance
 		discord_bot = DiscordBot(
 			self.logger.getChild("Discord"), self._info, self._config, deezer_dl

@@ -15,6 +15,7 @@ from contextlib import contextmanager
 #         return await asyncio.to_thread(func, *args, **kwargs)
 #     return wrapper
 
+
 def create_parent_directories(file_path):
 	directory = os.path.dirname(file_path)
 	if not os.path.exists(directory):
@@ -85,6 +86,7 @@ def human_string_array(data, columns) -> str:
 		lines.append(" | ".join((str(col).ljust(width) for col, width in zip(row, col_widths))))
 	return "\n".join(lines)
 
+
 @contextmanager
 def temp_locale(name):
 	saved_locale = locale.setlocale(locale.LC_TIME)
@@ -93,50 +95,56 @@ def temp_locale(name):
 	finally:
 		locale.setlocale(locale.LC_TIME, saved_locale)
 
+
 def format_date_by_country(date: datetime, country_code: str):
 	country_codes = {
-		'en-US': 'american_english',
-		'en-GB': 'british_english',
-		'bg': 'bulgarian',
-		'zh-CN': 'chinese',
-		'zh-TW': 'taiwan_chinese',
-		'hr': 'croatian',
-		'cs': 'czech',
-		'id': 'indonesian',
-		'da': 'danish',
-		'nl': 'dutch',
-		'fi': 'finnish',
-		'fr': 'french',
-		'de': 'german',
-		'el': 'greek',
-		'hi': 'hindi',
-		'hu': 'hungarian',
-		'it': 'italian',
-		'ja': 'japanese',
-		'ko': 'korean',
-		'lt': 'lithuanian',
-		'no': 'norwegian',
-		'pl': 'polish',
-		'pt-BR': 'brazil_portuguese',
-		'ro': 'romanian',
-		'ru': 'russian',
-		'es-ES': 'spain_spanish',
-		'sv-SE': 'swedish',
-		'th': 'thai',
-		'tr': 'turkish',
-		'uk': 'ukrainian',
-		'vi': 'vietnamese'
+		"en-US": "american_english",
+		"en-GB": "british_english",
+		"bg": "bulgarian",
+		"zh-CN": "chinese",
+		"zh-TW": "taiwan_chinese",
+		"hr": "croatian",
+		"cs": "czech",
+		"id": "indonesian",
+		"da": "danish",
+		"nl": "dutch",
+		"fi": "finnish",
+		"fr": "french",
+		"de": "german",
+		"el": "greek",
+		"hi": "hindi",
+		"hu": "hungarian",
+		"it": "italian",
+		"ja": "japanese",
+		"ko": "korean",
+		"lt": "lithuanian",
+		"no": "norwegian",
+		"pl": "polish",
+		"pt-BR": "brazil_portuguese",
+		"ro": "romanian",
+		"ru": "russian",
+		"es-ES": "spain_spanish",
+		"sv-SE": "swedish",
+		"th": "thai",
+		"tr": "turkish",
+		"uk": "ukrainian",
+		"vi": "vietnamese",
 	}
 
 	try:
 		with temp_locale(country_code):
-			formatted_date = date.strftime('%x')
+			formatted_date = date.strftime("%x")
 			return formatted_date
 	except locale.Error:
-		logging.warning('Locale not available for %s (%s). Using default (en_US.utf8)', country_codes.get(country_code, "Unknown"), country_code)
-		with temp_locale('en_US.utf8'):
-			formatted_date = date.strftime('%x')
+		logging.warning(
+			"Locale not available for %s (%s). Using default (en_US.utf8)",
+			country_codes.get(country_code, "Unknown"),
+			country_code,
+		)
+		with temp_locale("en_US.utf8"):
+			formatted_date = date.strftime("%x")
 			return formatted_date
+
 
 class Mode(Enum):
 	PRODUCTION = 1

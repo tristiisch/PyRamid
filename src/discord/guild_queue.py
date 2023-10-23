@@ -73,7 +73,9 @@ class GuildQueue:
 
 		# Message in channel with player
 		mpi = MusicPlayerInterface()
-		await msg_sender.response_message(content="", embed=mpi.embed_track(track, self.data.guild.preferred_locale))
+		await msg_sender.response_message(
+			content="", embed=mpi.embed_track(track, self.data.guild.preferred_locale)
+		)
 
 		return True
 

@@ -1,9 +1,8 @@
 import tools.utils
 
-from typing import Any, Literal, Optional, Sequence
-from discord import AllowedMentions, Embed, File, Interaction
+from typing import Optional, Sequence
+from discord import AllowedMentions, Embed, Interaction
 from discord.ui import View
-from discord.abc import Snowflake
 from discord.utils import MISSING
 
 MAX_MSG_LENGTH = 2000
@@ -82,8 +81,8 @@ class MessageSender:
 				content=content,
 				embeds=embeds,
 				embed=embed,  # type: ignore
-				view=view, # type: ignore
-				allowed_mentions=allowed_mentions, # type: ignore
+				view=view,  # type: ignore
+				allowed_mentions=allowed_mentions,  # type: ignore
 			)  # type: ignore
 
 	async def add_code_message(self, content: str, prefix=None, suffix=None):

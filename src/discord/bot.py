@@ -239,9 +239,7 @@ class DiscordBot:
 
 			await guild_cmd.play_multiple(ctx, input)
 
-		@bot.tree.command(
-			name="play_url", description="Plays songs by URL from Deezer"
-		)
+		@bot.tree.command(name="play_url", description="Plays songs by URL from Deezer")
 		async def play_url(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -284,7 +282,11 @@ class DiscordBot:
 	def __get_guild_cmd(self, guild: Guild) -> GuildCmd:
 		if guild.id not in self.guilds_instances:
 			self.guilds_instances[guild.id] = GuildInstances(
-				guild, self.logger.getChild(guild.name), self.deezer_dl, self.ffmpeg, self.search_engines
+				guild,
+				self.logger.getChild(guild.name),
+				self.deezer_dl,
+				self.ffmpeg,
+				self.search_engines,
 			)
 
 		return self.guilds_instances[guild.id].cmds
@@ -297,7 +299,7 @@ class GuildInstances:
 		logger: Logger,
 		deezer_downloader: DeezerDownloader,
 		ffmpeg_path: str,
-		search_engines: Dict[str, ASearch]
+		search_engines: Dict[str, ASearch],
 	):
 		self.data = GuildData(guild, search_engines)
 		self.songs = GuildQueue(self.data, ffmpeg_path)

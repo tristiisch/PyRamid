@@ -81,10 +81,10 @@ class Track(TrackMinimal):
 		self.date: datetime = datetime.strptime(data["PHYSICAL_RELEASE_DATE"], "%Y-%m-%d")
 		self.file_local: str = file_path
 
-
 	def get_date(self, locale: str = "en-US") -> str:
 		date_formatted = tools.utils.format_date_by_country(self.date, locale)
 		return date_formatted
+
 
 class TrackList:
 	def __init__(self):
