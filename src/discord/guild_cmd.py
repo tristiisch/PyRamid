@@ -1,119 +1,111 @@
+from logging import Logger
+from discord.guild_cmd_tools import GuildCmdTools
 import tools.utils
 import tools.format_list
 
-from discord import Interaction, Member, VoiceChannel, VoiceClient, VoiceState
+from discord import Interaction, VoiceChannel
 from deezer_api.downloader import DeezerDownloader
 from discord.guild_queue import GuildQueue
-from tools.object import Track, TrackMinimal
+from tools.object import TrackMinimal
 from tools.message_sender import MessageSender
 from tools.guild_data import GuildData
 
-
-class GuildCmd:
+class GuildCmd(GuildCmdTools):
 	def __init__(
 		self,
+		logger: Logger,
 		guild_data: GuildData,
 		guild_queue: GuildQueue,
 		deezer_dl: DeezerDownloader,
 	):
-		self.deezer_dl: DeezerDownloader = deezer_dl
-		self.data: GuildData = guild_data
-		self.queue: GuildQueue = guild_queue
+		self.logger = logger
+		self.deezer_dl = deezer_dl
+		self.data = guild_data
+		self.queue = guild_queue
 
 	async def play(self, ctx: Interaction, input: str) -> bool:
-		voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
+		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
 			return False
 
-		ms = MessageSender(ctx)
 		await ms.response_message(content=f"Searching **{input}**")
 
-		track_searched: TrackMinimal | None = self.data.search_engine.search_track(input)
-		if not track_searched:
+		track: TrackMinimal | None = self.data.search_engine.search_track(input)
+		if not track:
 			await ms.response_message(content=f"**{input}** not found.")
 			return False
-		await ms.response_message(
-			content=f"**{track_searched.get_full_name()}** found ! Downloading ..."
-		)
-
-		track_downloaded: Track | None = await self.deezer_dl.dl_track_by_id(track_searched.id)
-		if not track_downloaded:
-			await ms.response_message(content=f"**{input}** can't be downloaded.")
-			return False
-
-		self.data.track_list.add_song(track_downloaded)
-		await self.queue.goto_channel(voice_channel)
-
-		if await self.queue.play(MessageSender(ctx)) is False:
-			await ms.response_message(
-				content=f"**{track_searched.get_full_name()}** is added to the queue"
-			)
-		return True
+		return await self._execute_play(ms, voice_channel, track)
 
 	async def stop(self, ctx: Interaction) -> bool:
-		voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
-		if not voice_channel or not await self.__verify_bot_channel(ctx, voice_channel):
+		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
 		self.data.track_list.clear()
-		if (await self.queue.exit()) is False:
-			await ctx.response.send_message("The bot does not currently play music")
+		if await self.queue.exit() is False:
+			await ms.response_message(content="The bot does not currently play music")
 			return False
 
-		await ctx.response.send_message("Music stop")
+		await ms.response_message(content="Music stop")
 		return True
 
 	async def pause(self, ctx: Interaction) -> bool:
-		voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
-		if not voice_channel or not await self.__verify_bot_channel(ctx, voice_channel):
+		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
 		if self.queue.pause() is False:
-			await ctx.response.send_message("The bot does not currently play music")
+			await ms.response_message(content="The bot does not currently play music")
 			return False
 
-		await ctx.response.send_message("Music paused")
+		await ms.response_message(content="Music paused")
 		return True
 
 	async def resume(self, ctx: Interaction) -> bool:
-		voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
-		if not voice_channel or not await self.__verify_bot_channel(ctx, voice_channel):
+		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
 		if self.queue.resume() is False:
-			await ctx.response.send_message("The bot is not currently paused")
+			await ms.response_message(content="The bot is not currently paused")
 			return False
 
-		await ctx.response.send_message("Music resume")
+		await ms.response_message(content="Music resume")
 		return True
 
 	async def next(self, ctx: Interaction) -> bool:
-		voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
-		if not voice_channel or not await self.__verify_bot_channel(ctx, voice_channel):
+		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
 		if self.queue.has_next() is False:
 			if self.queue.stop() is False:
-				await ctx.response.send_message("The bot does not currently play music")
+				await ms.response_message(content="The bot does not currently play music")
 				return False
 			else:
-				await ctx.response.send_message("The bot didn't have next music")
+				await ms.response_message(content="The bot didn't have next music")
 				return True
 
 		await self.queue.goto_channel(voice_channel)
 		if self.queue.next() is False:
-			await ctx.response.send_message("Unable to play next music")
+			await ms.response_message(content="Unable to play next music")
 			return False
-		await ctx.response.send_message("Skip musique")
+
+		await ms.response_message(content="Skip musique")
 		return True
 
 	async def queue_list(self, ctx: Interaction) -> bool:
+		ms = MessageSender(ctx)
 		queue: str | None = self.queue.queue_list()
 		if queue is None:
-			await ctx.response.send_message("Queue is empty")
+			await ms.response_message(content="Queue is empty")
 			return False
 
-		ms = MessageSender(ctx)
 		await ms.add_code_message(queue, prefix="Here's the music in the queue :")
 		return True
 
@@ -137,55 +129,46 @@ class GuildCmd:
 			return False
 
 		hsa = tools.format_list.tracks(result)
-
 		await ms.add_code_message(hsa, prefix="Here are the results of your search :")
-
 		return True
 
 	# async def vuvuzela(self, ctx: Interaction):
 	# 	voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
 	# 	if not voice_channel:
 	# 		return
-	# 	await ctx.response.send_message(f"Im comming into {voice_channel.name}")
+	# 	await ms.response_message(content=f"Im comming into {voice_channel.name}")
 	# 	await self.__play_song(voice_channel, ctx, "songs_test\Vuvuzela.mp3", self.ffmpeg)
 
-	async def play_multiple(self, ctx: Interaction, input: str):
-		voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
-		if not voice_channel:
-			return
-
+	async def play_multiple(self, ctx: Interaction, input: str) -> bool:
 		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel:
+			return False
+
 		await ms.response_message(content=f"Searching **{input}**")
 
-		tracks: list[Track] | None = await self.deezer_dl.test(input)
+		tracks: list[TrackMinimal] | None = self.data.search_engine.search_tracks(input)
 		if not tracks:
 			await ms.response_message(content=f"**{input}** not found.")
-			return
-
-		self.data.track_list.add_songs(tracks)
-		await self.queue.goto_channel(voice_channel)
-		await self.queue.play(MessageSender(ctx))
-
-	async def __verify_voice_channel(self, ctx: Interaction) -> VoiceChannel | None:
-		if not isinstance(ctx.user, Member):
-			raise Exception("Can be only used by member - user in guild")
-
-		user: Member = ctx.user
-
-		# only play music if user is in a voice channel
-		if user.voice is None:
-			await ctx.response.send_message("You're not in a channel.")
-			return
-		voice_state: VoiceState = user.voice
-
-		# grab user's voice channel
-		voice_channel: VoiceChannel | None = voice_state.channel  # type: ignore
-		return voice_channel
-
-	async def __verify_bot_channel(self, ctx: Interaction, channel: VoiceChannel) -> bool:
-		vc: VoiceClient = self.data.voice_client
-
-		if vc.channel.id != channel.id:
-			await ctx.response.send_message("You're not in the bot channel.")
 			return False
-		return True
+
+		return await self._execute_play_multiple(ms, voice_channel, tracks)
+
+	async def play_url(self, ctx: Interaction, url: str) -> bool:
+		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel:
+			return False
+
+		ms = MessageSender(ctx)
+		await ms.response_message(content=f"Searching **{url}**")
+
+		tracks: list[TrackMinimal] | TrackMinimal | None = self.data.search_engine.get_by_url(url)
+		if not tracks:
+			await ms.response_message(content=f"**{url}** not found.")
+			return False
+		
+		if isinstance(tracks, TrackMinimal):
+			return await self._execute_play(ms, voice_channel, tracks)
+		else:
+			return await self._execute_play_multiple(ms, voice_channel, tracks)

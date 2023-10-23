@@ -20,12 +20,46 @@ class SpotifySearch(ASearch):
 		if not results or not results.get("tracks") or not results["tracks"].get("items"):
 			return None
 
-		return [TrackMinimalSpotify(element) for element in results["tracks"]["items"]]
+		tracks = results["tracks"]["items"]
+		return [TrackMinimalSpotify(element) for element in tracks]
 
 	def search_track(self, search) -> TrackMinimalSpotify | None:
 		results = self.client.search(q=search, limit=1, type="track")
 
 		if not results or not results.get("tracks") or not results["tracks"].get("items"):
 			return None
+		
+		tracks = results["tracks"]["items"]
+		track = tracks[0]
 
-		return TrackMinimalSpotify(results["tracks"]["items"][0])
+		return TrackMinimalSpotify(track)
+
+	def get_playlist_tracks(self, playlist_name) -> list[TrackMinimalSpotify] | None:
+		results = self.client.search(q=playlist_name, limit=1, type="playlist")
+
+		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+			return None
+
+		tracks = results["tracks"]["items"]
+		return [TrackMinimalSpotify(element) for element in tracks]
+
+	def get_album_tracks(self, album_name) -> list[TrackMinimalSpotify] | None:
+		results = self.client.search(q=album_name, limit=1, type="album")
+
+		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+			return None
+
+		tracks = results["tracks"]["items"]
+		return [TrackMinimalSpotify(element) for element in tracks]
+
+	def get_top_artist(self, artist_name, limit=10) -> list[TrackMinimalSpotify] | None:
+		results = self.client.search(q=artist_name, limit=1, type="artist")
+
+		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+			return None
+
+		tracks = results["tracks"]["items"]
+		return [TrackMinimalSpotify(element) for element in tracks]
+
+	def get_by_url(self, url) -> (list[TrackMinimalSpotify] | TrackMinimalSpotify | None):
+			raise NotImplementedError("Get by url for spotify is not implemted")

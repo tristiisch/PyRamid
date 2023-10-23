@@ -16,40 +16,40 @@ class MessageSender:
 	async def add_message(
 		self,
 		content: str = MISSING,
-		*,
-		username: str = MISSING,
-		avatar_url: Any = MISSING,
-		tts: bool = MISSING,
-		ephemeral: bool = MISSING,
-		file: File = MISSING,
-		files: Sequence[File] = MISSING,
-		embed: Embed = MISSING,
-		embeds: Sequence[Embed] = MISSING,
-		allowed_mentions: AllowedMentions = MISSING,
-		view: View = MISSING,
-		thread: Snowflake = MISSING,
-		thread_name: str = MISSING,
-		wait: Literal[True] = True,
-		suppress_embeds: bool = MISSING,
-		silent: bool = MISSING,
+		# *,
+		# username: str = MISSING,
+		# avatar_url: Any = MISSING,
+		# tts: bool = MISSING,
+		# ephemeral: bool = MISSING,
+		# file: File = MISSING,
+		# files: Sequence[File] = MISSING,
+		# embed: Embed = MISSING,
+		# embeds: Sequence[Embed] = MISSING,
+		# allowed_mentions: AllowedMentions = MISSING,
+		# view: View = MISSING,
+		# thread: Snowflake = MISSING,
+		# thread_name: str = MISSING,
+		# wait: Literal[True] = True,
+		# suppress_embeds: bool = MISSING,
+		# silent: bool = MISSING,
 	):
 		await self.ctx.followup.send(
 			content,
-			username=username,
-			avatar_url=avatar_url,
-			tts=tts,
-			ephemeral=ephemeral,
-			file=file,
-			files=files,
-			embed=embed,
-			embeds=embeds,
-			allowed_mentions=allowed_mentions,
-			view=view,
-			thread=thread,
-			thread_name=thread_name,
-			wait=wait,
-			suppress_embeds=suppress_embeds,
-			silent=silent,
+			# username=username,
+			# avatar_url=avatar_url,
+			# tts=tts,
+			# ephemeral=ephemeral,
+			# file=file,
+			# files=files,
+			# embed=embed,
+			# embeds=embeds,
+			# allowed_mentions=allowed_mentions,
+			# view=view,
+			# thread=thread,
+			# thread_name=thread_name,
+			# wait=wait,
+			# suppress_embeds=suppress_embeds,
+			# silent=silent,
 		)
 
 	async def response_message(
@@ -60,7 +60,7 @@ class MessageSender:
 		embed: Optional[Embed] = MISSING,
 		# attachments: Sequence[Union[Attachment, File]] = MISSING,
 		view: Optional[View] = MISSING,
-		allowed_mentions: Optional[AllowedMentions] = None,
+		allowed_mentions: Optional[AllowedMentions] = MISSING,
 	):
 		if content != MISSING and content != "":
 			new_content, is_used = tools.utils.substring_with_end_msg(
@@ -82,8 +82,8 @@ class MessageSender:
 				content=content,
 				embeds=embeds,
 				embed=embed,  # type: ignore
-				view=view,
-				allowed_mentions=allowed_mentions,
+				view=view, # type: ignore
+				allowed_mentions=allowed_mentions, # type: ignore
 			)  # type: ignore
 
 	async def add_code_message(self, content: str, prefix=None, suffix=None):
