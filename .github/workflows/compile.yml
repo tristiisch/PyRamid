@@ -3,10 +3,16 @@ name: Python 3.11 CI
 on:
   push:
     branches:
-      - '*'
+      - "*"
+    paths:
+      - "src/**/*.py"
+      - "requirements.txt"
   pull_request:
     branches:
-      - '*'
+      - "*"
+    paths:
+      - "src/**/*.py"
+      - "requirements.txt"
 
 jobs:
   compile:
