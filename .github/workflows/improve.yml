@@ -1,94 +1,130 @@
-name: Pull Request Action
+name: Improve code
 
 on:
   push:
     branches:
-      - master
+      - "*"
+    # paths:
+    #   - "src/**/*.py"
+    #   - "requirements.txt"
   pull_request:
     types: [opened, synchronize]
+    # paths:
+    #   - "src/**/*.py"
+    #   - "requirements.txt"
+  workflow_dispatch:
 
 jobs:
-  modify_and_commit:
-    if: github.event_name == 'push' && !startsWith(github.head_ref, 'pull')
+
+  commit_to_pr:
     runs-on: ubuntu-latest
+    name: "Improve and format code"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Git Configuration
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config core.autocrlf true
+          git config core.filemode false
+
       - name: Fix code quality
         uses: chartboost/ruff-action@v1
         with:
           src: "./src"
-          args: check --fix
-      - name: Commit code quality
+          args: check --fix-only --unsafe-fixes --show-fixes
+
+      - name: Add changes code quality
+        run: git add **.py
+
+      - name: Check for changes code quality
         run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add **/*.py
-          git commit -m "[ruff] Improve code quality"
+          if ! git diff --quiet --cached; then
+            echo "There are changes to commit."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes to commit."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+        id: check_changes_quality
+
+      - name: Commit changes code quality
+        if: steps.check_changes_quality.outputs.has_changes == 'true'
+        run: git commit -m "[ruff] Improve code quality"
 
       - name: Fix code format
         uses: chartboost/ruff-action@v1
         with:
           src: "./src"
           args: format
-      - name: Commit code format
-        run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add **/*.py
-          git commit -m "[ruff] Improve code format"
 
-      - name: Check for existing pull request
-        id: check_pr
+      - name: Add changes format
+        run: git add **.py
+
+      - name: Check for changes code quality
         run: |
-          if [[ $(gh pr list -s open -H auto-improve/${{ github.ref }}) ]]; then
-            gh pr close auto-improve/${{ github.ref }} -c "An other PR has been created"
+          if ! git diff --quiet --cached; then
+            echo "There are changes to commit."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes to commit."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+        id: check_changes_format
+
+      - name: Commit code format
+        if: steps.check_changes_format.outputs.has_changes == 'true'
+        run: git commit -m "[ruff] Improve code format"
+
+    # Only in PR
+      - name: Push changes in pull request
+        if: ${{ github.event_name == 'pull_request' && (steps.check_changes_quality.outputs.has_changes == 'true' || steps.check_changes_format.outputs.has_changes == 'true') }}
+        run: |
+          git push origin HEAD:refs/heads/${{ github.ref_name }}
+
+    # Only in Push
+      - name: Check for existing pull request
+        if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/pull') && (steps.check_changes_quality.outputs.has_changes == 'true' || steps.check_changes_format.outputs.has_changes == 'true') }}
+        run: |
+          if [[ $(gh pr list -s open -H auto-improve/${{ github.ref_name }}) ]]; then
+            gh pr close auto-improve/${{ github.ref_name }} -c "An other PR has been created"
           fi
 
       - name: Create Pull Request
+        if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/pull') && (steps.check_changes_quality.outputs.has_changes == 'true' || steps.check_changes_format.outputs.has_changes == 'true') }}
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Auto improve format"
+          commit-message: "[ruff] Auto improve format"
           title: "[ruff] Auto improve format"
-          body: "This is an automatically generated pull request to improve the format."
-          branch: auto-improve/${{ github.ref }}
-        #   author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          body: |
+            ## Description
+            This PR implements an automated code formatting and quality improvement bot to enhance the codebase.
+            
+            ## Changes Made
+            - Integration of automated code formatting for consistent style and readability.
+            - Addition of static code analysis tools to identify and address potential issues.
+            - Implementation of pre-commit hooks to enforce coding standards.
+            
+            ## Benefits
+            - Improved code consistency and readability.
+            - Reduced manual effort for code formatting and quality checks.
+            - Enhanced code quality and stability.
 
-  commit_to_pr:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+            ## Checklist
+            - [ ] Verified the functionality of the modifications.
+            - [ ] Ensured the value addition of the modifications.
+            - [ ] Approved the PR after a thorough review.
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+            Your feedback on the changes introduced by the code formatting and quality improvement bot is appreciated.
+          branch: auto-improve/${{ github.ref_name }}
+          author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
 
-      - name: Fix code quality
-        uses: chartboost/ruff-action@v1
-        with:
-          src: "./src"
-          args: check --fix
-      - name: Commit code quality
-        run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add **/*.py
-          git commit -m "[ruff] Improve code quality"
-
-      - name: Fix code format
-        uses: chartboost/ruff-action@v1
-        with:
-          src: "./src"
-          args: format
-      - name: Commit code format
-        run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add **/*.py
-          git commit -m "[ruff] Improve code format"
-
-      - name: Push changes for pull request
-        run: |
-          git push origin HEAD:refs/heads/${{ github.head_ref }}
+    #   - name: Is the code quality good?
+    #     uses: chartboost/ruff-action@v1
+    #     with:
+    #       src: "./src"
+    #       args: check --show-source
