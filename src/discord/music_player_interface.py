@@ -1,4 +1,3 @@
-import logging
 import discord
 
 from discord import Embed, Locale, Message, TextChannel

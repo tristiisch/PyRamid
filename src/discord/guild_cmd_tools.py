@@ -47,7 +47,7 @@ class GuildCmdTools:
 		if not permissions.connect and permissions.speak:
 			await ms.response_message(content=f"I can't go to {channel}")
 			return False
-	
+
 		if not permissions.speak:
 			await ms.response_message(content=f"Warning ! I can't speak in {channel}")
 			return False
@@ -75,7 +75,7 @@ class GuildCmdTools:
 			return False
 
 		await self.queue.goto_channel(voice_channel)
-		
+
 		if await self.queue.play(ms) is False:
 			await ms.response_message(content=f"**{length}** tracks are added to the queue")
 		return True

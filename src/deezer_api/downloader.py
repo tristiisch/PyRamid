@@ -6,7 +6,6 @@ import pydeezer.util
 
 from pydeezer import Deezer
 from pydeezer.constants import track_formats
-from pydeezer.exceptions import APIRequestError
 from pydeezer.exceptions import LoginError
 from tools.object import Track, TrackMinimal
 
@@ -16,7 +15,7 @@ class DeezerDownloader:
 		try:
 			self.deezer_api = Deezer(arl)
 		except LoginError as err:
-			raise err # Arl is invalid
+			raise err  # Arl is invalid
 		self.folder_path = folder
 		self.music_format = track_formats.MP3_128
 

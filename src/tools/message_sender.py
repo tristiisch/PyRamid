@@ -80,7 +80,6 @@ class MessageSender:
 				embed=embed,
 				view=view,
 				allowed_mentions=allowed_mentions,
-				
 			)
 		else:
 			await self.__ctx.response.send_message(
