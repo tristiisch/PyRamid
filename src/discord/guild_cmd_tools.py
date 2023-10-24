@@ -32,24 +32,27 @@ class GuildCmdTools:
 		voice_state: VoiceState = member.voice
 
 		# grab member's voice channel
-		voice_channel: VoiceChannel | None = voice_state.channel  # type: ignore
+		if voice_state.channel is None:
+			return None
+		voice_channel: VoiceChannel = voice_state.channel  # type: ignore
+
+		# verify bot's permission on member voice channel
+		bot: Member = self.data.guild.me
+		permissions = voice_channel.permissions_for(bot)
+		if not permissions.connect and permissions.speak:
+			await ms.response_message(content=f"I can't go to {voice_channel}")
+			return None
+
+		if not permissions.speak:
+			await ms.add_message(content=f"Warning ! I can't speak in {voice_channel}")
+
 		return voice_channel
 
 	async def _verify_bot_channel(self, ms: MessageSender, channel: VoiceChannel) -> bool:
 		vc: VoiceClient = self.data.voice_client
-		bot: Member = self.data.guild.me
 
 		if vc.channel.id != channel.id:
 			await ms.response_message(content="You're not in the bot channel.")
-			return False
-
-		permissions = channel.permissions_for(bot)
-		if not permissions.connect and permissions.speak:
-			await ms.response_message(content=f"I can't go to {channel}")
-			return False
-
-		if not permissions.speak:
-			await ms.response_message(content=f"Warning ! I can't speak in {channel}")
 			return False
 		return True
 
