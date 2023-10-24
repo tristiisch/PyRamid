@@ -107,7 +107,7 @@ jobs:
 
       - name: Set git info
         run: |
-          echo $(${{ needs.compile.outputs.json }} | jq -r '.git_info') > git_info.json
+          echo ${{ needs.compile.outputs.json }} | jq -r '.git_info' > git_info.json
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
