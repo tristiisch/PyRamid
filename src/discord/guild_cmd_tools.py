@@ -60,11 +60,12 @@ class GuildCmdTools:
 			await ms.response_message(
 				content=f"Downloading ... {i + 1 - cant_dl}/{length - cant_dl}"
 			)
-		if length == 0:
+		if length == cant_dl:
 			await ms.response_message(content="None of the music could be downloaded")
 			return False
 
 		await self.queue.goto_channel(voice_channel)
+		
 		if await self.queue.play(ms) is False:
 			await ms.response_message(content=f"**{length}** tracks are added to the queue")
 		return True
