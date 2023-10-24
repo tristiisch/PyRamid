@@ -28,7 +28,7 @@ class Config:
 		self.spotify_client_secret = config_data["spotify"]["client_secret"]
 		self.spotify_client_secret = config_data["spotify"]["client_secret"]
 
-		mode_upper = str(config_data["mode"]).upper()
+		mode_upper = str(config_data["mode"]).replace("-", "_").upper()
 		for mode in Mode:
 			if mode.name == mode_upper:
 				self.mode = mode
