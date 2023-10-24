@@ -28,7 +28,7 @@ class GuildCmdTools:
 		# only play music if user is in a voice channel
 		if member.voice is None:
 			await ms.response_message(content="You're not in a channel.")
-			return
+			return None
 		voice_state: VoiceState = member.voice
 
 		# grab member's voice channel
@@ -37,9 +37,19 @@ class GuildCmdTools:
 
 	async def _verify_bot_channel(self, ms: MessageSender, channel: VoiceChannel) -> bool:
 		vc: VoiceClient = self.data.voice_client
+		bot: Member = self.data.guild.me
 
 		if vc.channel.id != channel.id:
 			await ms.response_message(content="You're not in the bot channel.")
+			return False
+
+		permissions = channel.permissions_for(bot)
+		if not permissions.connect and permissions.speak:
+			await ms.response_message(content=f"I can't go to {channel}")
+			return False
+	
+		if not permissions.speak:
+			await ms.response_message(content=f"Warning ! I can't speak in {channel}")
 			return False
 		return True
 
@@ -85,4 +95,6 @@ class GuildCmdTools:
 
 		if await self.queue.play(ms) is False:
 			await ms.response_message(content=f"**{track.get_full_name()}** is added to the queue")
+		else:
+			await ms.response_message(content=f"Playing **{track.get_full_name()}**")
 		return True
