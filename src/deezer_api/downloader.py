@@ -7,12 +7,16 @@ import pydeezer.util
 from pydeezer import Deezer
 from pydeezer.constants import track_formats
 from pydeezer.exceptions import APIRequestError
+from pydeezer.exceptions import LoginError
 from tools.object import Track, TrackMinimal
 
 
 class DeezerDownloader:
 	def __init__(self, arl, folder):
-		self.deezer_api = Deezer(arl)
+		try:
+			self.deezer_api = Deezer(arl)
+		except LoginError as err:
+			raise err # Arl is invalid
 		self.folder_path = folder
 		self.music_format = track_formats.MP3_128
 
@@ -24,11 +28,11 @@ class DeezerDownloader:
 		return track
 
 	async def dl_track_by_id(self, track_id) -> Track | None:
-		try:
-			track_to_dl = self.deezer_api.get_track(track_id)
-		except APIRequestError as err:
-			logging.warn(f"Unable to download deezer song {track_id} : {err}", exc_info=True)
-			return None  # Track unvailable in this country
+		# try:
+		track_to_dl = self.deezer_api.get_track(track_id)
+		# except APIRequestError as err:
+		# 	logging.warn(f"Unable to download deezer song {track_id} : {err}", exc_info=True)
+		# 	return None  # Track unvailable in this country
 
 		if not track_to_dl:
 			logging.error(f"Unable to download deezer song {track_id} : Unknown error")

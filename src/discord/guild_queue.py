@@ -16,21 +16,22 @@ class GuildQueue:
 		self.data: GuildData = data
 		self.ffmpeg = ffmpeg_path
 		self.song_end_action = self.__song_end_continue
+		self.mpi = MusicPlayerInterface(data.guild.preferred_locale)
 
 	def is_playing(self) -> bool:
 		return self.data.voice_client.is_playing()
 
-	async def goto_channel(self, channel: VoiceChannel) -> bool:
+	async def goto_channel(self, voice_channel: VoiceChannel) -> bool:
 		vc: VoiceClient = self.data.voice_client
 
 		if vc is not None and vc.is_connected():
-			if vc.channel.id != channel.id:
+			if vc.channel.id != voice_channel.id:
 				# Move to an other voice channel
-				await self.data.voice_client.move_to(channel)
+				await self.data.voice_client.move_to(voice_channel)
 				return True
 		else:
 			# Connect into voice channel
-			self.data.voice_client = await channel.connect(self_deaf=True)
+			self.data.voice_client = await voice_channel.connect(self_deaf=True)
 			return True
 		return False
 
@@ -55,7 +56,6 @@ class GuildQueue:
 		track: Track = tl.get_song()
 
 		# Prepare codex to play song
-		# original_source = discord.FFmpegPCMAudio(track.file_local, executable=self.ffmpeg, stderr = sys.stderr, before_options=f"-af volume=0.25")
 		original_source = discord.FFmpegPCMAudio(
 			track.file_local, executable=self.ffmpeg, stderr=sys.stderr
 		)
@@ -63,7 +63,6 @@ class GuildQueue:
 		source.volume = float(0.025)
 
 		# Play song into discord
-		# tl.obs_start()
 		vc.play(
 			source,
 			after=lambda err: asyncio.run_coroutine_threadsafe(
@@ -72,15 +71,10 @@ class GuildQueue:
 		)
 
 		# Message in channel with player
-		mpi = MusicPlayerInterface()
-		await msg_sender.response_message(
-			content="", embed=mpi.embed_track(track, self.data.guild.preferred_locale)
-		)
-
+		await self.mpi.send_player(msg_sender.txt_channel, track)
 		return True
 
 	def stop(self) -> bool:
-		# tl : TrackList = self.data.track_list
 		vc: VoiceClient = self.data.voice_client
 		if vc is None:
 			return False
@@ -89,7 +83,6 @@ class GuildQueue:
 
 		self.song_end_action = self.__song_end_stop
 		vc.stop()
-		# tl.obs_clear()
 		return True
 
 	async def exit(self) -> bool:
@@ -102,7 +95,6 @@ class GuildQueue:
 		return False
 
 	def pause(self) -> bool:
-		# tl : TrackList = self.data.track_list
 		vc: VoiceClient = self.data.voice_client
 		if vc is None:
 			return False
@@ -113,7 +105,6 @@ class GuildQueue:
 		return False
 
 	def resume(self) -> bool:
-		# tl : TrackList = self.data.track_list
 		vc: VoiceClient = self.data.voice_client
 		if vc is None:
 			return False
@@ -128,7 +119,6 @@ class GuildQueue:
 		return tl.has_next()
 
 	def next(self) -> bool:
-		# tl : TrackList = self.data.track_list
 		vc: VoiceClient = self.data.voice_client
 		if vc is None:
 			return False

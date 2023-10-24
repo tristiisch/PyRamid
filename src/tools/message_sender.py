@@ -1,7 +1,7 @@
 import tools.utils
 
 from typing import Optional, Sequence
-from discord import AllowedMentions, Embed, Interaction
+from discord import AllowedMentions, Embed, Interaction, TextChannel
 from discord.ui import View
 from discord.utils import MISSING
 
@@ -10,7 +10,12 @@ MAX_MSG_LENGTH = 2000
 
 class MessageSender:
 	def __init__(self, ctx: Interaction):
-		self.ctx = ctx
+		self.__ctx = ctx
+		if ctx.channel is None:
+			raise NotImplementedError("Unable to create a MessageSender without channel")
+		if not isinstance(ctx.channel, TextChannel):
+			raise NotImplementedError("Unable to create a MessageSender without text channel")
+		self.txt_channel: TextChannel = ctx.channel
 
 	async def add_message(
 		self,
@@ -32,7 +37,7 @@ class MessageSender:
 		# suppress_embeds: bool = MISSING,
 		# silent: bool = MISSING,
 	):
-		await self.ctx.followup.send(
+		await self.__ctx.followup.send(
 			content,
 			# username=username,
 			# avatar_url=avatar_url,
@@ -68,16 +73,17 @@ class MessageSender:
 			if is_used:
 				content = new_content
 
-		if self.ctx.response.is_done():
-			await self.ctx.edit_original_response(
+		if self.__ctx.response.is_done():
+			return await self.__ctx.edit_original_response(
 				content=content,
 				embeds=embeds,
 				embed=embed,
 				view=view,
 				allowed_mentions=allowed_mentions,
+				
 			)
 		else:
-			await self.ctx.response.send_message(
+			await self.__ctx.response.send_message(
 				content=content,
 				embeds=embeds,
 				embed=embed,  # type: ignore
@@ -100,10 +106,10 @@ class MessageSender:
 
 		substrings_generator = tools.utils.split_string_by_length(content, max_length)
 
-		if not self.ctx.response.is_done():
+		if not self.__ctx.response.is_done():
 			first_substring = next(substrings_generator, None)
 			if first_substring is not None:
-				await self.ctx.response.send_message(content=f"```{first_substring}```")
+				await self.__ctx.response.send_message(content=f"```{first_substring}```")
 
 		for substring in substrings_generator:
-			await self.ctx.followup.send(content=f"```{substring}```")
+			await self.__ctx.followup.send(content=f"```{substring}```")

@@ -46,7 +46,8 @@ class DeezerSearch(ASearch):
 		playlist = self.client.get_playlist(playlist_id)  # Todo handle HTTP errors
 		if not playlist:
 			return None
-		return [TrackMinimalDeezer(element) for element in playlist.get_tracks()]
+		last = [TrackMinimalDeezer(element) for element in playlist.get_tracks()]
+		return last
 
 	def get_album_tracks(self, album_name) -> list[TrackMinimalDeezer] | None:
 		search_results = self.client.search_albums(query=album_name, strict=self.strict)
