@@ -37,24 +37,27 @@ class MessageSender:
 		# suppress_embeds: bool = MISSING,
 		# silent: bool = MISSING,
 	):
-		await self.__ctx.followup.send(
-			content,
-			# username=username,
-			# avatar_url=avatar_url,
-			# tts=tts,
-			# ephemeral=ephemeral,
-			# file=file,
-			# files=files,
-			# embed=embed,
-			# embeds=embeds,
-			# allowed_mentions=allowed_mentions,
-			# view=view,
-			# thread=thread,
-			# thread_name=thread_name,
-			# wait=wait,
-			# suppress_embeds=suppress_embeds,
-			# silent=silent,
-		)
+		if not self.__ctx.response.is_done():
+			await self.txt_channel.send(content)
+		else:
+			await self.__ctx.followup.send(
+				content,
+				# username=username,
+				# avatar_url=avatar_url,
+				# tts=tts,
+				# ephemeral=ephemeral,
+				# file=file,
+				# files=files,
+				# embed=embed,
+				# embeds=embeds,
+				# allowed_mentions=allowed_mentions,
+				# view=view,
+				# thread=thread,
+				# thread_name=thread_name,
+				# wait=wait,
+				# suppress_embeds=suppress_embeds,
+				# silent=silent,
+			)
 
 	async def response_message(
 		self,

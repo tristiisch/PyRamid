@@ -21,7 +21,7 @@ class GuildCmdTools:
 		self, ms: MessageSender, user: User | Member
 	) -> VoiceChannel | None:
 		if not isinstance(user, Member):
-			raise Exception("Can be only used by member - user in guild")
+			raise Exception("Can be only used by member (user in guild)")
 
 		member: Member = user
 
@@ -39,12 +39,12 @@ class GuildCmdTools:
 		# verify bot's permission on member voice channel
 		bot: Member = self.data.guild.me
 		permissions = voice_channel.permissions_for(bot)
-		if not permissions.connect and permissions.speak:
-			await ms.response_message(content=f"I can't go to {voice_channel}")
+		if not permissions.connect:
+			await ms.response_message(content=f"I can't go to {voice_channel.mention}")
 			return None
 
 		if not permissions.speak:
-			await ms.add_message(content=f"Warning ! I can't speak in {voice_channel}")
+			await ms.add_message(content=f"Warning ! I can't speak in {voice_channel.mention}")
 
 		return voice_channel
 
@@ -90,7 +90,7 @@ class GuildCmdTools:
 
 		track_downloaded: Track | None = await self.deezer_dl.dl_track_by_id(track.id)
 		if not track_downloaded:
-			await ms.response_message(content=f"**{input}** can't be downloaded.")
+			await ms.response_message(content=f"**{track.get_full_name()}** can't be downloaded.")
 			return False
 
 		self.data.track_list.add_song(track_downloaded)
