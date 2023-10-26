@@ -1,4 +1,5 @@
 from enum import Enum
+import logging
 import deezer
 import re
 import requests
@@ -46,8 +47,20 @@ class DeezerSearch(ASearch):
 		playlist = self.client.get_playlist(playlist_id)  # Todo handle HTTP errors
 		if not playlist:
 			return None
-		last = [TrackMinimalDeezer(element) for element in playlist.get_tracks()]
-		return last
+		# Tracks id are the not the good one
+		playlist_tracks = playlist.get_tracks()
+
+		# So we search the id for same name and artist
+		real_tracks: list[TrackMinimalDeezer] = [] * len(playlist_tracks)
+		for t in playlist_tracks:
+			track = self.search_exact_track(t.artist.name, None, t.title)
+			# logging.info("DEBUG song '%s' - '%s' - '%s'", t.artist.name, t.title, t.album.title)
+			if track is None:
+				logging.warning("Unkown song '%s' - '%s'", t.artist.name, t.title)
+				continue
+			real_tracks.append(track)
+
+		return real_tracks
 
 	def get_album_tracks(self, album_name) -> list[TrackMinimalDeezer] | None:
 		search_results = self.client.search_albums(query=album_name, strict=self.strict)
@@ -103,15 +116,52 @@ class DeezerSearch(ASearch):
 	def search_exact_track(
 		self, artist_name, album_title, track_title
 	) -> TrackMinimalDeezer | None:
+
+		clean_artist = self.__remove_special_chars(artist_name)
+		clean_album = self.__remove_special_chars(album_title)
+		clean_track = self.__remove_special_chars(track_title)
+		# logging.info("Song CLEANED '%s' - '%s' - '%s'", clean_artist, clean_track, clean_album)
+
 		search_results = self.client.search(
-			artist=artist_name, album=album_title, track=track_title, strict=True
+			artist=clean_artist,
+			album=clean_album,
+			track=clean_track
 		)
 		if not search_results:
 			return None
-
 		track = search_results[0]
 		return TrackMinimalDeezer(track)
+	
+	def __remove_special_chars(self, input_string: str | None, allowed_brackets: tuple=('(', ')', '[', ']')):
+		if input_string is None:
+			return None
 
+		open_brackets = [b for i, b in enumerate(allowed_brackets) if i % 2 == 0]
+		close_brackets = [b for i, b in enumerate(allowed_brackets) if i % 2 != 0]
+		stack: list[str] = []
+		result: list[str] = []
+		last_char = None  # Keep track of the last processed character
+
+		for char in input_string:
+			if char in open_brackets:
+				stack.append(char)
+			elif char in close_brackets:
+				if stack:
+					open_bracket = stack.pop()
+					if open_brackets.index(open_bracket) == close_brackets.index(char):
+						continue
+				if last_char != ' ':  # Append only if the previous character is not a space
+					result.append(char)
+			elif char == ' ':
+				if last_char != ' ':  # Append only if the previous character is not a space
+					result.append(char)
+			elif not stack and char.isalnum():
+				result.append(char)
+			else:
+				continue
+			last_char = char  # Update last_char
+
+		return ''.join(result)
 
 class DeezerType(Enum):
 	PLAYLIST = 1
