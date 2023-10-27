@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import os
+from typing import Callable
 import pydeezer.util
 
 from pydeezer import Deezer
@@ -13,28 +14,21 @@ from tools.object import Track, TrackMinimal
 class DeezerDownloader:
 	def __init__(self, arl, folder):
 		try:
-			self.deezer_api = Deezer(arl)
+			self.__deezer_dl_api = Deezer(arl)
 		except LoginError as err:
 			raise err  # Arl is invalid
 		self.folder_path = folder
 		self.music_format = track_formats.MP3_128
 
-	def get_track_by_name(self, name) -> TrackMinimal | None:
-		tracks_found = self.deezer_api.search_tracks(name)
-		if not tracks_found:
-			return None
-		track = TrackMinimal(tracks_found[0])
-		return track
-
 	async def dl_track_by_id(self, track_id) -> Track | None:
 		# try:
-		track_to_dl = self.deezer_api.get_track(track_id)
+		track_to_dl = self.__deezer_dl_api.get_track(track_id)
 		# except APIRequestError as err:
 		# 	logging.warn(f"Unable to download deezer song {track_id} : {err}", exc_info=True)
 		# 	return None  # Track unvailable in this country
 
 		if not track_to_dl:
-			logging.error(f"Unable to download deezer song {track_id} : Unknown error")
+			logging.error(f"Unable to find deezer song to download {track_id} : Unknown error")
 			return None
 
 		track_info = track_to_dl["info"]
@@ -44,21 +38,26 @@ class DeezerDownloader:
 		file_path = os.path.join(self.folder_path, file_name) + ".mp3"
 
 		if os.path.exists(file_path) is False:
-			await asyncio.get_event_loop().run_in_executor(
+			future = asyncio.get_event_loop().run_in_executor(
 				None,
-				self.deezer_api.download_track,
+				self.__dl_track,
+				self.__deezer_dl_api.download_track,
 				track_info,
-				self.folder_path,
-				self.music_format,
-				True,
-				file_name,
-				False,
-				True,
-				False,
+				file_name
 			)
+			is_dl = await asyncio.wrap_future(future)
+			if not is_dl:
+				return None
 
 		track_downloaded = Track(track_info["DATA"], file_path)
 		return track_downloaded
+
+	def get_track_by_name(self, name) -> TrackMinimal | None:
+		tracks_found = self.__deezer_dl_api.search_tracks(name)
+		if not tracks_found:
+			return None
+		track = TrackMinimal(tracks_found[0])
+		return track
 
 	async def dl_track_by_name(self, name) -> Track | None:
 		track: TrackMinimal | None = self.get_track_by_name(name)
@@ -68,16 +67,23 @@ class DeezerDownloader:
 		track_downloaded = await self.dl_track_by_id(track.id)
 		return track_downloaded
 
-	async def test(self, name) -> list[Track] | None:
-		tracks_found = self.deezer_api.search_tracks(name)
-		if not tracks_found:
-			return None
-		tracks = [TrackMinimal(item) for item in tracks_found[:10]]
-		tracks_dl = [await self.dl_track_by_id(item.id) for item in tracks]
-		tracks_dl_filtered = [
-			track for track in tracks_dl if track is not None
-		]  # Filter out None values
-		return tracks_dl_filtered
+	def __dl_track(self, func: Callable[..., None], track_info, file_name: str) -> bool:
+		try:
+			func(
+				track_info,
+				self.folder_path,
+				self.music_format,
+				True,
+				file_name,
+				False,
+				True,
+				False,
+			)
+			return True
+		except Exception:
+			track = Track(track_info["DATA"], None)
+			logging.warning("Unable to dl track %s", track, exc_info=True)
+			return False
 
 
 async def cli():

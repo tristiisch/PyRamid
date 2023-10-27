@@ -1,17 +1,15 @@
 import logging
 import sys
 import argparse
+from test_dev import TestDev
 import tools.utils
 
 from datetime import datetime
-from spotify.search import SpotifySearch
 from deezer_api.downloader import DeezerDownloader
-from deezer_api.search import DeezerSearch
 from discord.bot import DiscordBot
 from tools.config import Config
 from tools.information import ProgramInformation
 from tools.logs import Logger
-from tools.git import GitInfo
 
 
 class Main:
@@ -78,33 +76,6 @@ class Main:
 		# Connect bot to Discord servers
 		discord_bot.start()
 
-	def test_spotify(self, input):
-		spotify_search = SpotifySearch(
-			self._config.spotify_client_id, self._config.spotify_client_secret
-		)
-		res = spotify_search.search_tracks(input, limit=10)
-		if res is None:
-			return
-		for track in res:
-			print(track)
-
-	def test_deezer(self, input):
-		deezer_search = DeezerSearch()
-		res = deezer_search.search_tracks(input, limit=10)
-		if res is None:
-			return
-		for track in res:
-			print(track)
-
-	def test_git(self):
-		t = GitInfo()
-		t.get()
-		t.save()
-
-		t2 = GitInfo.read()
-		if t2:
-			print(vars(t2))
-
 
 main = Main()
 
@@ -113,4 +84,7 @@ main.logs()
 main.git_info()
 main.config()
 main.clean_data()
+
+test_dev = TestDev(main._config, main.logger)
+# test_dev.test_deezer()
 main.init()

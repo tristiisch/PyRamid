@@ -1,3 +1,6 @@
+import logging
+import os
+import deezer.resources
 import tools.utils
 
 from datetime import datetime
@@ -57,14 +60,15 @@ class TrackMinimalSpotify(TrackMinimal):
 
 
 class TrackMinimalDeezer(TrackMinimal):
-	def __init__(self, data):
+	def __init__(self, data: deezer.resources.Track):
 		self.id: str = str(data.id)
 		self.author_name: str = data.artist.name
 		self.author_picture: str = data.artist.picture_medium
 		self.name: str = data.title
 		self.album_title: str = data.album.title
 		self.album_picture: str = data.album.cover_xl
-
+		if not data.readable:
+			logging.warning("%s - %s is unreadable", self.author_name, self.name)
 
 class Track(TrackMinimal):
 	def __init__(self, data, file_path):
@@ -91,8 +95,11 @@ class TrackList:
 		self.__tracks: list[Track] = []
 		# self.obs_clear()
 
-	def add_song(self, track: Track):
+	def add_song(self, track: Track) -> bool:
+		if not os.path.exists(track.file_local):
+			return False
 		self.__tracks.append(track)
+		return True
 
 	def add_songs(self, tracks: list[Track]):
 		self.__tracks.extend(tracks)

@@ -69,7 +69,10 @@ class GuildCmdTools:
 				await ms.add_message(content=f"**{track.get_full_name()}** can't be downloaded.")
 				cant_dl += 1
 				continue
-			self.data.track_list.add_song(track_downloaded)
+			if not self.data.track_list.add_song(track_downloaded):
+				await ms.add_message(content=f"**{track.get_full_name()}** can't be add to the queue.")
+				cant_dl += 1
+				continue
 			await ms.response_message(
 				content=f"Downloading ... {i + 1 - cant_dl}/{length - cant_dl}"
 			)
@@ -93,7 +96,9 @@ class GuildCmdTools:
 			await ms.response_message(content=f"**{track.get_full_name()}** can't be downloaded.")
 			return False
 
-		self.data.track_list.add_song(track_downloaded)
+		if not self.data.track_list.add_song(track_downloaded):
+			await ms.add_message(content=f"**{track.get_full_name()}** can't be add to the queue.")
+			return False
 		await self.queue.goto_channel(voice_channel)
 
 		if await self.queue.play(ms) is False:
