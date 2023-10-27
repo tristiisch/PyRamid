@@ -1,6 +1,6 @@
 import yaml
 
-from tools.utils import Mode
+from tools.environment import Environment
 
 
 class Config:
@@ -11,7 +11,7 @@ class Config:
 		self.discord_ffmpeg: str
 		self.spotify_client_id: str
 		self.spotify_client_secret: str
-		self.mode: Mode
+		self.mode: Environment
 		self.config_version: str
 
 	def load(self):
@@ -29,11 +29,11 @@ class Config:
 		self.spotify_client_secret = config_data["spotify"]["client_secret"]
 
 		mode_upper = str(config_data["mode"]).replace("-", "_").upper()
-		for mode in Mode:
+		for mode in Environment:
 			if mode.name == mode_upper:
 				self.mode = mode
 				break
 		else:
-			self.mode = Mode.PRODUCTION
+			self.mode = Environment.PRODUCTION
 
 		self.config_version = config_data["version"]

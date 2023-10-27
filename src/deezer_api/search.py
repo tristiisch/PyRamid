@@ -116,23 +116,22 @@ class DeezerSearch(ASearch):
 	def search_exact_track(
 		self, artist_name, album_title, track_title
 	) -> TrackMinimalDeezer | None:
-
 		clean_artist = self.__remove_special_chars(artist_name)
 		clean_album = self.__remove_special_chars(album_title)
 		clean_track = self.__remove_special_chars(track_title)
 		# logging.info("Song CLEANED '%s' - '%s' - '%s'", clean_artist, clean_track, clean_album)
 
 		search_results = self.client.search(
-			artist=clean_artist,
-			album=clean_album,
-			track=clean_track
+			artist=clean_artist, album=clean_album, track=clean_track
 		)
 		if not search_results:
 			return None
 		track = search_results[0]
 		return TrackMinimalDeezer(track)
-	
-	def __remove_special_chars(self, input_string: str | None, allowed_brackets: tuple=('(', ')', '[', ']')):
+
+	def __remove_special_chars(
+		self, input_string: str | None, allowed_brackets: tuple = ("(", ")", "[", "]")
+	):
 		if input_string is None:
 			return None
 
@@ -150,10 +149,10 @@ class DeezerSearch(ASearch):
 					open_bracket = stack.pop()
 					if open_brackets.index(open_bracket) == close_brackets.index(char):
 						continue
-				if last_char != ' ':  # Append only if the previous character is not a space
+				if last_char != " ":  # Append only if the previous character is not a space
 					result.append(char)
-			elif char == ' ':
-				if last_char != ' ':  # Append only if the previous character is not a space
+			elif char == " ":
+				if last_char != " ":  # Append only if the previous character is not a space
 					result.append(char)
 			elif not stack and char.isalnum():
 				result.append(char)
@@ -161,7 +160,8 @@ class DeezerSearch(ASearch):
 				continue
 			last_char = char  # Update last_char
 
-		return ''.join(result)
+		return "".join(result)
+
 
 class DeezerType(Enum):
 	PLAYLIST = 1

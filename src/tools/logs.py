@@ -5,29 +5,32 @@ import sys
 import coloredlogs
 import tools.utils
 
+from tools.environment import Environment
 from tools.information import ProgramInformation
 
 
 class Logger:
 	def __init__(self, info: ProgramInformation, logs_dir, log_filename, error_filename):
-		self.info = info
-		self.logs_dir = logs_dir
-		self.log_filename = log_filename
-		self.error_filename = error_filename
+		self.__info = info
+		self.__logs_dir = logs_dir
+		self.__log_filename = log_filename
+		self.__error_filename = error_filename
 
-		self.date = "%d/%m/%Y %H:%M:%S"
-		self.console_format = "%(asctime)s %(levelname)s %(message)s"
-		self.file_format = "[{asctime}] [{levelname:<8}] {name}: {message}"
+		self.__date = "%d/%m/%Y %H:%M:%S"
+		self.__console_format = "%(asctime)s %(levelname)s %(message)s"
+		self.__file_format = "[{asctime}] [{levelname:<8}] {name}: {message}"
+
+		self.logger = logging.getLogger()
 
 		self.log_to_console()
 		self.log_to_file()
 		self.log_to_file_unhandled_exception()
 
 	def log_to_console(self):
-		coloredlogs.install(fmt=self.console_format, datefmt=self.date)
+		coloredlogs.install(fmt=self.__console_format, datefmt=self.__date)
 
 	def log_to_file(self):
-		log_filename = os.path.join(self.logs_dir, self.log_filename)
+		log_filename = os.path.join(self.__logs_dir, self.__log_filename)
 		tools.utils.create_parent_directories(log_filename)
 
 		file_handler = logging.handlers.RotatingFileHandler(
@@ -37,18 +40,17 @@ class Logger:
 			backupCount=10,
 		)
 
-		formatter = logging.Formatter(self.file_format, self.date, style="{")
+		formatter = logging.Formatter(self.__file_format, self.__date, style="{")
 		file_handler.setFormatter(formatter)
 
 		logging.getLogger().addHandler(file_handler)
-		# logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 	def log_to_file_unhandled_exception(self):
-		log_filename = os.path.join(self.logs_dir, self.error_filename)
+		log_filename = os.path.join(self.__logs_dir, self.__error_filename)
 
 		file_handler = logging.FileHandler(filename=log_filename, encoding="utf-8")
 
-		formatter = logging.Formatter(self.file_format, self.date, style="{")
+		formatter = logging.Formatter(self.__file_format, self.__date, style="{")
 		file_handler.setFormatter(formatter)
 
 		self.logger_unhandled_exception = logging.getLogger("Unhandled Exception")
@@ -64,5 +66,13 @@ class Logger:
 			return
 		# Create a critical level log message with info from the except hook.
 		self.logger_unhandled_exception.critical(
-			self.info, exc_info=(exc_type, exc_value, exc_traceback)
+			self.__info, exc_info=(exc_type, exc_value, exc_traceback)
 		)
+
+	def set_log_level(self, mode: Environment):
+		if mode == Environment.PRODUCTION:
+			self.logger.setLevel("INFO")
+			coloredlogs.set_level("INFO")
+		else:
+			self.logger.setLevel("DEBUG")
+			coloredlogs.set_level("DEBUG")

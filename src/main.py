@@ -59,10 +59,7 @@ class Main:
 		self._config = Config()
 		self._config.load()
 
-		if self._config.mode == tools.utils.Mode.PRODUCTION:
-			self.logger.setLevel("INFO")
-		else:
-			self.logger.setLevel("DEBUG")
+		self._logs_handler.set_log_level(self._config.mode)
 
 	def clean_data(self):
 		# Songs folder clear

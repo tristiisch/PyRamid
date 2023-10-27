@@ -45,3 +45,8 @@ function Push-Docker() {
 function Clean-Docker-Image() {
 	docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
 }
+
+function Format-Code() {
+	ruff check --fix-only --unsafe-fixes --show-fixes .\src
+	ruff format .\src
+}

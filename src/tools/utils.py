@@ -5,10 +5,10 @@ import logging
 import typing
 import os
 
-from enum import Enum
 from typing import Optional
 from datetime import datetime
 from contextlib import contextmanager
+
 # def to_thread(func: typing.Callable) -> typing.Coroutine:
 #     @functools.wraps(func)
 #     async def wrapper(*args, **kwargs):
@@ -144,9 +144,3 @@ def format_date_by_country(date: datetime, country_code: str):
 		with temp_locale("en_US.utf8"):
 			formatted_date = date.strftime("%x")
 			return formatted_date
-
-
-class Mode(Enum):
-	PRODUCTION = 1
-	PRE_PRODUCTION = 2
-	DEVELOPMENT = 3

@@ -23,10 +23,10 @@ from spotify.search import SpotifySearch
 from discord.guild_cmd import GuildCmd
 from discord.guild_queue import GuildQueue
 from tools.config import Config
+from tools.environment import Environment
 from tools.information import ProgramInformation
 from tools.guild_data import GuildData
 from tools.abc import ASearch
-from tools.utils import Mode
 
 
 class DiscordBot:
@@ -41,7 +41,7 @@ class DiscordBot:
 		self.information = information
 		self.token = config.discord_token
 		self.ffmpeg = config.discord_ffmpeg
-		self.environment: Mode = config.mode
+		self.environment: Environment = config.mode
 		self.deezer_dl = deezer_dl
 		self.search_engines: Dict[str, ASearch] = dict(
 			{
