@@ -1,3 +1,4 @@
+import asyncio
 from enum import Enum
 import logging
 import re
@@ -94,7 +95,7 @@ class DeezerSearch(ASearch):
 		top_tracks = artist.get_top()[:limit]
 		return [TrackMinimalDeezer(element) for element in top_tracks], []
 
-	def get_by_url(self, url) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None:
+	async def get_by_url(self, url) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None:
 		id, type = self.tools.extract_deezer_info(url)
 
 		if id is None:
@@ -105,7 +106,10 @@ class DeezerSearch(ASearch):
 		tracks: tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None
 
 		if type == DeezerType.PLAYLIST:
-			tracks = self.get_playlist_tracks_by_id(id)
+			future = asyncio.get_event_loop().run_in_executor(
+				None, self.get_playlist_tracks_by_id, id
+			)
+			tracks = await asyncio.wrap_future(future)
 		elif type == DeezerType.ARTIST:
 			tracks = self.get_top_artist_by_id(id)
 		elif type == DeezerType.ALBUM:

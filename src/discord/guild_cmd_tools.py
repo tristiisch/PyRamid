@@ -72,7 +72,7 @@ class GuildCmdTools:
 			if len(track_unvailable_names) != 0:
 				out = '\n* '.join(track_unvailable_names)
 				await ms.add_message(content=f"These tracks are currently unavailable (restricted in certain regions or removed):\n* {out}")
-			if len(track_unvailable_names) != 0:
+			if len(tracks_unfindable_names) != 0:
 				out = '\n* '.join(tracks_unfindable_names)
 				await ms.add_message(content=f"Can't find the audio for this track:\n* {out}")
 

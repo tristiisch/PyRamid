@@ -69,11 +69,14 @@ class DeezerDownloader:
 				track_info,
 				self.folder_path,
 				self.music_format,
-				True,
+				True, # fallback quality if not available
 				file_name,
-				False,
-				True,
-				False,
+				False, # renew track info
+				False, # metadata
+				False, # lyrics
+				", ", # separator for multiple artists
+				False, # show messages
+				None, # Custom progress bar
 			)
 			return True
 		except Exception:

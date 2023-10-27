@@ -100,6 +100,19 @@ class GuildCmd(GuildCmdTools):
 		await ms.response_message(content="Skip musique")
 		return True
 
+	async def suffle(self, ctx: Interaction):
+		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
+			return False
+		
+		if not self.queue.shuffle():
+			await ms.response_message(content="No need to shuffle the queue.")
+			return False
+		
+		await ms.response_message(content="The queue has been shuffled.")
+		return True
+
 	async def queue_list(self, ctx: Interaction) -> bool:
 		ms = MessageSender(ctx)
 		queue: str | None = self.queue.queue_list()
@@ -133,13 +146,6 @@ class GuildCmd(GuildCmdTools):
 		await ms.add_code_message(hsa, prefix="Here are the results of your search :")
 		return True
 
-	# async def vuvuzela(self, ctx: Interaction):
-	# 	voice_channel: VoiceChannel | None = await self.__verify_voice_channel(ctx)
-	# 	if not voice_channel:
-	# 		return
-	# 	await ms.response_message(content=f"Im comming into {voice_channel.name}")
-	# 	await self.__play_song(voice_channel, ctx, "songs_test\Vuvuzela.mp3", self.ffmpeg)
-
 	async def play_multiple(self, ctx: Interaction, input: str) -> bool:
 		ms = MessageSender(ctx)
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
@@ -164,8 +170,8 @@ class GuildCmd(GuildCmdTools):
 		ms = MessageSender(ctx)
 		await ms.response_message(content=f"Searching **{url}**")
 
-		# tracks: tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None = self.data.search_engine.get_by_url(url)
-		res: tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None = self.data.search_engine.get_by_url(url)
+		# ctx.client.loop
+		res: tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None = await self.data.search_engine.get_by_url(url)
 		if not res:
 			await ms.response_message(content=f"**{url}** not found.")
 			return False

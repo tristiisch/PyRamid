@@ -77,7 +77,7 @@ class Track(TrackMinimal):
 		self.authors: list[str] = [element["ART_NAME"] for element in data["ARTISTS"]]
 		self.name: str = data["SNG_TITLE"]
 		self.album_title: str = data["ALB_TITLE"]
-		self.album_picture: str = f"https://e-cdn-images.dzcdn.net/images/cover/{data['ALB_PICTURE']}/512x512-000000-80-0-0.jpg"
+		self.album_picture: str = f"https://e-cdn-images.dzcdn.net/images/cover/{data['ALB_PICTURE']}/1024x1024-000000-80-0-0.jpg"
 		self.actual_seconds: int = int(0)
 		self.duration_seconds: int = int(data["DURATION"])
 		self.duration: str = self.format_duration(int(data["DURATION"]))

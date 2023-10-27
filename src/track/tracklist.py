@@ -1,4 +1,5 @@
 import os
+import random
 import tools.format_list
 import tools.utils
 
@@ -17,8 +18,26 @@ class TrackList:
 	def add_songs(self, tracks: list[Track]):
 		self.__tracks.extend(tracks)
 
-	def clear(self):
+	def clear(self) -> bool:
+		if self.is_empty():
+			return False
 		self.__tracks.clear()
+		return True
+
+	def shuffle(self, ignore_first=True) -> bool:
+		length = len(self.__tracks)
+		if length <= 2:
+			return False
+		
+		if ignore_first:
+			first = self.__tracks[0]
+			others = self.__tracks[1:]
+			random.shuffle(others)
+			self.__tracks = [first] + others
+
+		else:
+			random.shuffle(self.__tracks)
+		return True
 
 	def is_empty(self) -> bool:
 		return len(self.__tracks) == 0

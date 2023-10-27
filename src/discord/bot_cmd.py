@@ -87,11 +87,6 @@ class BotCmd:
 
 			await ctx.response.send_message(embed=embed)
 
-		# @bot.tree.command(name="vuvuzela", description="Plays an awful vuvuzela in the voice channel")
-		# async def cmd_vuvuzela(ctx: Interaction):
-		# 	guild_cmd : GuildCmd = self.__get_guild_cmd(ctx.guild)
-		# 	await guild_cmd.vuvuzela(ctx, input)
-
 		@bot.tree.command(name="play", description="Play a song in the voice channel")
 		async def cmd_play(ctx: Interaction, input: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
@@ -136,6 +131,15 @@ class BotCmd:
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
 			await guild_cmd.next(ctx)
+
+		@bot.tree.command(name="shuffle", description="Randomize the queue")
+		async def cmd_shuffle(ctx: Interaction):
+			if (await self.__use_on_guild_only(ctx)) is False:
+				return
+			guild: Guild = ctx.guild  # type: ignore
+			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+
+			await guild_cmd.suffle(ctx)
 
 		@bot.tree.command(name="queue", description="List musique in queue")
 		async def cmd_queue(ctx: Interaction):

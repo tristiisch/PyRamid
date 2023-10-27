@@ -61,5 +61,5 @@ class SpotifySearch(ASearch):
 		tracks = results["tracks"]["items"]
 		return [TrackMinimalSpotify(element) for element in tracks]
 
-	def get_by_url(self, url) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | TrackMinimalSpotify | None:
+	async def get_by_url(self, url) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | TrackMinimalSpotify | None:
 		raise NotImplementedError("Get by url for spotify is not implemted")

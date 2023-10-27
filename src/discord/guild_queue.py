@@ -1,8 +1,6 @@
 import asyncio
 import sys
 import discord
-import tools.utils
-import tools.format_list
 
 from discord import VoiceChannel, VoiceClient
 from discord.music_player_interface import MusicPlayerInterface
@@ -129,6 +127,13 @@ class GuildQueue:
 			vc.stop()
 			return True
 		return False
+	
+	def shuffle(self) -> bool:
+		vc: VoiceClient = self.data.voice_client
+		tl: TrackList = self.data.track_list
+		if vc is None or not tl.shuffle(vc.is_playing() or vc.is_paused()):
+			return False
+		return True
 
 	def queue_list(self) -> str | None:
 		tl: TrackList = self.data.track_list
