@@ -70,6 +70,8 @@ class TrackMinimalDeezer(TrackMinimal):
 		if not data.readable:
 			logging.warning("%s - %s is unreadable", self.author_name, self.name)
 			self.available = False
+		else:
+			self.available = True
 
 
 class Track(TrackMinimal):
