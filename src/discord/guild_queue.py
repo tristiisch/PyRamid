@@ -6,9 +6,10 @@ import tools.format_list
 
 from discord import VoiceChannel, VoiceClient
 from discord.music_player_interface import MusicPlayerInterface
-from tools.object import Track, TrackList
+from track.track import Track
 from tools.message_sender import MessageSender
 from tools.guild_data import GuildData
+from track.tracklist import TrackList
 
 
 class GuildQueue:
@@ -16,7 +17,7 @@ class GuildQueue:
 		self.data: GuildData = data
 		self.ffmpeg = ffmpeg_path
 		self.song_end_action = self.__song_end_continue
-		self.mpi = MusicPlayerInterface(data.guild.preferred_locale)
+		self.mpi = MusicPlayerInterface(data.guild.preferred_locale, self.data.track_list)
 
 	def is_playing(self) -> bool:
 		return self.data.voice_client.is_playing()
@@ -53,7 +54,7 @@ class GuildQueue:
 			vc.resume()
 			return True
 
-		track: Track = tl.get_song()
+		track: Track = tl.first_song()
 
 		# Prepare codex to play song
 		original_source = discord.FFmpegPCMAudio(
@@ -132,13 +133,11 @@ class GuildQueue:
 	def queue_list(self) -> str | None:
 		tl: TrackList = self.data.track_list
 
-		queue = tl.get_songs()
-		if len(queue) == 0:
+		if tl.is_empty():
 			return None
 
-		hsa = tools.format_list.tracks(queue)
-
-		return hsa
+		humain_str_array = tl.get_songs_str()
+		return humain_str_array
 
 	# Called after song played
 	async def __song_end(self, err: Exception | None, msg_sender: MessageSender):

@@ -37,6 +37,13 @@ class MessageSender:
 		# suppress_embeds: bool = MISSING,
 		# silent: bool = MISSING,
 	):
+		if content != MISSING and content != "":
+			new_content, is_used = tools.utils.substring_with_end_msg(
+				content, MAX_MSG_LENGTH, "{} more characters..."
+			)
+			if is_used:
+				content = new_content
+
 		if not self.__ctx.response.is_done():
 			await self.txt_channel.send(content)
 		else:
@@ -71,7 +78,7 @@ class MessageSender:
 	):
 		if content != MISSING and content != "":
 			new_content, is_used = tools.utils.substring_with_end_msg(
-				content, MAX_MSG_LENGTH, "{} more..."
+				content, MAX_MSG_LENGTH, "{} more characters..."
 			)
 			if is_used:
 				content = new_content

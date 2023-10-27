@@ -1,6 +1,6 @@
 import tools.utils
 
-from tools.object import Track, TrackMinimal
+from track.track import Track, TrackMinimal
 
 
 def tracks(list_of_track: list[TrackMinimal] | list[Track]) -> str:

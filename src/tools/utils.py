@@ -144,3 +144,74 @@ def format_date_by_country(date: datetime, country_code: str):
 		with temp_locale("en_US.utf8"):
 			formatted_date = date.strftime("%x")
 			return formatted_date
+
+def time_to_duration(time_in_sec: int) -> str:
+	# Define the constants for conversion
+	seconds_in_minute = 60
+	minutes_in_hour = 60
+	hours_in_day = 24
+	days_in_month = 30
+	seconds_in_day = seconds_in_minute * minutes_in_hour * hours_in_day
+	seconds_in_month = seconds_in_day * days_in_month
+
+	# Convert the total duration into months, days, minutes, and seconds
+	months, remainder = divmod(time_in_sec, seconds_in_month)
+	days, remainder = divmod(remainder, seconds_in_day)
+	hours, remainder = divmod(remainder, seconds_in_minute * minutes_in_hour)
+	minutes, seconds = divmod(remainder, seconds_in_minute)
+
+	result: list[str] = []
+
+	# Display the result
+	if months > 0:
+		if months == 1:
+			result.append(f"{months} month")
+		else:
+			result.append(f"{months} months")
+
+		if days == 1:
+			result.append(f"{days} day")
+		elif days > 1:
+			result.append(f"{days} days")
+
+	elif days > 0:
+		if days == 1:
+			result.append(f"{days} day")
+		else:
+			result.append(f"{days} days")
+
+		if hours == 1:
+			result.append(f"{hours} hour")
+		elif hours > 1:
+			result.append(f"{hours} hours")
+
+	elif hours > 0:
+		if hours == 1:
+			result.append(f"{hours} hour")
+		else:
+			result.append(f"{hours} hours")
+
+		if minutes == 1:
+			result.append(f"{minutes} minute")
+		if minutes > 1:
+			result.append(f"{minutes} minutes")
+
+	elif minutes > 0:
+		if minutes == 1:
+			result.append(f"{minutes} minute")
+		else:
+			result.append(f"{minutes} minutes")
+
+		if seconds == 1:
+			result.append(f"{seconds} second")
+		if seconds > 1:
+			result.append(f"{seconds} seconds")
+
+	elif seconds > 0:
+		if seconds == 1:
+			result.append(f"{seconds} second")
+		else:
+			result.append(f"{seconds} seconds")
+	else:
+		return "now"
+	return ", ".join(result)

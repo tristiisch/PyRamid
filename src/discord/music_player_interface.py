@@ -1,13 +1,15 @@
 import discord
 
 from discord import Embed, Locale, Message, TextChannel
-from tools.object import Track
+from track.track import Track
+from track.tracklist import TrackList
 
 
 class MusicPlayerInterface:
-	def __init__(self, locale: Locale):
+	def __init__(self, locale: Locale, track_list: TrackList):
 		self.locale = locale
 		self.last_message: Message | None = None
+		self.track_list = track_list
 
 	async def send_player(self, txt_channel: TextChannel, track: Track):
 		embed = self.__embed_track(track)
@@ -24,15 +26,20 @@ class MusicPlayerInterface:
 	def __embed_track(self, track: Track) -> Embed:
 		# track.actual_seconds = round(track.duration_seconds * 0.75)
 		track.actual_seconds = int(0)
+		progress_bar = f"{track.format_duration(track.actual_seconds)} {self.__generate_color_sequence(track.actual_seconds / track.duration_seconds * 100)} {track.duration}"
+
 		embed = discord.Embed(
 			# title=f"{track.authors}",
 			title=f"{track.name}",
-			description=f"{track.format_duration(track.actual_seconds)} {self.__generate_color_sequence(track.actual_seconds / track.duration_seconds * 100)} {track.duration}",
+			description=f"{progress_bar}",
 			color=discord.Color.blue(),
 		)
+		embed.add_field(name="Album", value=track.album_title)
+		embed.add_field(name="Release", value=track.get_date(self.locale.value))
+	
 		embed.set_author(name=", ".join(track.authors), icon_url=track.author_picture)
 		embed.set_thumbnail(url=track.album_picture)
-		embed.set_footer(text=f"Release {track.get_date(self.locale.value)}")
+		embed.set_footer(text=f"{self.track_list.get_length()} | {self.track_list.get_duration()}")
 
 		return embed
 

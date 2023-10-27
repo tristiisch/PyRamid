@@ -1,16 +1,18 @@
 from enum import Enum
 import logging
-import deezer
 import re
+import time
 import requests
 
+from deezer import Client
+from deezer.client import DeezerErrorResponse
 from tools.abc import ASearch
-from tools.object import TrackMinimalDeezer
+from track.track import TrackMinimalDeezer
 
 
 class DeezerSearch(ASearch):
 	def __init__(self):
-		self.client = deezer.Client()
+		self.client = Client()
 		self.tools = DeezerTools()
 		self.strict = False
 		self.default_limit = 10
@@ -43,7 +45,7 @@ class DeezerSearch(ASearch):
 		playlist = search_results[0]
 		return [TrackMinimalDeezer(element) for element in playlist.get_tracks()]
 
-	def get_playlist_tracks_by_id(self, playlist_id: int) -> list[TrackMinimalDeezer] | None:
+	def get_playlist_tracks_by_id(self, playlist_id: int) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]]  | None:
 		playlist = self.client.get_playlist(playlist_id)  # Todo handle HTTP errors
 		if not playlist:
 			return None
@@ -52,15 +54,17 @@ class DeezerSearch(ASearch):
 
 		# So we search the id for same name and artist
 		real_tracks: list[TrackMinimalDeezer] = [] * len(playlist_tracks)
+		unfindable_track: list[TrackMinimalDeezer] = []
 		for t in playlist_tracks:
 			track = self.search_exact_track(t.artist.name, None, t.title)
 			# logging.info("DEBUG song '%s' - '%s' - '%s'", t.artist.name, t.title, t.album.title)
 			if track is None:
-				logging.warning("Unkown song '%s' - '%s'", t.artist.name, t.title)
+				logging.warning("Unknown song '%s' - '%s'", t.artist.name, t.title)
+				unfindable_track.append(TrackMinimalDeezer(t))
 				continue
 			real_tracks.append(track)
 
-		return real_tracks
+		return real_tracks, unfindable_track
 
 	def get_album_tracks(self, album_name) -> list[TrackMinimalDeezer] | None:
 		search_results = self.client.search_albums(query=album_name, strict=self.strict)
@@ -69,11 +73,11 @@ class DeezerSearch(ASearch):
 		album = search_results[0]
 		return [TrackMinimalDeezer(element) for element in album.get_tracks()]
 
-	def get_album_tracks_by_id(self, album_id: int) -> list[TrackMinimalDeezer] | None:
+	def get_album_tracks_by_id(self, album_id: int) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
 		album = self.client.get_album(album_id)  # Todo handle HTTP errors
 		if not album:
 			return None
-		return [TrackMinimalDeezer(element) for element in album.get_tracks()]
+		return [TrackMinimalDeezer(element) for element in album.get_tracks()], []
 
 	def get_top_artist(self, artist_name, limit=10) -> list[TrackMinimalDeezer] | None:
 		search_results = self.client.search_artists(query=artist_name, strict=self.strict)
@@ -83,14 +87,14 @@ class DeezerSearch(ASearch):
 		top_tracks = artist.get_top()[:limit]
 		return [TrackMinimalDeezer(element) for element in top_tracks]
 
-	def get_top_artist_by_id(self, artist_id: int, limit=10) -> list[TrackMinimalDeezer] | None:
+	def get_top_artist_by_id(self, artist_id: int, limit=10) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
 		artist = self.client.get_artist(artist_id)  # Todo handle HTTP errors
 		if not artist:
 			return None
 		top_tracks = artist.get_top()[:limit]
-		return [TrackMinimalDeezer(element) for element in top_tracks]
+		return [TrackMinimalDeezer(element) for element in top_tracks], []
 
-	def get_by_url(self, url) -> list[TrackMinimalDeezer] | TrackMinimalDeezer | None:
+	def get_by_url(self, url) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None:
 		id, type = self.tools.extract_deezer_info(url)
 
 		if id is None:
@@ -98,7 +102,7 @@ class DeezerSearch(ASearch):
 		if type is None:
 			raise NotImplementedError(f"The type of deezer info '{url}' is not implemented")
 
-		tracks: list[TrackMinimalDeezer] | TrackMinimalDeezer | None
+		tracks: tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None
 
 		if type == DeezerType.PLAYLIST:
 			tracks = self.get_playlist_tracks_by_id(id)
@@ -121,13 +125,23 @@ class DeezerSearch(ASearch):
 		clean_track = self.__remove_special_chars(track_title)
 		# logging.info("Song CLEANED '%s' - '%s' - '%s'", clean_artist, clean_track, clean_album)
 
-		search_results = self.client.search(
-			artist=clean_artist, album=clean_album, track=clean_track
-		)
-		if not search_results:
-			return None
-		track = search_results[0]
-		return TrackMinimalDeezer(track)
+		try:
+			search_results = self.client.search(
+				artist=clean_artist, album=clean_album, track=clean_track
+			)
+			if not search_results:
+				return None
+			track = search_results[0]
+			return TrackMinimalDeezer(track)
+			
+		except DeezerErrorResponse as err:
+			err_json = err.json_data["error"]
+			i = err_json["code"] # type: ignore
+			if int(i) == 4:
+				time.sleep(5)
+				return self.search_exact_track(artist_name, album_title, track_title)
+			else:
+				raise err
 
 	def __remove_special_chars(
 		self, input_string: str | None, allowed_brackets: tuple = ("(", ")", "[", "]")
@@ -139,7 +153,7 @@ class DeezerSearch(ASearch):
 		close_brackets = [b for i, b in enumerate(allowed_brackets) if i % 2 != 0]
 		stack: list[str] = []
 		result: list[str] = []
-		last_char = None  # Keep track of the last processed character
+		last_char: str | None = None  # Keep track of the last processed character
 
 		for char in input_string:
 			if char in open_brackets:
@@ -151,10 +165,11 @@ class DeezerSearch(ASearch):
 						continue
 				if last_char != " ":  # Append only if the previous character is not a space
 					result.append(char)
-			elif char == " ":
+			elif char.isspace():
 				if last_char != " ":  # Append only if the previous character is not a space
 					result.append(char)
-			elif not stack and char.isalnum():
+			# elif not stack and (char.isalnum() or char == "'" or char == "/"):
+			elif not stack:
 				result.append(char)
 			else:
 				continue

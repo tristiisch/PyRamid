@@ -3,7 +3,7 @@ from deezer_api.downloader import DeezerDownloader
 from discord.guild_queue import GuildQueue
 from tools.guild_data import GuildData
 from tools.message_sender import MessageSender
-from tools.object import Track, TrackMinimal
+from track.track import Track, TrackMinimal
 
 
 class GuildCmdTools:
@@ -57,8 +57,25 @@ class GuildCmdTools:
 		return True
 
 	async def _execute_play_multiple(
-		self, ms: MessageSender, voice_channel: VoiceChannel, tracks: list[TrackMinimal]
+		self, ms: MessageSender, voice_channel: VoiceChannel, tracks: list[TrackMinimal], tracks_unfindable: list[TrackMinimal] | None = None
 	) -> bool:
+		
+		if tracks_unfindable is not None and len(tracks_unfindable) != 0:
+			track_unvailable_names = []
+			tracks_unfindable_names = []
+			for t in tracks_unfindable:
+				if not t.available:
+					track_unvailable_names.append(t.get_full_name())
+				else:
+					tracks_unfindable_names.append(t.get_full_name())
+
+			if len(track_unvailable_names) != 0:
+				out = '\n* '.join(track_unvailable_names)
+				await ms.add_message(content=f"These tracks are currently unavailable (restricted in certain regions or removed):\n* {out}")
+			if len(track_unvailable_names) != 0:
+				out = '\n* '.join(tracks_unfindable_names)
+				await ms.add_message(content=f"Can't find the audio for this track:\n* {out}")
+
 		length = len(tracks)
 		await ms.response_message(content=f"Downloading ... 0/{length}")
 
@@ -70,12 +87,18 @@ class GuildCmdTools:
 				cant_dl += 1
 				continue
 			if not self.data.track_list.add_song(track_downloaded):
-				await ms.add_message(content=f"**{track.get_full_name()}** can't be add to the queue.")
+				await ms.add_message(
+					content=f"**{track.get_full_name()}** can't be add to the queue."
+				)
 				cant_dl += 1
 				continue
 			await ms.response_message(
 				content=f"Downloading ... {i + 1 - cant_dl}/{length - cant_dl}"
 			)
+			if i == 0:
+				await self.queue.goto_channel(voice_channel)
+				await self.queue.play(ms)
+
 		if length == cant_dl:
 			await ms.response_message(content="None of the music could be downloaded")
 			return False
@@ -83,7 +106,7 @@ class GuildCmdTools:
 		await self.queue.goto_channel(voice_channel)
 
 		if await self.queue.play(ms) is False:
-			await ms.response_message(content=f"**{length}** tracks are added to the queue")
+			await ms.response_message(content=f"**{length}** tracks have been added to the queue")
 		return True
 
 	async def _execute_play(

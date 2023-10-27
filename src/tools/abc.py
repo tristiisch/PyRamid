@@ -1,7 +1,7 @@
 import abc
 
 from abc import ABC
-from tools.object import TrackMinimal
+from track.track import TrackMinimal
 
 
 class ASearch(ABC):
@@ -26,5 +26,5 @@ class ASearch(ABC):
 		pass
 
 	@abc.abstractmethod
-	def get_by_url(self, url) -> list[TrackMinimal] | TrackMinimal | None:
+	def get_by_url(self, url) -> tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None:
 		pass

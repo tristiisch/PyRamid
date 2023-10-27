@@ -1,13 +1,10 @@
 import math
-import traceback
-import logging
 import discord
 
 from typing import Callable
 from logging import Logger
 from discord.user import BaseUser
-from discord.ext.commands import Context, Bot
-from discord.ext.commands.errors import CommandNotFound, MissingRequiredArgument, MissingPermissions
+from discord.ext.commands import Bot
 from discord import (
 	AppInfo,
 	ClientUser,

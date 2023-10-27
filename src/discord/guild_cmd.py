@@ -6,7 +6,7 @@ import tools.format_list
 from discord import Interaction, VoiceChannel
 from deezer_api.downloader import DeezerDownloader
 from discord.guild_queue import GuildQueue
-from tools.object import TrackMinimal
+from track.track import TrackMinimal
 from tools.message_sender import MessageSender
 from tools.guild_data import GuildData
 
@@ -164,12 +164,17 @@ class GuildCmd(GuildCmdTools):
 		ms = MessageSender(ctx)
 		await ms.response_message(content=f"Searching **{url}**")
 
-		tracks: list[TrackMinimal] | TrackMinimal | None = self.data.search_engine.get_by_url(url)
-		if not tracks:
+		# tracks: tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None = self.data.search_engine.get_by_url(url)
+		res: tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None = self.data.search_engine.get_by_url(url)
+		if not res:
 			await ms.response_message(content=f"**{url}** not found.")
 			return False
-
-		if isinstance(tracks, TrackMinimal):
+		
+		if isinstance(res, tuple):
+			tracks, tracks_unfindable = res
+			return await self._execute_play_multiple(ms, voice_channel, tracks, tracks_unfindable)
+		elif isinstance(res, TrackMinimal):
+			tracks = res
 			return await self._execute_play(ms, voice_channel, tracks)
 		else:
-			return await self._execute_play_multiple(ms, voice_channel, tracks)
+			raise Exception("Unknown type 'res'")

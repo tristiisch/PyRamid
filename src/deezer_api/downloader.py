@@ -8,7 +8,7 @@ import pydeezer.util
 from pydeezer import Deezer
 from pydeezer.constants import track_formats
 from pydeezer.exceptions import LoginError
-from tools.object import Track, TrackMinimal
+from track.track import Track, TrackMinimal
 
 
 class DeezerDownloader:
@@ -39,11 +39,7 @@ class DeezerDownloader:
 
 		if os.path.exists(file_path) is False:
 			future = asyncio.get_event_loop().run_in_executor(
-				None,
-				self.__dl_track,
-				self.__deezer_dl_api.download_track,
-				track_info,
-				file_name
+				None, self.__dl_track, self.__deezer_dl_api.download_track, track_info, file_name
 			)
 			is_dl = await asyncio.wrap_future(future)
 			if not is_dl:

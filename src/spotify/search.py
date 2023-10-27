@@ -2,7 +2,7 @@ import spotipy
 
 from spotipy.oauth2 import SpotifyClientCredentials
 from tools.abc import ASearch
-from tools.object import TrackMinimalSpotify
+from track.track import TrackMinimalSpotify
 
 
 class SpotifySearch(ASearch):
@@ -61,5 +61,5 @@ class SpotifySearch(ASearch):
 		tracks = results["tracks"]["items"]
 		return [TrackMinimalSpotify(element) for element in tracks]
 
-	def get_by_url(self, url) -> list[TrackMinimalSpotify] | TrackMinimalSpotify | None:
+	def get_by_url(self, url) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | TrackMinimalSpotify | None:
 		raise NotImplementedError("Get by url for spotify is not implemted")

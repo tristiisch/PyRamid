@@ -1,9 +1,9 @@
-
 from logging import Logger
 from tools.config import Config
 from tools.git import GitInfo
 from spotify.search import SpotifySearch
 from deezer_api.search import DeezerSearch
+
 
 class TestDev:
 	def __init__(self, config: Config, logger: Logger):
