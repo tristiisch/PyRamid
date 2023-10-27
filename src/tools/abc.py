@@ -26,5 +26,7 @@ class ASearch(ABC):
 		pass
 
 	@abc.abstractmethod
-	async def get_by_url(self, url) -> tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None:
+	async def get_by_url(
+		self, url
+	) -> tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None:
 		pass

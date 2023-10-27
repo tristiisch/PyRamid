@@ -105,11 +105,11 @@ class GuildCmd(GuildCmdTools):
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
-		
+
 		if not self.queue.shuffle():
 			await ms.response_message(content="No need to shuffle the queue.")
 			return False
-		
+
 		await ms.response_message(content="The queue has been shuffled.")
 		return True
 
@@ -171,11 +171,13 @@ class GuildCmd(GuildCmdTools):
 		await ms.response_message(content=f"Searching **{url}**")
 
 		# ctx.client.loop
-		res: tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None = await self.data.search_engine.get_by_url(url)
+		res: (
+			tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None
+		) = await self.data.search_engine.get_by_url(url)
 		if not res:
 			await ms.response_message(content=f"**{url}** not found.")
 			return False
-		
+
 		if isinstance(res, tuple):
 			tracks, tracks_unfindable = res
 			return await self._execute_play_multiple(ms, voice_channel, tracks, tracks_unfindable)

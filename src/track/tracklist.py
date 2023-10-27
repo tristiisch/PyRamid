@@ -5,6 +5,7 @@ import tools.utils
 
 from track.track import Track
 
+
 class TrackList:
 	def __init__(self):
 		self.__tracks: list[Track] = []
@@ -28,7 +29,7 @@ class TrackList:
 		length = len(self.__tracks)
 		if length <= 2:
 			return False
-		
+
 		if ignore_first:
 			first = self.__tracks[0]
 			others = self.__tracks[1:]
@@ -60,6 +61,6 @@ class TrackList:
 			return f"{length} tracks"
 		else:
 			return f"{length} track"
-	
+
 	def get_duration(self) -> str:
 		return tools.utils.time_to_duration(sum(t.duration_seconds for t in self.__tracks))

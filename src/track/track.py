@@ -4,6 +4,7 @@ import tools.utils
 
 from datetime import datetime
 
+
 class TrackMinimal:
 	def __init__(self, data):
 		self.id: str = data["id"]
@@ -70,6 +71,7 @@ class TrackMinimalDeezer(TrackMinimal):
 			logging.warning("%s - %s is unreadable", self.author_name, self.name)
 			self.available = False
 
+
 class Track(TrackMinimal):
 	def __init__(self, data, file_path):
 		self.author_name: str = data["ART_NAME"]
@@ -88,4 +90,3 @@ class Track(TrackMinimal):
 	def get_date(self, locale: str = "en-US") -> str:
 		date_formatted = tools.utils.format_date_by_country(self.date, locale)
 		return date_formatted
-

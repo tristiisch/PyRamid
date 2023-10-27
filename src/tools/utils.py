@@ -145,6 +145,7 @@ def format_date_by_country(date: datetime, country_code: str):
 			formatted_date = date.strftime("%x")
 			return formatted_date
 
+
 def time_to_duration(time_in_sec: int) -> str:
 	# Define the constants for conversion
 	seconds_in_minute = 60

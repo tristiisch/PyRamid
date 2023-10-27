@@ -46,7 +46,9 @@ class DeezerSearch(ASearch):
 		playlist = search_results[0]
 		return [TrackMinimalDeezer(element) for element in playlist.get_tracks()]
 
-	def get_playlist_tracks_by_id(self, playlist_id: int) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]]  | None:
+	def get_playlist_tracks_by_id(
+		self, playlist_id: int
+	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
 		playlist = self.client.get_playlist(playlist_id)  # Todo handle HTTP errors
 		if not playlist:
 			return None
@@ -74,7 +76,9 @@ class DeezerSearch(ASearch):
 		album = search_results[0]
 		return [TrackMinimalDeezer(element) for element in album.get_tracks()]
 
-	def get_album_tracks_by_id(self, album_id: int) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
+	def get_album_tracks_by_id(
+		self, album_id: int
+	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
 		album = self.client.get_album(album_id)  # Todo handle HTTP errors
 		if not album:
 			return None
@@ -88,14 +92,18 @@ class DeezerSearch(ASearch):
 		top_tracks = artist.get_top()[:limit]
 		return [TrackMinimalDeezer(element) for element in top_tracks]
 
-	def get_top_artist_by_id(self, artist_id: int, limit=10) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
+	def get_top_artist_by_id(
+		self, artist_id: int, limit=10
+	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
 		artist = self.client.get_artist(artist_id)  # Todo handle HTTP errors
 		if not artist:
 			return None
 		top_tracks = artist.get_top()[:limit]
 		return [TrackMinimalDeezer(element) for element in top_tracks], []
 
-	async def get_by_url(self, url) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None:
+	async def get_by_url(
+		self, url
+	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None:
 		id, type = self.tools.extract_deezer_info(url)
 
 		if id is None:
@@ -103,7 +111,9 @@ class DeezerSearch(ASearch):
 		if type is None:
 			raise NotImplementedError(f"The type of deezer info '{url}' is not implemented")
 
-		tracks: tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None
+		tracks: (
+			tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None
+		)
 
 		if type == DeezerType.PLAYLIST:
 			future = asyncio.get_event_loop().run_in_executor(
@@ -137,10 +147,10 @@ class DeezerSearch(ASearch):
 				return None
 			track = search_results[0]
 			return TrackMinimalDeezer(track)
-			
+
 		except DeezerErrorResponse as err:
 			err_json = err.json_data["error"]
-			i = err_json["code"] # type: ignore
+			i = err_json["code"]  # type: ignore
 			if int(i) == 4:
 				time.sleep(5)
 				return self.search_exact_track(artist_name, album_title, track_title)

@@ -36,7 +36,7 @@ class MusicPlayerInterface:
 		)
 		embed.add_field(name="Album", value=track.album_title)
 		embed.add_field(name="Release", value=track.get_date(self.locale.value))
-	
+
 		embed.set_author(name=", ".join(track.authors), icon_url=track.author_picture)
 		embed.set_thumbnail(url=track.album_picture)
 		embed.set_footer(text=f"{self.track_list.get_length()} | {self.track_list.get_duration()}")

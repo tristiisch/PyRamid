@@ -127,7 +127,7 @@ class GuildQueue:
 			vc.stop()
 			return True
 		return False
-	
+
 	def shuffle(self) -> bool:
 		vc: VoiceClient = self.data.voice_client
 		tl: TrackList = self.data.track_list
