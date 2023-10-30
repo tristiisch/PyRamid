@@ -1,7 +1,7 @@
 import math
 import discord
 
-from typing import Callable
+from typing import Callable, List
 from logging import Logger
 from discord.user import BaseUser
 from discord.ext.commands import Bot
@@ -11,10 +11,10 @@ from discord import (
 	Guild,
 	Interaction,
 )
+from discord.app_commands import Command
 from discord.guild_cmd import GuildCmd
 from tools.environment import Environment
 from tools.information import ProgramInformation
-
 
 class BotCmd:
 	def __init__(
@@ -34,12 +34,12 @@ class BotCmd:
 	def register(self):
 		bot = self.__bot
 
-		@bot.tree.command(name="ping", description="Get time between Bot and Discord")
+		@bot.tree.command(name="ping", description="Displays response time between bot and dioscord")
 		async def cmd_ping(ctx: Interaction):
 			await ctx.response.send_message(f"Pong ! ({math.trunc(bot.latency * 1000)}ms)")
 
 		@bot.tree.command(name="about", description="About the bot")
-		async def about(ctx: Interaction):
+		async def cmd_about(ctx: Interaction):
 			bot_user: ClientUser | None
 			if bot.user is not None:
 				bot_user = bot.user
@@ -87,7 +87,34 @@ class BotCmd:
 
 			await ctx.response.send_message(embed=embed)
 
-		@bot.tree.command(name="play", description="Play a song in the voice channel")
+		@bot.tree.command(name="help", description="List all commands")
+		async def cmd_help(ctx: Interaction):
+			all_commands: List[Command] = bot.tree.get_commands() # type: ignore
+			commands_dict = {command.name: command.description for command in all_commands}
+			embed_template = discord.Embed(title="List of every commands available", color=discord.Color.gold())
+			max_embed = 10
+			max_fields = 25
+			embeds = []
+
+			for command, description in commands_dict.items():
+				embed_template.add_field(name=command, value=description, inline=True)
+				if len(embed_template.fields) == max_fields:
+					embeds.append(embeds)
+					embed_template.clear_fields()
+
+			# Append the last embed if it's not empty
+			if len(embed_template.fields) > 0:
+				embeds.append(embed_template)
+
+			# Sending the first embed as a response and subsequent follow-up embeds
+			for i in range(0, len(embeds), max_embed):
+				embeds_chunk = embeds[i:i + max_embed]
+				if i == 0:
+					await ctx.response.send_message(embeds=embeds_chunk)
+				else:
+					await ctx.followup.send(embeds=embeds_chunk)
+
+		@bot.tree.command(name="play", description="Play a single track at end of queue")
 		async def cmd_play(ctx: Interaction, input: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -95,6 +122,15 @@ class BotCmd:
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
 			await guild_cmd.play(ctx, input)
+
+		@bot.tree.command(name="play_next", description="Play a single track next to the current")
+		async def cmd_play_next(ctx: Interaction, input: str):
+			if (await self.__use_on_guild_only(ctx)) is False:
+				return
+			guild: Guild = ctx.guild  # type: ignore
+			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+
+			await guild_cmd.play(ctx, input, at_end=False)
 
 		@bot.tree.command(name="pause", description="Pause music")
 		async def cmd_pause(ctx: Interaction):
@@ -123,7 +159,7 @@ class BotCmd:
 
 			await guild_cmd.stop(ctx)
 
-		@bot.tree.command(name="next", description="Next music")
+		@bot.tree.command(name="next", description="Next track")
 		async def cmd_next(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -159,7 +195,7 @@ class BotCmd:
 
 			await guild_cmd.goto(ctx, number_in_queue)
 
-		@bot.tree.command(name="queue", description="List musique in queue")
+		@bot.tree.command(name="queue", description="List the track queue")
 		async def cmd_queue(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -170,7 +206,7 @@ class BotCmd:
 
 		@bot.tree.command(
 			name="search",
-			description="Search musique",
+			description="Search tracks",
 		)
 		async def cmd_search(ctx: Interaction, input: str, engine: str | None):
 			if (await self.__use_on_guild_only(ctx)) is False:
@@ -191,7 +227,7 @@ class BotCmd:
 
 			await guild_cmd.play_multiple(ctx, input)
 
-		@bot.tree.command(name="play_url", description="Plays songs by URL from Deezer")
+		@bot.tree.command(name="play_url", description="Plays track, artist, album or playlist by URL")
 		async def play_url(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -199,6 +235,15 @@ class BotCmd:
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
 			await guild_cmd.play_url(ctx, url)
+
+		@bot.tree.command(name="play_url_next", description="Plays track, artist, album or playlist by URL next to the current")
+		async def play_url_next(ctx: Interaction, url: str):
+			if (await self.__use_on_guild_only(ctx)) is False:
+				return
+			guild: Guild = ctx.guild  # type: ignore
+			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+
+			await guild_cmd.play_url(ctx, url, at_end=False)
 
 		# @bot.command()
 		# async def ignore_none_slash_cmd():

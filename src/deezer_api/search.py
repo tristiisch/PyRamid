@@ -3,9 +3,11 @@ from enum import Enum
 import logging
 import re
 import time
+from typing import List
+import deezer
 import requests
 
-from deezer import Client
+from deezer import Client, PaginatedList
 from deezer.client import DeezerErrorResponse
 from tools.abc import ASearch
 from track.track import TrackMinimalDeezer
@@ -26,7 +28,7 @@ class DeezerSearch(ASearch):
 		return TrackMinimalDeezer(track)
 
 	def get_track_by_id(self, track_id: int) -> TrackMinimalDeezer | None:
-		track = self.client.get_track(track_id)  # Todo handle HTTP errors
+		track = self.client.get_track(track_id)  # TODO handle HTTP errors
 		if not track:
 			return None
 		return TrackMinimalDeezer(track)
@@ -49,20 +51,37 @@ class DeezerSearch(ASearch):
 	def get_playlist_tracks_by_id(
 		self, playlist_id: int
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
-		playlist = self.client.get_playlist(playlist_id)  # Todo handle HTTP errors
+		playlist = self.client.get_playlist(playlist_id)  # TODO handle HTTP errors
 		if not playlist:
 			return None
 		# Tracks id are the not the good one
-		playlist_tracks = playlist.get_tracks()
+		playlist_tracks: PaginatedList[deezer.Track] = playlist.get_tracks()
 
 		# So we search the id for same name and artist
 		real_tracks: list[TrackMinimalDeezer] = [] * len(playlist_tracks)
 		unfindable_track: list[TrackMinimalDeezer] = []
-		for t in playlist_tracks:
+
+		while playlist_tracks._could_grow():
+			chunk_tracks = playlist_tracks._fetch_next_page()
+			rt, ut = self.__iter_playlist(chunk_tracks)
+			real_tracks.extend(rt)
+			unfindable_track.extend(ut)
+
+		return real_tracks, unfindable_track
+
+	def __iter_playlist(self, playlist_tracks: List[deezer.Track]):
+		real_tracks: list[TrackMinimalDeezer] = []
+		unfindable_track: list[TrackMinimalDeezer] = []
+
+		for t in playlist_tracks: 
+
 			track = self.search_exact_track(t.artist.name, None, t.title)
 			# logging.info("DEBUG song '%s' - '%s' - '%s'", t.artist.name, t.title, t.album.title)
 			if track is None:
-				logging.warning("Unknown song '%s' - '%s'", t.artist.name, t.title)
+				if not t.readable:
+					logging.warning("Unavailable track in playlist '%s' - '%s'", t.artist.name, t.title)
+				else:
+					logging.warning("Unknown track searched in playlist '%s' - '%s'", t.artist.name, t.title)
 				unfindable_track.append(TrackMinimalDeezer(t))
 				continue
 			real_tracks.append(track)
@@ -79,7 +98,7 @@ class DeezerSearch(ASearch):
 	def get_album_tracks_by_id(
 		self, album_id: int
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
-		album = self.client.get_album(album_id)  # Todo handle HTTP errors
+		album = self.client.get_album(album_id)  # TODO handle HTTP errors
 		if not album:
 			return None
 		return [TrackMinimalDeezer(element) for element in album.get_tracks()], []
@@ -95,7 +114,7 @@ class DeezerSearch(ASearch):
 	def get_top_artist_by_id(
 		self, artist_id: int, limit=10
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
-		artist = self.client.get_artist(artist_id)  # Todo handle HTTP errors
+		artist = self.client.get_artist(artist_id)  # TODO handle HTTP errors
 		if not artist:
 			return None
 		top_tracks = artist.get_top()[:limit]
@@ -145,7 +164,7 @@ class DeezerSearch(ASearch):
 			)
 			if not search_results:
 				return None
-			track = search_results[0]
+			track = search_results[0] # TODO Check if the first one is the most appropriate
 			return TrackMinimalDeezer(track)
 
 		except DeezerErrorResponse as err:

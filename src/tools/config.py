@@ -1,3 +1,4 @@
+import os
 import yaml
 
 from tools.environment import Environment
@@ -23,7 +24,12 @@ class Config:
 		self.deezer_arl = config_data["deezer"]["arl"]
 		self.deezer_folder = config_data["deezer"]["folder"]
 		self.discord_token = config_data["discord"]["token"]
-		self.discord_ffmpeg = config_data["discord"]["ffmpeg"]
+
+		ffmpeg = config_data["discord"]["ffmpeg"]
+		if not os.path.exists(ffmpeg):
+			raise Exception(f"Binary {ffmpeg} didn't exists on this system")
+		self.discord_ffmpeg = ffmpeg
+
 		self.spotify_client_id = config_data["spotify"]["client_id"]
 		self.spotify_client_secret = config_data["spotify"]["client_secret"]
 		self.spotify_client_secret = config_data["spotify"]["client_secret"]

@@ -4,6 +4,7 @@ from discord.guild_queue import GuildQueue
 from tools.guild_data import GuildData
 from tools.message_sender import MessageSender
 from track.track import Track, TrackMinimal
+from track.tracklist import TrackList
 
 
 class GuildCmdTools:
@@ -62,7 +63,10 @@ class GuildCmdTools:
 		voice_channel: VoiceChannel,
 		tracks: list[TrackMinimal],
 		tracks_unfindable: list[TrackMinimal] | None = None,
+		at_end=True
 	) -> bool:
+		tl: TrackList = self.data.track_list
+
 		if tracks_unfindable is not None and len(tracks_unfindable) != 0:
 			track_unvailable_names = []
 			tracks_unfindable_names = []
@@ -91,7 +95,10 @@ class GuildCmdTools:
 				await ms.add_message(content=f"**{track.get_full_name()}** can't be downloaded.")
 				cant_dl += 1
 				continue
-			if not self.data.track_list.add_song(track_downloaded):
+			if (
+				at_end is True and not tl.add_track(track_downloaded)
+				or not tl.add_track_after(track_downloaded)
+			):
 				await ms.add_message(
 					content=f"**{track.get_full_name()}** can't be add to the queue."
 				)
@@ -115,8 +122,9 @@ class GuildCmdTools:
 		return True
 
 	async def _execute_play(
-		self, ms: MessageSender, voice_channel: VoiceChannel, track: TrackMinimal
+		self, ms: MessageSender, voice_channel: VoiceChannel, track: TrackMinimal, at_end=True
 	) -> bool:
+		tl: TrackList = self.data.track_list
 		await ms.response_message(content=f"**{track.get_full_name()}** found ! Downloading ...")
 
 		track_downloaded: Track | None = await self.deezer_dl.dl_track_by_id(track.id)
@@ -124,7 +132,10 @@ class GuildCmdTools:
 			await ms.response_message(content=f"**{track.get_full_name()}** can't be downloaded.")
 			return False
 
-		if not self.data.track_list.add_song(track_downloaded):
+		if (
+			at_end is True and not tl.add_track(track_downloaded)
+			or not tl.add_track_after(track_downloaded)
+		):
 			await ms.add_message(content=f"**{track.get_full_name()}** can't be add to the queue.")
 			return False
 		await self.queue.goto_channel(voice_channel)

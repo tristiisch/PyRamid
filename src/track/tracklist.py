@@ -10,13 +10,19 @@ class TrackList:
 	def __init__(self):
 		self.__tracks: list[Track] = []
 
-	def add_song(self, track: Track) -> bool:
+	def add_track(self, track: Track) -> bool:
 		if not os.path.exists(track.file_local):
 			return False
 		self.__tracks.append(track)
 		return True
 
-	def add_songs(self, tracks: list[Track]):
+	def add_track_after(self, track: Track) -> bool:
+		if not os.path.exists(track.file_local):
+			return False
+		self.__tracks.insert(1, track)
+		return True
+
+	def add_tracks(self, tracks: list[Track]):
 		self.__tracks.extend(tracks)
 
 	def clear(self) -> bool:

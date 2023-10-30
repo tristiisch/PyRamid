@@ -24,7 +24,7 @@ class Logger:
 
 		self.log_to_console()
 		self.log_to_file()
-		self.log_to_file_unhandled_exception()
+		self.log_to_file_exceptions()
 
 	def log_to_console(self):
 		coloredlogs.install(fmt=self.__console_format, datefmt=self.__date)
@@ -37,7 +37,6 @@ class Logger:
 			filename=log_filename,
 			encoding="utf-8",
 			maxBytes=512 * 1024 * 1024,  # 512 Mo
-			backupCount=10,
 		)
 
 		formatter = logging.Formatter(self.__file_format, self.__date, style="{")
@@ -45,18 +44,26 @@ class Logger:
 
 		logging.getLogger().addHandler(file_handler)
 
-	def log_to_file_unhandled_exception(self):
+	def log_to_file_exceptions(self):
 		log_filename = os.path.join(self.__logs_dir, self.__error_filename)
 
-		file_handler = logging.FileHandler(filename=log_filename, encoding="utf-8")
+		file_handler = logging.handlers.RotatingFileHandler(
+			filename=log_filename,
+			encoding="utf-8",
+			maxBytes=10 * 1024 * 1024, # 10 Mo
+			backupCount=10
+		)
 
 		formatter = logging.Formatter(self.__file_format, self.__date, style="{")
 		file_handler.setFormatter(formatter)
 
+		# Retrieves warning exceptions and above
+		file_handler.setLevel("WARNING")
+		logging.getLogger().addHandler(file_handler)
+
+		# Retrieves unhandled exceptions
 		self.logger_unhandled_exception = logging.getLogger("Unhandled Exception")
 		self.logger_unhandled_exception.addHandler(file_handler)
-
-		# Assign the excepthook to the handler
 		sys.excepthook = self.__handle_unhandled_exception
 
 	def __handle_unhandled_exception(self, exc_type, exc_value, exc_traceback):

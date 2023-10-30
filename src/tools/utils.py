@@ -2,6 +2,7 @@
 # import functools
 import locale
 import logging
+import shutil
 import typing
 import os
 
@@ -216,3 +217,7 @@ def time_to_duration(time_in_sec: int) -> str:
 	else:
 		return "now"
 	return ", ".join(result)
+
+def get_available_space(path: str = "."):
+	total, used, free = shutil.disk_usage(path)
+	return free

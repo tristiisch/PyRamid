@@ -9,6 +9,7 @@ from discord.guild_queue import GuildQueue
 from track.track import TrackMinimal
 from tools.message_sender import MessageSender
 from tools.guild_data import GuildData
+from track.tracklist import TrackList
 
 
 class GuildCmd(GuildCmdTools):
@@ -24,7 +25,7 @@ class GuildCmd(GuildCmdTools):
 		self.data = guild_data
 		self.queue = guild_queue
 
-	async def play(self, ctx: Interaction, input: str) -> bool:
+	async def play(self, ctx: Interaction, input: str, at_end=True) -> bool:
 		ms = MessageSender(ctx)
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
@@ -36,7 +37,8 @@ class GuildCmd(GuildCmdTools):
 		if not track:
 			await ms.response_message(content=f"**{input}** not found.")
 			return False
-		return await self._execute_play(ms, voice_channel, track)
+
+		return await self._execute_play(ms, voice_channel, track, at_end=at_end)
 
 	async def stop(self, ctx: Interaction) -> bool:
 		ms = MessageSender(ctx)
@@ -211,7 +213,7 @@ class GuildCmd(GuildCmdTools):
 		if not voice_channel:
 			return False
 
-		await ms.response_message(content=f"Searching **{input}**")
+		await ms.response_message(content=f"Searching **{input}** ...")
 
 		tracks: list[TrackMinimal] | None = self.data.search_engine.search_tracks(input)
 		if not tracks:
@@ -220,14 +222,14 @@ class GuildCmd(GuildCmdTools):
 
 		return await self._execute_play_multiple(ms, voice_channel, tracks)
 
-	async def play_url(self, ctx: Interaction, url: str) -> bool:
+	async def play_url(self, ctx: Interaction, url: str, at_end=True) -> bool:
 		ms = MessageSender(ctx)
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
 			return False
 
 		ms = MessageSender(ctx)
-		await ms.response_message(content=f"Searching **{url}**")
+		await ms.response_message(content=f"Searching **{url}** ...")
 
 		# ctx.client.loop
 		res: (
@@ -239,9 +241,9 @@ class GuildCmd(GuildCmdTools):
 
 		if isinstance(res, tuple):
 			tracks, tracks_unfindable = res
-			return await self._execute_play_multiple(ms, voice_channel, tracks, tracks_unfindable)
+			return await self._execute_play_multiple(ms, voice_channel, tracks, tracks_unfindable, at_end=at_end)
 		elif isinstance(res, TrackMinimal):
 			tracks = res
-			return await self._execute_play(ms, voice_channel, tracks)
+			return await self._execute_play(ms, voice_channel, tracks, at_end=at_end)
 		else:
 			raise Exception("Unknown type 'res'")

@@ -49,7 +49,7 @@ class TrackMinimal:
 class TrackMinimalSpotify(TrackMinimal):
 	def __init__(self, data):
 		# author_picture = data['artists'][0]['images'][0]['url'] if data['artists'][0]['images'] else ""
-		# author_picture : str = "" # Todo Fix it
+		# author_picture : str = "" # TODO Fix it
 		album_picture = data["album"]["images"][0]["url"] if data["album"]["images"] else ""
 		self.id: str = data["id"]
 		self.author_name: str = data["artists"][0]["name"]
@@ -68,7 +68,7 @@ class TrackMinimalDeezer(TrackMinimal):
 		self.album_title: str = data.album.title
 		self.album_picture: str = data.album.cover_xl
 		if not data.readable:
-			logging.warning("%s - %s is unreadable", self.author_name, self.name)
+			# logging.warning("%s - %s is unreadable", self.author_name, self.name)
 			self.available = False
 		else:
 			self.available = True
