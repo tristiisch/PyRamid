@@ -7,12 +7,14 @@ on:
     paths:
       - "src/**/*.py"
       - "requirements.txt"
+      - "Dockerfile"
   pull_request:
     branches:
       - "*"
     paths:
       - "src/**/*.py"
       - "requirements.txt"
+      - "Dockerfile"
 
 jobs:
 
