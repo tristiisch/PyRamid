@@ -40,6 +40,26 @@ class TrackList:
 			random.shuffle(self.__tracks)
 		return True
 
+	def remove(self, index: int) -> Track | None:
+		length = len(self.__tracks)
+		if length <= index or index <= 0:
+			return None
+
+		track_to_delete = self.__tracks[index]
+		del self.__tracks[index]
+		return track_to_delete
+	
+	def remove_to(self, index: int) -> int:
+		length = len(self.__tracks)
+		if length <= index or index <= 0:
+			return -1
+		if index == 1:
+			return self.remove(index) is not None
+
+		new_tracks = self.__tracks[:1] + self.__tracks[index:]
+		self.__tracks = new_tracks
+		return length - len(self.__tracks)
+
 	def is_empty(self) -> bool:
 		return len(self.__tracks) == 0
 

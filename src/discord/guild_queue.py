@@ -134,6 +134,24 @@ class GuildQueue:
 		if vc is None or not tl.shuffle(vc.is_playing() or vc.is_paused()):
 			return False
 		return True
+	
+	def remove(self, index: int) -> Track | None:
+		vc: VoiceClient = self.data.voice_client
+		tl: TrackList = self.data.track_list
+		if vc is None:
+			return None
+
+		return tl.remove(index)
+	
+	def goto(self, index: int) -> int:
+		vc: VoiceClient = self.data.voice_client
+		tl: TrackList = self.data.track_list
+		if vc is None:
+			return -1
+		tracks_removed = tl.remove_to(index)
+		if tracks_removed > 0:
+			self.next()
+		return tracks_removed
 
 	def queue_list(self) -> str | None:
 		tl: TrackList = self.data.track_list

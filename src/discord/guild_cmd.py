@@ -113,6 +113,65 @@ class GuildCmd(GuildCmdTools):
 		await ms.response_message(content="The queue has been shuffled.")
 		return True
 
+	async def remove(self, ctx: Interaction, number_in_queue: int):
+		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
+			return False
+
+		if number_in_queue <= 0:
+			await ms.response_message(
+				content=f"Unable to remove element with the number {number_in_queue} in the queue"
+			)
+			return False
+
+		if number_in_queue == 1:
+			await ms.response_message(
+				content="Unable to remove the current track from the queue. Use `next` instead"
+			)
+			return False
+
+		track_deleted = self.queue.remove(number_in_queue - 1)
+		if track_deleted is None:
+			await ms.response_message(
+				content=f"There is no element with the number {number_in_queue} in the queue"
+			)
+			return False
+
+		await ms.response_message(
+			content=f"**{track_deleted.get_full_name()}** has been removed from queue"
+		)
+		return True
+
+	async def goto(self, ctx: Interaction, number_in_queue: int):
+		ms = MessageSender(ctx)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
+			return False
+
+		if number_in_queue <= 0:
+			await ms.response_message(
+				content=f"Unable to go to element with number {number_in_queue} in the queue"
+			)
+			return False
+
+		if number_in_queue == 1:
+			await ms.response_message(
+				content="Unable to remove the current track from the queue. Use `next` instead"
+			)
+			return False
+
+		tracks_removed = self.queue.goto(number_in_queue - 1)
+		if tracks_removed <= 0:
+			await ms.response_message(
+				content=f"There is no element with the number {number_in_queue} in the queue"
+			)
+			return False
+
+		# +1 for current track
+		await ms.response_message(content=f"f{tracks_removed + 1} tracks has been skipped")
+		return True
+
 	async def queue_list(self, ctx: Interaction) -> bool:
 		ms = MessageSender(ctx)
 		queue: str | None = self.queue.queue_list()

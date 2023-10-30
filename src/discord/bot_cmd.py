@@ -141,6 +141,24 @@ class BotCmd:
 
 			await guild_cmd.suffle(ctx)
 
+		@bot.tree.command(name="remove", description="Remove an element in the queue")
+		async def cmd_remove(ctx: Interaction, number_in_queue: int):
+			if (await self.__use_on_guild_only(ctx)) is False:
+				return
+			guild: Guild = ctx.guild  # type: ignore
+			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+
+			await guild_cmd.remove(ctx, number_in_queue)
+
+		@bot.tree.command(name="goto", description="Go to an element in the queue")
+		async def cmd_goto(ctx: Interaction, number_in_queue: int):
+			if (await self.__use_on_guild_only(ctx)) is False:
+				return
+			guild: Guild = ctx.guild  # type: ignore
+			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+
+			await guild_cmd.goto(ctx, number_in_queue)
+
 		@bot.tree.command(name="queue", description="List musique in queue")
 		async def cmd_queue(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
