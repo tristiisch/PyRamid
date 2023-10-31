@@ -15,7 +15,7 @@ function Add-Lib($lib) {
 }
 
 function Create-Docker() {
-	$data = (python src/main.py --git) -Join "`n"
+	$data = (python src/pyramid --git) -Join "`n"
 	$Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 	[System.IO.File]::WriteAllLines(".\git_info.json", $data, $Utf8NoBomEncoding)
 

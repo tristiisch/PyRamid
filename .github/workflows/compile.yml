@@ -8,6 +8,7 @@ on:
       - "src/**/*.py"
       - "requirements.txt"
       - "Dockerfile"
+      - ".github/workflows/compile.yml"
   pull_request:
     branches:
       - "*"
@@ -15,6 +16,7 @@ on:
       - "src/**/*.py"
       - "requirements.txt"
       - "Dockerfile"
+      - ".github/workflows/compile.yml"
 
 jobs:
 
@@ -55,7 +57,7 @@ jobs:
 
       - name: Save version
         run: |
-          FULL_JSON=$(python src/main.py --version)
+          FULL_JSON=$(python src/pyramid --version)
           echo "json=$(echo $FULL_JSON | jq -c)" >> $GITHUB_OUTPUT
           echo "version=$(echo $FULL_JSON | jq -r '.version')" >> $GITHUB_OUTPUT
           echo "commit_id=$(echo $FULL_JSON | jq -r '.git_info.commit_id')" >> $GITHUB_OUTPUT
