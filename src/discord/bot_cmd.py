@@ -15,6 +15,7 @@ from discord.app_commands import Command
 from discord.guild_cmd import GuildCmd
 from tools.environment import Environment
 from tools.information import ProgramInformation
+from tools.message_sender import MessageSender
 
 class BotCmd:
 	def __init__(
@@ -219,7 +220,7 @@ class BotCmd:
 		@bot.tree.command(
 			name="play_multiple", description="Plays the first 10 songs of the search"
 		)
-		async def play_multiple(ctx: Interaction, input: str):
+		async def cmd_play_multiple(ctx: Interaction, input: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			guild: Guild = ctx.guild  # type: ignore
@@ -228,7 +229,7 @@ class BotCmd:
 			await guild_cmd.play_multiple(ctx, input)
 
 		@bot.tree.command(name="play_url", description="Plays track, artist, album or playlist by URL")
-		async def play_url(ctx: Interaction, url: str):
+		async def cmd_play_url(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			guild: Guild = ctx.guild  # type: ignore
@@ -237,13 +238,21 @@ class BotCmd:
 			await guild_cmd.play_url(ctx, url)
 
 		@bot.tree.command(name="play_url_next", description="Plays track, artist, album or playlist by URL next to the current")
-		async def play_url_next(ctx: Interaction, url: str):
+		async def cmd_play_url_next(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
 			await guild_cmd.play_url(ctx, url, at_end=False)
+
+		@bot.tree.command(name="spam", description="Test spam")
+		async def cmd_spam(ctx: Interaction):
+			ms = MessageSender(ctx)
+
+			for i in range(100):
+				await ms.add_message(f"Spam n°{i}")
+			await ctx.response.send_message("Spam ended")
 
 		# @bot.command()
 		# async def ignore_none_slash_cmd():

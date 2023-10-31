@@ -1,14 +1,18 @@
+import asyncio
 import logging
-import tools.utils
+from typing import Callable
+from tools.queue import Queue, QueueItem
 
-from typing import Optional, Sequence
-from discord import AllowedMentions, Embed, Interaction, Message, TextChannel, WebhookMessage
-from discord.ui import View
-from discord.utils import MISSING
+import tools.utils
+from discord import Interaction, Message, TextChannel, WebhookMessage
 from discord.errors import HTTPException
+from discord.utils import MISSING
 
 MAX_MSG_LENGTH = 2000
 
+queue = Queue(1, "MessageSender")
+queue.start()
+queue.register_to_wait_on_exit()
 
 class MessageSender:
 	def __init__(self, ctx: Interaction):
@@ -19,27 +23,19 @@ class MessageSender:
 			raise NotImplementedError("Unable to create a MessageSender without text channel")
 		self.txt_channel: TextChannel = ctx.channel
 		self.last_reponse: Message | WebhookMessage | None = None
+		self.loop: asyncio.AbstractEventLoop = ctx.client.loop
 
+	"""
+	Add a message as a response or follow-up. If no message has been sent yet, the message is sent as a response.
+	Otherwise, the message will be linked to the response (sent as a follow-up message).
+	If the message exceeds the maximum character limit, it will be truncated.
+	"""
 	async def add_message(
+	# def add_message(
 		self,
 		content: str = MISSING,
-		# *,
-		# username: str = MISSING,
-		# avatar_url: Any = MISSING,
-		# tts: bool = MISSING,
-		# ephemeral: bool = MISSING,
-		# file: File = MISSING,
-		# files: Sequence[File] = MISSING,
-		# embed: Embed = MISSING,
-		# embeds: Sequence[Embed] = MISSING,
-		# allowed_mentions: AllowedMentions = MISSING,
-		# view: View = MISSING,
-		# thread: Snowflake = MISSING,
-		# thread_name: str = MISSING,
-		# wait: Literal[True] = True,
-		# suppress_embeds: bool = MISSING,
-		# silent: bool = MISSING,
-	):
+		callback: Callable | None = None
+	) -> None: 
 		if content != MISSING and content != "":
 			new_content, is_used = tools.utils.substring_with_end_msg(
 				content, MAX_MSG_LENGTH, "{} more characters..."
@@ -48,37 +44,25 @@ class MessageSender:
 				content = new_content
 
 		if not self.__ctx.response.is_done():
-			msg = await self.txt_channel.send(content)
+			# msg = await self.txt_channel.send(content)
+			queue.add(QueueItem("Send reponse", self.txt_channel.send, self.loop, callback, content=content))
 		else:
-			msg = await self.__ctx.followup.send(
-				content,
-				# username=username,
-				# avatar_url=avatar_url,
-				# tts=tts,
-				# ephemeral=ephemeral,
-				# file=file,
-				# files=files,
-				# embed=embed,
-				# embeds=embeds,
-				# allowed_mentions=allowed_mentions,
-				# view=view,
-				# thread=thread,
-				# thread_name=thread_name,
-				wait=True,
-				# suppress_embeds=suppress_embeds,
-				# silent=silent,
-			)
-		return msg
+			# msg = await self.__ctx.followup.send(
+			# 	content,
+			# 	wait=True,
+			# )
+			queue.add(QueueItem("Send followup", self.__ctx.followup.send, self.loop, callback, content=content, wait=True))
+		# return msg
 
+	"""
+	Send a message as a response. If the response has already been sent, it will be modified.
+	If it is not possible to modify it, a new message will be sent as a follow-up.
+	If the message exceeds the maximum character limit, it will be truncated.
+	"""
 	async def response_message(
+	# def response_message(
 		self,
 		content: str = MISSING,
-		# *,
-		# embeds: Sequence[Embed] = MISSING,
-		# embed: Optional[Embed] = MISSING,
-		# attachments: Sequence[Union[Attachment, File]] = MISSING,
-		# view: Optional[View] = MISSING,
-		# allowed_mentions: Optional[AllowedMentions] = MISSING,
 	):
 		if content != MISSING and content != "":
 			new_content, is_used = tools.utils.substring_with_end_msg(
@@ -92,29 +76,28 @@ class MessageSender:
 
 		elif self.__ctx.response.is_done():
 			try:
-				await self.__ctx.edit_original_response(
-					content=content,
-					# embeds=embeds,
-					# embed=embed,
-					# view=view,
-					# allowed_mentions=allowed_mentions,
-				)
+				# await self.__ctx.edit_original_response(
+				# 	content=content,
+				# )
+				queue.add(QueueItem("Edit response", self.__ctx.edit_original_response, self.loop, content=content))
 			except HTTPException as err:
 				if err.code == 50027: # 401 Unauthorized : Invalid Webhook Token
 					logging.warning("Unable to modify original response, send message instead", exc_info=True)
-					self.last_reponse = await self.add_message(content)
+					# self.last_reponse = await self.add_message(content)
+					await self.add_message(content, lambda msg: setattr(self, 'last_response', msg))
 				else:
 					raise err
 		else:
-			await self.__ctx.response.send_message(
-				content=content,
-				# embeds=embeds,
-				# embed=embed,  # type: ignore
-				# view=view,  # type: ignore
-				# allowed_mentions=allowed_mentions,  # type: ignore
-			)  # type: ignore
+			# await self.__ctx.response.send_message(
+			# 	content=content,
+			# )
+			queue.add(QueueItem("Send followup as response", self.__ctx.response.send_message, self.loop, content=content))
 
+	"""
+	Send a message with markdown code formatting. If the character limit is exceeded, send multiple messages.
+	"""
 	async def add_code_message(self, content: str, prefix=None, suffix=None):
+	# def add_code_message(self, content: str, prefix=None, suffix=None):
 		max_length = MAX_MSG_LENGTH
 		if prefix is None:
 			prefix = "```"
@@ -132,7 +115,11 @@ class MessageSender:
 		if not self.__ctx.response.is_done():
 			first_substring = next(substrings_generator, None)
 			if first_substring is not None:
-				await self.__ctx.response.send_message(content=f"```{first_substring}```")
+				first_substring_formatted = f"```{first_substring}```"
+				# await self.__ctx.response.send_message(content=first_substring_formatted)
+				queue.add(QueueItem("Send code as response", self.__ctx.response.send_message, self.loop, content=first_substring_formatted))
 
 		for substring in substrings_generator:
-			await self.__ctx.followup.send(content=f"```{substring}```")
+			substring_formatted = f"```{substring}```"
+			# await self.__ctx.followup.send(content=substring_formatted)
+			queue.add(QueueItem("Send code as followup", self.__ctx.followup.send, self.loop, content=substring_formatted))

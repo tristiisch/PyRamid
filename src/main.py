@@ -1,7 +1,8 @@
 import logging
 import sys
 import argparse
-from test_dev import TestDev
+from tools.test_dev import TestDev
+from tools.queue import Queue
 import tools.utils
 
 from datetime import datetime
@@ -76,6 +77,9 @@ class Main:
 		# Connect bot to Discord servers
 		discord_bot.start()
 
+	def stop(self):
+		Queue.wait_for_end(5)
+
 
 main = Main()
 
@@ -88,3 +92,4 @@ main.clean_data()
 test_dev = TestDev(main._config, main.logger)
 # test_dev.test_deezer()
 main.init()
+main.stop()
