@@ -2,15 +2,15 @@ import logging
 import logging.handlers
 import os
 import sys
+
 import coloredlogs
-import tools.utils
+import tools.utils as tools
+from data.functional.application_info import ApplicationInfo
+from data.environment import Environment
 
-from tools.environment import Environment
-from tools.information import ProgramInformation
 
-
-class Logger:
-	def __init__(self, info: ProgramInformation, logs_dir, log_filename, error_filename):
+class LogsHandler:
+	def __init__(self, info: ApplicationInfo, logs_dir, log_filename, error_filename):
 		self.__info = info
 		self.__logs_dir = logs_dir
 		self.__log_filename = log_filename
@@ -31,7 +31,7 @@ class Logger:
 
 	def log_to_file(self):
 		log_filename = os.path.join(self.__logs_dir, self.__log_filename)
-		tools.utils.create_parent_directories(log_filename)
+		tools.create_parent_directories(log_filename)
 
 		file_handler = logging.handlers.RotatingFileHandler(
 			filename=log_filename,

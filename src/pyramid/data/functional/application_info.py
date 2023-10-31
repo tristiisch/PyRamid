@@ -2,10 +2,10 @@ import json
 import platform
 import subprocess
 
-from tools.git import GitInfo
+from data.functional.git_info import GitInfo
 
 
-class ProgramInformation:
+class ApplicationInfo:
 	def __init__(self):
 		self.name = "pyramid"
 		self.os = get_os().lower()

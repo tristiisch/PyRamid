@@ -1,16 +1,17 @@
 import asyncio
-from enum import Enum
 import logging
 import re
 import time
+from enum import Enum
 from typing import List
-import deezer
 import requests
 
+import deezer
 from deezer import Client, PaginatedList
 from deezer.client import DeezerErrorResponse
-from tools.abc import ASearch
-from track.track import TrackMinimalDeezer
+
+from data.track import TrackMinimalDeezer
+from data.a_search import ASearch
 
 
 class DeezerSearch(ASearch):
@@ -73,15 +74,18 @@ class DeezerSearch(ASearch):
 		real_tracks: list[TrackMinimalDeezer] = []
 		unfindable_track: list[TrackMinimalDeezer] = []
 
-		for t in playlist_tracks: 
-
+		for t in playlist_tracks:
 			track = self.search_exact_track(t.artist.name, None, t.title)
 			# logging.info("DEBUG song '%s' - '%s' - '%s'", t.artist.name, t.title, t.album.title)
 			if track is None:
 				if not t.readable:
-					logging.warning("Unavailable track in playlist '%s' - '%s'", t.artist.name, t.title)
+					logging.warning(
+						"Unavailable track in playlist '%s' - '%s'", t.artist.name, t.title
+					)
 				else:
-					logging.warning("Unknown track searched in playlist '%s' - '%s'", t.artist.name, t.title)
+					logging.warning(
+						"Unknown track searched in playlist '%s' - '%s'", t.artist.name, t.title
+					)
 				unfindable_track.append(TrackMinimalDeezer(t))
 				continue
 			real_tracks.append(track)
@@ -164,7 +168,7 @@ class DeezerSearch(ASearch):
 			)
 			if not search_results:
 				return None
-			track = search_results[0] # TODO Check if the first one is the most appropriate
+			track = search_results[0]  # TODO Check if the first one is the most appropriate
 			return TrackMinimalDeezer(track)
 
 		except DeezerErrorResponse as err:

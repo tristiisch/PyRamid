@@ -1,35 +1,36 @@
-import traceback
 import logging
-import discord
-
-from typing import Dict
+import traceback
 from logging import Logger
-from discord.ext.commands import Context, Bot
-from discord.ext.commands.errors import CommandNotFound, MissingRequiredArgument, MissingPermissions
+from typing import Dict
+
+import discord
 from discord import (
 	Guild,
 	PrivilegedIntentsRequired,
 )
-from deezer_api.downloader import DeezerDownloader
-from deezer_api.search import DeezerSearch
-from discord.bot_cmd import BotCmd
-from discord.bot_listener import BotListener
-from spotify.search import SpotifySearch
-from discord.guild_cmd import GuildCmd
-from discord.guild_queue import GuildQueue
-from tools.config import Config
-from tools.environment import Environment
-from tools.information import ProgramInformation
-from tools.guild_data import GuildData
-from tools.abc import ASearch
+from discord.ext.commands import Bot, Context
+from discord.ext.commands.errors import CommandNotFound, MissingPermissions, MissingRequiredArgument
+
+from data.functional.application_info import ApplicationInfo
+from data.a_search import ASearch
+from data.environment import Environment
+from data.guild_data import GuildData
+from connector.deezer.downloader import DeezerDownloader
+from connector.deezer.search import DeezerSearch
+from connector.discord.bot_cmd import BotCmd
+from connector.discord.bot_listener import BotListener
+from connector.discord.guild_cmd import GuildCmd
+from connector.discord.guild_queue import GuildQueue
+from connector.spotify.search import SpotifySearch
+from tools.configuration import Configuration
 
 
 class DiscordBot:
 	def __init__(
 		self,
 		logger: logging.Logger,
-		information: ProgramInformation,
-		config: Config,
+		information: ApplicationInfo,
+		config: Configuration,
 		deezer_dl: DeezerDownloader,
 	):
 		self.__logger = logger

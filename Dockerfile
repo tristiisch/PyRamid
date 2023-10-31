@@ -21,4 +21,4 @@ RUN pip install -r requirements.txt
 RUN apk update
 RUN apk add build-base libffi-dev openssl-dev libgcc python3-dev ffmpeg libsodium opus-dev
 
-CMD ["python", "src/main.py"]
+CMD ["python", "src/pyramid"]

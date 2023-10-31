@@ -1,12 +1,13 @@
 from logging import Logger
-from tools.config import Config
-from tools.git import GitInfo
-from spotify.search import SpotifySearch
-from deezer_api.search import DeezerSearch
+
+from connector.deezer.search import DeezerSearch
+from data.functional.git_info import GitInfo
+from tools.configuration import Configuration
+from connector.spotify.search import SpotifySearch
 
 
 class TestDev:
-	def __init__(self, config: Config, logger: Logger):
+	def __init__(self, config: Configuration, logger: Logger):
 		self._config = config
 		self.logger = logger
 

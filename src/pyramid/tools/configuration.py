@@ -1,10 +1,11 @@
 import os
+
 import yaml
 
-from tools.environment import Environment
+from data.environment import Environment
 
 
-class Config:
+class Configuration:
 	def __init__(self):
 		self.deezer_arl: str
 		self.deezer_folder: str

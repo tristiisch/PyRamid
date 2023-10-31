@@ -1,10 +1,10 @@
 import asyncio
-from concurrent.futures import CancelledError
 import inspect
 import logging
-from collections import deque
-from threading import Event, Lock, Thread
 import traceback
+from collections import deque
+from concurrent.futures import CancelledError
+from threading import Event, Lock, Thread
 from typing import Any, Callable, Deque, List
 
 
@@ -49,7 +49,7 @@ def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):
 							"Exception in thread %d :\nUnable to call %s.%s cause the loop is closed",
 							thread_id,
 							item.func.__module__,
-							item.func.__qualname__
+							item.func.__qualname__,
 						)
 						continue
 					# Async func in loop open
@@ -66,9 +66,12 @@ def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):
 			if item.func_sucess is not None:
 				item.func_sucess(result)
 		except CancelledError:
-			logging.warning("Exception in thread %d :\nTask %s.%s has been cancelled", thread_id,
-							item.func.__module__,
-							item.func.__qualname__)
+			logging.warning(
+				"Exception in thread %d :\nTask %s.%s has been cancelled",
+				thread_id,
+				item.func.__module__,
+				item.func.__qualname__,
+			)
 			continue
 
 		except Exception as err:
@@ -80,6 +83,7 @@ def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):
 					thread_id,
 					"".join(traceback.format_exception(type(err), err, err.__traceback__)),
 				)
+
 
 class Queue:
 	all_queue = deque()

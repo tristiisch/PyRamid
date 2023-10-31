@@ -7,11 +7,11 @@ from discord import (
 	Status,
 )
 from discord.ext.commands import Bot
-from tools.information import ProgramInformation
+from data.functional.application_info import ApplicationInfo
 
 
 class BotListener:
-	def __init__(self, bot: Bot, logger: Logger, info: ProgramInformation):
+	def __init__(self, bot: Bot, logger: Logger, info: ApplicationInfo):
 		self.__bot = bot
 		self.__logger = logger
 		self.__info = info

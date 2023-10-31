@@ -1,8 +1,8 @@
 import discord
-
 from discord import Embed, Locale, Message, TextChannel
-from track.track import Track
-from track.tracklist import TrackList
+
+from data.track import Track
+from data.tracklist import TrackList
 
 
 class MusicPlayerInterface:

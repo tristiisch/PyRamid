@@ -1,7 +1,7 @@
 import abc
-
 from abc import ABC
-from track.track import TrackMinimal
+
+from data.track import TrackMinimal
 
 
 class ASearch(ABC):

@@ -1,13 +1,14 @@
 import asyncio
 import sys
-import discord
 
+import discord
 from discord import VoiceChannel, VoiceClient
-from discord.music_player_interface import MusicPlayerInterface
-from track.track import Track
+
+from data.track import Track
+from data.tracklist import TrackList
+from data.guild_data import GuildData
+from connector.discord.music_player_interface import MusicPlayerInterface
 from tools.message_sender import MessageSender
-from tools.guild_data import GuildData
-from track.tracklist import TrackList
 
 
 class GuildQueue:
@@ -134,7 +135,7 @@ class GuildQueue:
 		if vc is None or not tl.shuffle(vc.is_playing() or vc.is_paused()):
 			return False
 		return True
-	
+
 	def remove(self, index: int) -> Track | None:
 		vc: VoiceClient = self.data.voice_client
 		tl: TrackList = self.data.track_list
@@ -142,7 +143,7 @@ class GuildQueue:
 			return None
 
 		return tl.remove(index)
-	
+
 	def goto(self, index: int) -> int:
 		vc: VoiceClient = self.data.voice_client
 		tl: TrackList = self.data.track_list

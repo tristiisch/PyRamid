@@ -1,8 +1,8 @@
 import spotipy
 
 from spotipy.oauth2 import SpotifyClientCredentials
-from tools.abc import ASearch
-from track.track import TrackMinimalSpotify
+from data.track import TrackMinimalSpotify
+from data.a_search import ASearch
 
 
 class SpotifySearch(ASearch):

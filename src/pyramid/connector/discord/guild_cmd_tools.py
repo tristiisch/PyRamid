@@ -1,10 +1,11 @@
 from discord import Member, User, VoiceChannel, VoiceClient, VoiceState
-from deezer_api.downloader import DeezerDownloader
-from discord.guild_queue import GuildQueue
-from tools.guild_data import GuildData
+
+from data.track import Track, TrackMinimal
+from data.guild_data import GuildData
+from data.tracklist import TrackList
+from connector.deezer.downloader import DeezerDownloader
+from connector.discord.guild_queue import GuildQueue
 from tools.message_sender import MessageSender
-from track.track import Track, TrackMinimal
-from track.tracklist import TrackList
 
 
 class GuildCmdTools:
@@ -63,7 +64,7 @@ class GuildCmdTools:
 		voice_channel: VoiceChannel,
 		tracks: list[TrackMinimal],
 		tracks_unfindable: list[TrackMinimal] | None = None,
-		at_end=True
+		at_end=True,
 	) -> bool:
 		tl: TrackList = self.data.track_list
 
@@ -96,7 +97,8 @@ class GuildCmdTools:
 				cant_dl += 1
 				continue
 			if (
-				at_end is True and not tl.add_track(track_downloaded)
+				at_end is True
+				and not tl.add_track(track_downloaded)
 				or not tl.add_track_after(track_downloaded)
 			):
 				await ms.add_message(
@@ -133,7 +135,8 @@ class GuildCmdTools:
 			return False
 
 		if (
-			at_end is True and not tl.add_track(track_downloaded)
+			at_end is True
+			and not tl.add_track(track_downloaded)
 			or not tl.add_track_after(track_downloaded)
 		):
 			await ms.add_message(content=f"**{track.get_full_name()}** can't be add to the queue.")

@@ -50,3 +50,10 @@ function Format-Code() {
 	ruff check --fix-only --unsafe-fixes --show-fixes .\src
 	ruff format .\src
 }
+
+function Clean-Python-Cache() {
+	$Path = "./src"
+	$DirToDelete = Get-ChildItem -Path $Path -Recurse -Directory | Where-Object { $_.Name -eq "__pycache__" }
+	$DirToDelete | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
+	Write-Host "$($DirToDelete.Length) directories of Python cache have been deleted."
+}

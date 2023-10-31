@@ -1,15 +1,14 @@
 from logging import Logger
-from discord.guild_cmd_tools import GuildCmdTools
-import tools.utils
-import tools.format_list
 
 from discord import Interaction, VoiceChannel
-from deezer_api.downloader import DeezerDownloader
-from discord.guild_queue import GuildQueue
-from track.track import TrackMinimal
+
+import data.tracklist as utils_list_track
+from data.guild_data import GuildData
+from data.track import TrackMinimal
+from connector.deezer.downloader import DeezerDownloader
+from connector.discord.guild_cmd_tools import GuildCmdTools
+from connector.discord.guild_queue import GuildQueue
 from tools.message_sender import MessageSender
-from tools.guild_data import GuildData
-from track.tracklist import TrackList
 
 
 class GuildCmd(GuildCmdTools):
@@ -203,7 +202,7 @@ class GuildCmd(GuildCmdTools):
 			await ms.response_message(content=f"**{input}** not found.")
 			return False
 
-		hsa = tools.format_list.tracks(result)
+		hsa = utils_list_track.to_str.tracks(result)
 		await ms.add_code_message(hsa, prefix="Here are the results of your search :")
 		return True
 

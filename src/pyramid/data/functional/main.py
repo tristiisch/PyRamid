@@ -1,22 +1,21 @@
+import argparse
 import logging
 import sys
-import argparse
-from tools.test_dev import TestDev
-from tools.queue import Queue
-import tools.utils
-
 from datetime import datetime
-from deezer_api.downloader import DeezerDownloader
-from discord.bot import DiscordBot
-from tools.config import Config
-from tools.information import ProgramInformation
-from tools.logs import Logger
+
+import tools.utils as tools
+from data.functional.application_info import ApplicationInfo
+from connector.deezer.downloader import DeezerDownloader
+from connector.discord.bot import DiscordBot
+from tools.configuration import Configuration
+from tools.logs_handler import LogsHandler
+from tools.queue import Queue
 
 
 class Main:
 	def __init__(self):
 		# Program information
-		self._info = ProgramInformation()
+		self._info = ApplicationInfo()
 
 	# Argument management
 	def args(self):
@@ -42,11 +41,11 @@ class Main:
 		log_dir = "./logs"
 		log_name = f"./{current_datetime.strftime('%Y_%m_%d %H_%M')}.log"
 
-		self._logs_handler = Logger(self._info, log_dir, log_name, "error.log")
+		self._logs_handler = LogsHandler(self._info, log_dir, log_name, "error.log")
 		self.logger = logging.getLogger()
 
 		# Deletion of log files over 10
-		tools.utils.keep_latest_files(log_dir, 10, "error")
+		tools.keep_latest_files(log_dir, 10, "error")
 
 	# Logs management
 	def git_info(self):
@@ -55,14 +54,14 @@ class Main:
 
 	def config(self):
 		# Config load
-		self._config = Config()
+		self._config = Configuration()
 		self._config.load()
 
 		self._logs_handler.set_log_level(self._config.mode)
 
 	def clean_data(self):
 		# Songs folder clear
-		tools.utils.clear_directory(self._config.deezer_folder)
+		tools.clear_directory(self._config.deezer_folder)
 
 	def init(self):
 		# Create Deezer player instance
@@ -79,17 +78,3 @@ class Main:
 
 	def stop(self):
 		Queue.wait_for_end(5)
-
-
-main = Main()
-
-main.args()
-main.logs()
-main.git_info()
-main.config()
-main.clean_data()
-
-test_dev = TestDev(main._config, main.logger)
-# test_dev.test_deezer()
-main.init()
-main.stop()

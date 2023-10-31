@@ -8,7 +8,7 @@
             "name": "Python: Main",
             "type": "python",
             "request": "launch",
-            "program": "src/main.py",
+            "program": "src/pyramid",
             "console": "integratedTerminal",
             "justMyCode": false
         },

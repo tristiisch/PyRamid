@@ -1,21 +1,16 @@
 import math
-import discord
-
-from typing import Callable, List
 from logging import Logger
-from discord.user import BaseUser
-from discord.ext.commands import Bot
-from discord import (
-	AppInfo,
-	ClientUser,
-	Guild,
-	Interaction,
-)
+from typing import Callable, List
+
+from discord import AppInfo, ClientUser, Color, Embed, Guild, Interaction
 from discord.app_commands import Command
-from discord.guild_cmd import GuildCmd
-from tools.environment import Environment
-from tools.information import ProgramInformation
+from discord.ext.commands import Bot
+from discord.user import BaseUser
+from connector.discord.guild_cmd import GuildCmd
+from data.environment import Environment
+from data.functional.application_info import ApplicationInfo
 from tools.message_sender import MessageSender
+
 
 class BotCmd:
 	def __init__(
@@ -23,7 +18,7 @@ class BotCmd:
 		bot: Bot,
 		get_guild_cmd: Callable[[Guild], GuildCmd],
 		logger: Logger,
-		info: ProgramInformation,
+		info: ApplicationInfo,
 		environment: Environment,
 	):
 		self.__bot = bot
@@ -49,7 +44,7 @@ class BotCmd:
 				self.__logger.warning("Unable to get self user instance")
 
 			info = self.__info
-			embed = discord.Embed(title=info.name.capitalize(), color=discord.Color.gold())
+			embed = Embed(title=info.name.capitalize(), color=Color.gold())
 			if bot_user is not None and bot_user.avatar is not None:
 				embed.set_thumbnail(url=bot_user.avatar.url)
 
@@ -92,7 +87,7 @@ class BotCmd:
 		async def cmd_help(ctx: Interaction):
 			all_commands: List[Command] = bot.tree.get_commands() # type: ignore
 			commands_dict = {command.name: command.description for command in all_commands}
-			embed_template = discord.Embed(title="List of every commands available", color=discord.Color.gold())
+			embed_template = Embed(title="List of every commands available", color=Color.gold())
 			max_embed = 10
 			max_fields = 25
 			embeds = []

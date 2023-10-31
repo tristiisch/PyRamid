@@ -1,8 +1,7 @@
-import logging
-import deezer.resources
-import tools.utils
-
 from datetime import datetime
+
+import deezer.resources
+import tools.utils as tools
 
 
 class TrackMinimal:
@@ -90,5 +89,5 @@ class Track(TrackMinimal):
 		self.file_local: str = file_path
 
 	def get_date(self, locale: str = "en-US") -> str:
-		date_formatted = tools.utils.format_date_by_country(self.date, locale)
+		date_formatted = tools.format_date_by_country(self.date, locale)
 		return date_formatted

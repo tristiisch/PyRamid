@@ -1,9 +1,8 @@
 import os
 import random
-import tools.format_list
-import tools.utils
 
-from track.track import Track
+import tools.utils as tools
+from data.track import Track, TrackMinimal
 
 
 class TrackList:
@@ -54,7 +53,7 @@ class TrackList:
 		track_to_delete = self.__tracks[index]
 		del self.__tracks[index]
 		return track_to_delete
-	
+
 	def remove_to(self, index: int) -> int:
 		length = len(self.__tracks)
 		if length <= index or index <= 0:
@@ -79,7 +78,7 @@ class TrackList:
 		self.__tracks.pop(0)
 
 	def get_songs_str(self) -> str:
-		return tools.format_list.tracks(self.__tracks)
+		return to_str(self.__tracks)
 
 	def get_length(self) -> str:
 		length = len(self.__tracks)
@@ -89,4 +88,14 @@ class TrackList:
 			return f"{length} track"
 
 	def get_duration(self) -> str:
-		return tools.utils.time_to_duration(sum(t.duration_seconds for t in self.__tracks))
+		return tools.time_to_duration(sum(t.duration_seconds for t in self.__tracks))
+
+
+def to_str(list_of_track: list[TrackMinimal] | list[Track]) -> str:
+	data = [
+		[i + 1, track.author_name, track.name, track.album_title]
+		for i, track in enumerate(list_of_track)
+	]
+	columns = ["n°", "Author", "Title", "Album"]
+	hsa = tools.human_string_array(data, columns)
+	return hsa
