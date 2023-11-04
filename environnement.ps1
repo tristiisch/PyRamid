@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
-$Name = "pyramid-local"
-$Tag = "latest"
+$LocalName = "pyramid-local"
+$LocalTag = "latest"
 
 $RemoteName="tristiisch/pyramid"
 $RemoteTag="dev"
@@ -19,13 +19,13 @@ function Create-Docker() {
 	$Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 	[System.IO.File]::WriteAllLines(".\git_info.json", $data, $Utf8NoBomEncoding)
 
-	docker build -t ${Name}:${Tag} .
+	docker build -t ${LocalName}:${LocalTag} .
 
 	Remove-Item -r git_info.json
 }
 
 function Run-Docker() {
-	$containerName = $Name
+	$containerName = $LocalName
 	# $volume = "config.yml:/app/config.yml"
 
 	$existingContainer = docker ps -a --format '{{.Names}}' | Where-Object {$_ -eq $containerName}
@@ -34,12 +34,12 @@ function Run-Docker() {
 		# docker stop -t 5 $containerName
 		docker rm -v -f $containerName
 	}
-	docker run --name $Name --mount type=bind,source=$($(Get-Item .).FullName)\config.yml,target=/app/config.yml -it ${Name}:${Tag}
+	docker run --name $LocalName --mount type=bind,source=$($(Get-Item .).FullName)\config.yml,target=/app/config.yml -it ${LocalName}:${LocalTag}
 }
 
 function Push-Docker() {
-	docker tag ${Name}:${Tag} ${RemoteName}/pyramid:${Tag}
-	docker push ${RemoteName}/pyramid:${Tag}
+	docker tag ${LocalName}:${LocalTag} ${RemoteName}:${RemoteTag}
+	docker push ${RemoteName}:${RemoteTag}
 }
 
 function Clean-Docker-Image() {
