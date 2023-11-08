@@ -1,5 +1,6 @@
 import math
 from logging import Logger
+import time
 from typing import Callable, List
 
 from discord import AppInfo, ClientUser, Color, Embed, Guild, Interaction
@@ -10,7 +11,7 @@ from connector.discord.guild_cmd import GuildCmd
 from data.environment import Environment
 from data.functional.application_info import ApplicationInfo
 from tools.message_sender_queued import MessageSenderQueued
-from tools.message_sender import MessageSender
+import tools.utils
 
 
 class BotCmd:
@@ -21,12 +22,14 @@ class BotCmd:
 		logger: Logger,
 		info: ApplicationInfo,
 		environment: Environment,
+		started: float,
 	):
 		self.__bot = bot
 		self.__get_guild_cmd = get_guild_cmd
 		self.__logger = logger
 		self.__info = info
 		self.__environment = environment
+		self.__started = started
 
 	def register(self):
 		bot = self.__bot
@@ -79,6 +82,11 @@ class BotCmd:
 			embed.add_field(
 				name="Environment",
 				value=self.__environment.name.capitalize(),
+				inline=True,
+			)
+			embed.add_field(
+				name="Uptime",
+				value=tools.utils.time_to_duration(int(round(time.time() - self.__started))),
 				inline=True,
 			)
 

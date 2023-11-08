@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 from datetime import datetime
+from threading import Thread
 
 import tools.utils as tools
 from data.functional.application_info import ApplicationInfo
@@ -73,8 +74,15 @@ class Main:
 		)
 		# Create bot
 		discord_bot.create()
+
 		# Connect bot to Discord servers
-		discord_bot.start()
+		thread = Thread(
+			name="Discord",
+			target=discord_bot.start,
+			daemon=True,
+		)
+		thread.start()
+		thread.join()
 
 	def stop(self):
 		Queue.wait_for_end(5)
