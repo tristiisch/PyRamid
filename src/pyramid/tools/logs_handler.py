@@ -79,7 +79,7 @@ class LogsHandler:
 	def set_log_level(self, mode: Environment):
 		if mode == Environment.PRODUCTION:
 			self.logger.setLevel("INFO")
-			coloredlogs.set_level("INFO")
 		else:
 			self.logger.setLevel("DEBUG")
-			coloredlogs.set_level("DEBUG")
+			# coloredlogs.set_level("DEBUG")
+		coloredlogs.set_level("INFO")

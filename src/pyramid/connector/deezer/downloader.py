@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import os
+import time
 from typing import Callable
 
 import pydeezer.util
@@ -10,6 +11,8 @@ from pydeezer.constants import track_formats
 from pydeezer.exceptions import LoginError
 
 from data.track import Track, TrackMinimal
+from connector.deezer.downloader_progress_bar import DownloaderProgressBar
+from urllib3.exceptions import MaxRetryError
 
 
 class DeezerDownloader:
@@ -77,9 +80,14 @@ class DeezerDownloader:
 				False,  # lyrics
 				", ",  # separator for multiple artists
 				False,  # show messages
-				None,  # Custom progress bar
+				DownloaderProgressBar(),  # Custom progress bar
 			)
 			return True
+		except MaxRetryError:
+			track = Track(track_info["DATA"], None)
+			logging.warning("Downloader MaxRetryError %s", track)
+			time.sleep(5)
+			return self.__dl_track(func, track_info, file_name)
 		except Exception:
 			track = Track(track_info["DATA"], None)
 			logging.warning("Unable to dl track %s", track, exc_info=True)
