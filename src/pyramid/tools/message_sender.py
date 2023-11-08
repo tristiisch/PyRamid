@@ -6,13 +6,12 @@ import tools.utils as tools
 from discord import Interaction, Message, TextChannel, WebhookMessage
 from discord.errors import HTTPException
 from discord.utils import MISSING
-from tools.queue import Queue, QueueItem
 
 MAX_MSG_LENGTH = 2000
 
-queue = Queue(1, "MessageSender")
-queue.start()
-queue.register_to_wait_on_exit()
+# queue = Queue(1, "MessageSender")
+# queue.start()
+# queue.register_to_wait_on_exit()
 
 
 class MessageSender:
@@ -37,7 +36,8 @@ class MessageSender:
 		self,
 		content: str = MISSING,
 		callback: Callable | None = None,
-	) -> None:
+	# ) -> None:
+	) -> Message:
 		if content != MISSING and content != "":
 			new_content, is_used = tools.substring_with_end_msg(
 				content, MAX_MSG_LENGTH, "{} more characters..."
@@ -46,28 +46,28 @@ class MessageSender:
 				content = new_content
 
 		if not self.__ctx.response.is_done():
-			# msg = await self.txt_channel.send(content)
-			queue.add(
-				QueueItem(
-					"Send reponse", self.txt_channel.send, self.loop, callback, content=content
-				)
-			)
-		else:
-			# msg = await self.__ctx.followup.send(
-			# 	content,
-			# 	wait=True,
+			msg = await self.txt_channel.send(content)
+			# queue.add(
+			# 	QueueItem(
+			# 		"Send reponse", self.txt_channel.send, self.loop, callback, content=content
+			# 	)
 			# )
-			queue.add(
-				QueueItem(
-					"Send followup",
-					self.__ctx.followup.send,
-					self.loop,
-					callback,
-					content=content,
-					wait=True,
-				)
+		else:
+			msg = await self.__ctx.followup.send(
+				content,
+				wait=True,
 			)
-		# return msg
+			# queue.add(
+			# 	QueueItem(
+			# 		"Send followup",
+			# 		self.__ctx.followup.send,
+			# 		self.loop,
+			# 		callback,
+			# 		content=content,
+			# 		wait=True,
+			# 	)
+			# )
+		return msg
 
 	"""
 	Send a message as a response. If the response has already been sent, it will be modified.
@@ -92,17 +92,17 @@ class MessageSender:
 
 		elif self.__ctx.response.is_done():
 			try:
-				# await self.__ctx.edit_original_response(
-				# 	content=content,
-				# )
-				queue.add(
-					QueueItem(
-						"Edit response",
-						self.__ctx.edit_original_response,
-						self.loop,
-						content=content,
-					)
+				await self.__ctx.edit_original_response(
+					content=content,
 				)
+				# queue.add(
+				# 	QueueItem(
+				# 		"Edit response",
+				# 		self.__ctx.edit_original_response,
+				# 		self.loop,
+				# 		content=content,
+				# 	)
+				# )
 			except HTTPException as err:
 				if err.code == 50027:  # 401 Unauthorized : Invalid Webhook Token
 					logging.warning(
@@ -113,17 +113,17 @@ class MessageSender:
 				else:
 					raise err
 		else:
-			# await self.__ctx.response.send_message(
-			# 	content=content,
-			# )
-			queue.add(
-				QueueItem(
-					"Send followup as response",
-					self.__ctx.response.send_message,
-					self.loop,
-					content=content,
-				)
+			await self.__ctx.response.send_message(
+				content=content,
 			)
+			# queue.add(
+			# 	QueueItem(
+			# 		"Send followup as response",
+			# 		self.__ctx.response.send_message,
+			# 		self.loop,
+			# 		content=content,
+			# 	)
+			# )
 
 	"""
 	Send a message with markdown code formatting. If the character limit is exceeded, send multiple messages.
@@ -149,24 +149,24 @@ class MessageSender:
 			first_substring = next(substrings_generator, None)
 			if first_substring is not None:
 				first_substring_formatted = f"```{first_substring}```"
-				# await self.__ctx.response.send_message(content=first_substring_formatted)
-				queue.add(
-					QueueItem(
-						"Send code as response",
-						self.__ctx.response.send_message,
-						self.loop,
-						content=first_substring_formatted,
-					)
-				)
+				await self.__ctx.response.send_message(content=first_substring_formatted)
+				# queue.add(
+				# 	QueueItem(
+				# 		"Send code as response",
+				# 		self.__ctx.response.send_message,
+				# 		self.loop,
+				# 		content=first_substring_formatted,
+				# 	)
+				# )
 
 		for substring in substrings_generator:
 			substring_formatted = f"```{substring}```"
-			# await self.__ctx.followup.send(content=substring_formatted)
-			queue.add(
-				QueueItem(
-					"Send code as followup",
-					self.__ctx.followup.send,
-					self.loop,
-					content=substring_formatted,
-				)
-			)
+			await self.__ctx.followup.send(content=substring_formatted)
+			# queue.add(
+			# 	QueueItem(
+			# 		"Send code as followup",
+			# 		self.__ctx.followup.send,
+			# 		self.loop,
+			# 		content=substring_formatted,
+			# 	)
+			# )

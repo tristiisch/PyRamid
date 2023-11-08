@@ -24,8 +24,7 @@ class GuildCmd(GuildCmdTools):
 		self.data = guild_data
 		self.queue = guild_queue
 
-	async def play(self, ctx: Interaction, input: str, at_end=True) -> bool:
-		ms = MessageSender(ctx)
+	async def play(self, ms: MessageSender, ctx: Interaction, input: str, at_end=True) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
 			return False
@@ -39,8 +38,7 @@ class GuildCmd(GuildCmdTools):
 
 		return await self._execute_play(ms, voice_channel, track, at_end=at_end)
 
-	async def stop(self, ctx: Interaction) -> bool:
-		ms = MessageSender(ctx)
+	async def stop(self, ms: MessageSender, ctx: Interaction) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
@@ -53,8 +51,7 @@ class GuildCmd(GuildCmdTools):
 		await ms.response_message(content="Music stop")
 		return True
 
-	async def pause(self, ctx: Interaction) -> bool:
-		ms = MessageSender(ctx)
+	async def pause(self, ms: MessageSender, ctx: Interaction) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
@@ -66,8 +63,7 @@ class GuildCmd(GuildCmdTools):
 		await ms.response_message(content="Music paused")
 		return True
 
-	async def resume(self, ctx: Interaction) -> bool:
-		ms = MessageSender(ctx)
+	async def resume(self, ms: MessageSender, ctx: Interaction) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
@@ -79,8 +75,7 @@ class GuildCmd(GuildCmdTools):
 		await ms.response_message(content="Music resume")
 		return True
 
-	async def next(self, ctx: Interaction) -> bool:
-		ms = MessageSender(ctx)
+	async def next(self, ms: MessageSender, ctx: Interaction) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
@@ -101,8 +96,7 @@ class GuildCmd(GuildCmdTools):
 		await ms.response_message(content="Skip musique")
 		return True
 
-	async def suffle(self, ctx: Interaction):
-		ms = MessageSender(ctx)
+	async def suffle(self, ms: MessageSender, ctx: Interaction):
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
@@ -114,8 +108,7 @@ class GuildCmd(GuildCmdTools):
 		await ms.response_message(content="The queue has been shuffled.")
 		return True
 
-	async def remove(self, ctx: Interaction, number_in_queue: int):
-		ms = MessageSender(ctx)
+	async def remove(self, ms: MessageSender, ctx: Interaction, number_in_queue: int):
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
@@ -144,8 +137,7 @@ class GuildCmd(GuildCmdTools):
 		)
 		return True
 
-	async def goto(self, ctx: Interaction, number_in_queue: int):
-		ms = MessageSender(ctx)
+	async def goto(self, ms: MessageSender, ctx: Interaction, number_in_queue: int):
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
@@ -173,8 +165,7 @@ class GuildCmd(GuildCmdTools):
 		await ms.response_message(content=f"f{tracks_removed + 1} tracks has been skipped")
 		return True
 
-	async def queue_list(self, ctx: Interaction) -> bool:
-		ms = MessageSender(ctx)
+	async def queue_list(self, ms: MessageSender, ctx: Interaction) -> bool:
 		queue: str | None = self.queue.queue_list()
 		if queue is None:
 			await ms.response_message(content="Queue is empty")
@@ -183,9 +174,7 @@ class GuildCmd(GuildCmdTools):
 		await ms.add_code_message(queue, prefix="Here's the music in the queue :")
 		return True
 
-	async def search(self, ctx: Interaction, input: str, engine: str | None) -> bool:
-		ms = MessageSender(ctx)
-
+	async def search(self, ms: MessageSender, ctx: Interaction, input: str, engine: str | None) -> bool:
 		if engine is None:
 			search_engine = self.data.search_engine
 		else:
@@ -206,8 +195,7 @@ class GuildCmd(GuildCmdTools):
 		await ms.add_code_message(hsa, prefix="Here are the results of your search :")
 		return True
 
-	async def play_multiple(self, ctx: Interaction, input: str) -> bool:
-		ms = MessageSender(ctx)
+	async def play_multiple(self, ms: MessageSender, ctx: Interaction, input: str) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
 			return False
@@ -221,13 +209,11 @@ class GuildCmd(GuildCmdTools):
 
 		return await self._execute_play_multiple(ms, voice_channel, tracks)
 
-	async def play_url(self, ctx: Interaction, url: str, at_end=True) -> bool:
-		ms = MessageSender(ctx)
+	async def play_url(self, ms: MessageSender, ctx: Interaction, url: str, at_end=True) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
 			return False
 
-		ms = MessageSender(ctx)
 		await ms.response_message(content=f"Searching **{url}** ...")
 
 		# ctx.client.loop
