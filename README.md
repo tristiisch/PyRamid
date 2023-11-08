@@ -8,6 +8,8 @@ It's designed for use within Discord guilds and isn't compatible with private Di
 
 Upon integration, the bot unlocks a range of commands. Simply type /help to access a list of all available commands.
 
+The original GitHub repository can be accessed [here](https://github.com/tristiisch/PyRamid).
+
 ## Usage
 
 Add this bot discord to your guild [here](https://discord.com/api/oauth2/authorize?client_id=1162155331124736101&permissions=380174863936&scope=bot).
