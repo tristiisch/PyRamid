@@ -13,7 +13,8 @@ from deezer.client import DeezerErrorResponse
 from data.track import TrackMinimalDeezer
 from data.a_search import ASearch
 
-DEFAULT_LIMIT=100
+DEFAULT_LIMIT = 100
+
 
 class DeezerSearch(ASearch):
 	def __init__(self):

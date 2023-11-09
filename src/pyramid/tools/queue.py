@@ -72,7 +72,6 @@ def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):
 				item.func.__module__,
 				item.func.__qualname__,
 			)
-			continue
 
 		except Exception as err:
 			if item.func_error is not None:

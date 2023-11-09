@@ -34,7 +34,9 @@ class BotCmd:
 	def register(self):
 		bot = self.__bot
 
-		@bot.tree.command(name="ping", description="Displays response time between bot and dioscord")
+		@bot.tree.command(
+			name="ping", description="Displays response time between bot and dioscord"
+		)
 		async def cmd_ping(ctx: Interaction):
 			await ctx.response.send_message(f"Pong ! ({math.trunc(bot.latency * 1000)}ms)")
 
@@ -94,7 +96,7 @@ class BotCmd:
 
 		@bot.tree.command(name="help", description="List all commands")
 		async def cmd_help(ctx: Interaction):
-			all_commands: List[Command] = bot.tree.get_commands() # type: ignore
+			all_commands: List[Command] = bot.tree.get_commands()  # type: ignore
 			commands_dict = {command.name: command.description for command in all_commands}
 			embed_template = Embed(title="List of every commands available", color=Color.gold())
 			max_embed = 10
@@ -113,7 +115,7 @@ class BotCmd:
 
 			# Sending the first embed as a response and subsequent follow-up embeds
 			for i in range(0, len(embeds), max_embed):
-				embeds_chunk = embeds[i:i + max_embed]
+				embeds_chunk = embeds[i : i + max_embed]
 				if i == 0:
 					await ctx.response.send_message(embeds=embeds_chunk)
 				else:
@@ -256,7 +258,9 @@ class BotCmd:
 
 			await guild_cmd.play_multiple(ms, ctx, input)
 
-		@bot.tree.command(name="play_url", description="Plays track, artist, album or playlist by URL")
+		@bot.tree.command(
+			name="play_url", description="Plays track, artist, album or playlist by URL"
+		)
 		async def cmd_play_url(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -267,7 +271,10 @@ class BotCmd:
 
 			await guild_cmd.play_url(ms, ctx, url)
 
-		@bot.tree.command(name="play_url_next", description="Plays track, artist, album or playlist by URL next to the current")
+		@bot.tree.command(
+			name="play_url_next",
+			description="Plays track, artist, album or playlist by URL next to the current",
+		)
 		async def cmd_play_url_next(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return

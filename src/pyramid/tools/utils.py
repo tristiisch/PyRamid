@@ -209,6 +209,7 @@ def time_to_duration(time_in_sec: int) -> str:
 		return "now"
 	return ", ".join(result)
 
+
 def get_available_space(path: str = "."):
 	total, used, free = shutil.disk_usage(path)
 	return free

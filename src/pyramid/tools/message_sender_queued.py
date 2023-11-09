@@ -35,15 +35,17 @@ class MessageSenderQueued(MessageSender):
 		content: str = MISSING,
 	):
 		queue.add(
-			QueueItem(
-				"response_message", super().response_message, self.loop, content=content
-			)
+			QueueItem("response_message", super().response_message, self.loop, content=content)
 		)
 
 	async def add_code_message(self, content: str, prefix=None, suffix=None):
 		queue.add(
 			QueueItem(
-				"add_code_message", super().add_code_message, self.loop, content=content, prefix=prefix, suffix=suffix
+				"add_code_message",
+				super().add_code_message,
+				self.loop,
+				content=content,
+				prefix=prefix,
+				suffix=suffix,
 			)
 		)
-

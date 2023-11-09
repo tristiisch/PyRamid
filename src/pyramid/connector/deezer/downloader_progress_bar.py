@@ -25,11 +25,7 @@ class DownloaderProgressBar(BaseProgressHandler):
 
 		self.start_time = time.time()
 		self.last_print = self.start_time
-		logging.info(
-			"Start download\t%s (%s)",
-			self.track_title,
-			self.track_quality
-		)
+		logging.info("Start download\t%s (%s)", self.track_title, self.track_quality)
 
 	def update(self, *args, **kwargs):
 		super().update(**kwargs)

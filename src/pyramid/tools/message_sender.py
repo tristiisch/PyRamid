@@ -36,7 +36,7 @@ class MessageSender:
 		self,
 		content: str = MISSING,
 		callback: Callable | None = None,
-	# ) -> None:
+		# ) -> None:
 	) -> Message:
 		if content != MISSING and content != "":
 			new_content, is_used = tools.substring_with_end_msg(

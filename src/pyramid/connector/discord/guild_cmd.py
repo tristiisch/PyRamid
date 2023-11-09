@@ -174,7 +174,9 @@ class GuildCmd(GuildCmdTools):
 		await ms.add_code_message(queue, prefix="Here's the music in the queue :")
 		return True
 
-	async def search(self, ms: MessageSender, ctx: Interaction, input: str, engine: str | None) -> bool:
+	async def search(
+		self, ms: MessageSender, ctx: Interaction, input: str, engine: str | None
+	) -> bool:
 		if engine is None:
 			search_engine = self.data.search_engine
 		else:
@@ -226,7 +228,9 @@ class GuildCmd(GuildCmdTools):
 
 		if isinstance(res, tuple):
 			tracks, tracks_unfindable = res
-			return await self._execute_play_multiple(ms, voice_channel, tracks, tracks_unfindable, at_end=at_end)
+			return await self._execute_play_multiple(
+				ms, voice_channel, tracks, tracks_unfindable, at_end=at_end
+			)
 		elif isinstance(res, TrackMinimal):
 			tracks = res
 			return await self._execute_play(ms, voice_channel, tracks, at_end=at_end)

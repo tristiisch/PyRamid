@@ -50,8 +50,8 @@ class LogsHandler:
 		file_handler = logging.handlers.RotatingFileHandler(
 			filename=log_filename,
 			encoding="utf-8",
-			maxBytes=10 * 1024 * 1024, # 10 Mo
-			backupCount=10
+			maxBytes=10 * 1024 * 1024,  # 10 Mo
+			backupCount=10,
 		)
 
 		formatter = logging.Formatter(self.__file_format, self.__date, style="{")
