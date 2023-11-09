@@ -64,7 +64,7 @@ class Main:
 		# Songs folder clear
 		tools.clear_directory(self._config.deezer_folder)
 
-	def init(self):
+	def start(self):
 		# Create Deezer player instance
 		deezer_dl = DeezerDownloader(self._config.deezer_arl, self._config.deezer_folder)
 
@@ -78,11 +78,12 @@ class Main:
 		# Connect bot to Discord servers
 		thread = Thread(
 			name="Discord",
-			target=discord_bot.start,
-			daemon=True,
+			target=discord_bot.start
 		)
 		thread.start()
 		thread.join()
 
 	def stop(self):
+		logging.info("Wait for background tasks to stop")
 		Queue.wait_for_end(5)
+		logging.info("Bye bye")

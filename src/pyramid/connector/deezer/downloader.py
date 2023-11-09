@@ -9,7 +9,7 @@ from pydeezer import Deezer
 from pydeezer.constants import track_formats
 from pydeezer.exceptions import LoginError
 
-from data.track import Track, TrackMinimal
+from data.track import Track
 from connector.deezer.downloader_progress_bar import DownloaderProgressBar
 from urllib3.exceptions import MaxRetryError
 

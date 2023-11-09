@@ -10,7 +10,7 @@ from discord.user import BaseUser
 from connector.discord.guild_cmd import GuildCmd
 from data.environment import Environment
 from data.functional.application_info import ApplicationInfo
-from tools.message_sender_queued import MessageSenderQueued
+from data.functional.messages.message_sender_queued import MessageSenderQueued
 import tools.utils
 
 
@@ -229,7 +229,7 @@ class BotCmd:
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.queue_list(ms, ctx)
+			guild_cmd.queue_list(ms, ctx)
 
 		@bot.tree.command(
 			name="search",
@@ -243,7 +243,7 @@ class BotCmd:
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.search(ms, ctx, input, engine)
+			guild_cmd.search(ms, ctx, input, engine)
 
 		@bot.tree.command(
 			name="play_multiple", description="Plays the first 10 songs of the search"
@@ -291,7 +291,7 @@ class BotCmd:
 			await ms.waiting()
 
 			for i in range(100):
-				await ms.add_message(f"Spam n°{i}")
+				ms.add_message(f"Spam n°{i}")
 			await ctx.response.send_message("Spam ended")
 
 	async def __use_on_guild_only(self, ctx: Interaction) -> bool:

@@ -1,8 +1,8 @@
 from typing import Callable
-from tools.message_sender import MessageSender
 
 from discord import Interaction
 from discord.utils import MISSING
+from data.functional.messages.message_sender import MessageSender
 from tools.queue import Queue, QueueItem
 
 MAX_MSG_LENGTH = 2000
@@ -19,7 +19,7 @@ class MessageSenderQueued(MessageSender):
 	async def waiting(self):
 		await super().response_message("Waiting for result ...")
 
-	async def add_message(
+	def add_message(
 		self,
 		content: str = MISSING,
 		callback: Callable | None = None,
@@ -30,7 +30,7 @@ class MessageSenderQueued(MessageSender):
 			)
 		)
 
-	async def response_message(
+	def response_message(
 		self,
 		content: str = MISSING,
 	):
@@ -38,7 +38,7 @@ class MessageSenderQueued(MessageSender):
 			QueueItem("response_message", super().response_message, self.loop, content=content)
 		)
 
-	async def add_code_message(self, content: str, prefix=None, suffix=None):
+	def add_code_message(self, content: str, prefix=None, suffix=None):
 		queue.add(
 			QueueItem(
 				"add_code_message",
