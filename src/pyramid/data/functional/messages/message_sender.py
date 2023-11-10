@@ -16,7 +16,7 @@ MAX_MSG_LENGTH = 2000
 
 class MessageSender:
 	def __init__(self, ctx: Interaction):
-		self.__ctx = ctx
+		self.ctx = ctx
 		if ctx.channel is None:
 			raise NotImplementedError("Unable to create a MessageSender without channel")
 		if not isinstance(ctx.channel, TextChannel):
@@ -45,28 +45,13 @@ class MessageSender:
 			if is_used:
 				content = new_content
 
-		if not self.__ctx.response.is_done():
+		if not self.ctx.response.is_done():
 			msg = await self.txt_channel.send(content)
-			# queue.add(
-			# 	QueueItem(
-			# 		"Send reponse", self.txt_channel.send, self.loop, callback, content=content
-			# 	)
-			# )
 		else:
-			msg = await self.__ctx.followup.send(
+			msg = await self.ctx.followup.send(
 				content,
 				wait=True,
 			)
-			# queue.add(
-			# 	QueueItem(
-			# 		"Send followup",
-			# 		self.__ctx.followup.send,
-			# 		self.loop,
-			# 		callback,
-			# 		content=content,
-			# 		wait=True,
-			# 	)
-			# )
 		return msg
 
 	"""
@@ -90,9 +75,9 @@ class MessageSender:
 		if self.last_reponse is not None:
 			self.last_reponse.edit(content=content)
 
-		elif self.__ctx.response.is_done():
+		elif self.ctx.response.is_done():
 			try:
-				await self.__ctx.edit_original_response(
+				await self.ctx.edit_original_response(
 					content=content,
 				)
 				# queue.add(
@@ -113,7 +98,7 @@ class MessageSender:
 				else:
 					raise err
 		else:
-			await self.__ctx.response.send_message(
+			await self.ctx.response.send_message(
 				content=content,
 			)
 			# queue.add(
@@ -145,11 +130,11 @@ class MessageSender:
 
 		substrings_generator = tools.split_string_by_length(content, max_length)
 
-		if not self.__ctx.response.is_done():
+		if not self.ctx.response.is_done():
 			first_substring = next(substrings_generator, None)
 			if first_substring is not None:
 				first_substring_formatted = f"```{first_substring}```"
-				await self.__ctx.response.send_message(content=first_substring_formatted)
+				await self.ctx.response.send_message(content=first_substring_formatted)
 				# queue.add(
 				# 	QueueItem(
 				# 		"Send code as response",
@@ -161,7 +146,7 @@ class MessageSender:
 
 		for substring in substrings_generator:
 			substring_formatted = f"```{substring}```"
-			await self.__ctx.followup.send(content=substring_formatted)
+			await self.ctx.followup.send(content=substring_formatted)
 			# queue.add(
 			# 	QueueItem(
 			# 		"Send code as followup",

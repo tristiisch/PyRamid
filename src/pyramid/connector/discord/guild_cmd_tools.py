@@ -93,7 +93,7 @@ class GuildCmdTools:
 		for i, track in enumerate(tracks):
 			track_downloaded: Track | None = await self.deezer_dl.dl_track_by_id(track.id)
 			if not track_downloaded:
-				ms.add_message(content=f"**{track.get_full_name()}** can't be downloaded.")
+				ms.add_message(content=f"ERROR > **{track.get_full_name()}** can't be downloaded.")
 				cant_dl += 1
 				continue
 			if (
@@ -102,7 +102,7 @@ class GuildCmdTools:
 				or tl.add_track_after(track_downloaded))
 			):
 				ms.add_message(
-					content=f"**{track.get_full_name()}** can't be add to the queue."
+					content=f"ERROR > **{track.get_full_name()}** can't be add to the queue."
 				)
 				cant_dl += 1
 				continue
@@ -131,7 +131,7 @@ class GuildCmdTools:
 
 		track_downloaded: Track | None = await self.deezer_dl.dl_track_by_id(track.id)
 		if not track_downloaded:
-			ms.response_message(content=f"**{track.get_full_name()}** can't be downloaded.")
+			ms.response_message(content=f"ERROR > **{track.get_full_name()}** can't be downloaded.")
 			return False
 
 		if (
@@ -139,7 +139,7 @@ class GuildCmdTools:
 			and not (tl.add_track(track_downloaded)
 			or tl.add_track_after(track_downloaded))
 		):
-			ms.add_message(content=f"**{track.get_full_name()}** can't be add to the queue.")
+			ms.add_message(content=f"ERROR > **{track.get_full_name()}** can't be add to the queue.")
 			return False
 		await self.queue.goto_channel(voice_channel)
 
