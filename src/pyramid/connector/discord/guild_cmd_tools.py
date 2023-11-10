@@ -98,8 +98,8 @@ class GuildCmdTools:
 				continue
 			if (
 				at_end is True
-				and not tl.add_track(track_downloaded)
-				or not tl.add_track_after(track_downloaded)
+				and not (tl.add_track(track_downloaded)
+				or tl.add_track_after(track_downloaded))
 			):
 				ms.add_message(
 					content=f"**{track.get_full_name()}** can't be add to the queue."
@@ -136,8 +136,8 @@ class GuildCmdTools:
 
 		if (
 			at_end is True
-			and not tl.add_track(track_downloaded)
-			or not tl.add_track_after(track_downloaded)
+			and not (tl.add_track(track_downloaded)
+			or tl.add_track_after(track_downloaded))
 		):
 			ms.add_message(content=f"**{track.get_full_name()}** can't be add to the queue.")
 			return False
