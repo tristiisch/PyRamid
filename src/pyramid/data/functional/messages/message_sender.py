@@ -9,10 +9,6 @@ from discord.utils import MISSING
 
 MAX_MSG_LENGTH = 2000
 
-# queue = Queue(1, "MessageSender")
-# queue.start()
-# queue.register_to_wait_on_exit()
-
 
 class MessageSender:
 	def __init__(self, ctx: Interaction):

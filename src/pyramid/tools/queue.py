@@ -28,7 +28,9 @@ class QueueItem:
 
 def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):
 	while True:
-		event.wait()
+		if len(q) == 0:
+			event.wait()
+
 		if not q:
 			event.clear()
 			continue
@@ -39,29 +41,7 @@ def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):
 			break
 
 		try:
-			# Async func
-			if inspect.iscoroutinefunction(item.func) or inspect.isasyncgenfunction(item.func):
-				# Async func in loop
-				if item.loop is not None:
-					# Async func in loop closed
-					if item.loop.is_closed():
-						logging.warning(
-							"Exception in thread %d :\nUnable to call %s.%s cause the loop is closed",
-							thread_id,
-							item.func.__module__,
-							item.func.__qualname__,
-						)
-						continue
-					# Async func in loop open
-					result = asyncio.run_coroutine_threadsafe(
-						item.func(**item.kwargs), item.loop
-					).result()
-				# Async func classic
-				else:
-					result = asyncio.run(item.func(**item.kwargs))
-			# Sync func
-			else:
-				result = item.func(**item.kwargs)
+			result = run_task(item.func, item.loop, **item.kwargs)
 
 			if item.func_sucess is not None:
 				item.func_sucess(result)
@@ -83,6 +63,28 @@ def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):
 					"".join(traceback.format_exception(type(err), err, err.__traceback__)),
 				)
 
+def run_task(func: Callable, loop: asyncio.AbstractEventLoop | None, **kwargs):
+	# Async func
+	if inspect.iscoroutinefunction(func) or inspect.isasyncgenfunction(func):
+		# Async func in loop
+		if loop is not None:
+			# Async func in loop closed
+			if loop.is_closed():
+				raise Exception("Unable to call %s.%s cause the loop is closed",
+					func.__module__,
+					func.__qualname__
+				)
+			# Async func in loop open
+			result = asyncio.run_coroutine_threadsafe(
+				func(**kwargs), loop
+			).result()
+		# Async func classic
+		else:
+			result = asyncio.run(func(**kwargs))
+	# Sync func
+	else:
+		result = func(**kwargs)
+	return result
 
 class Queue:
 	all_queue = deque()
@@ -94,11 +96,6 @@ class Queue:
 		self.__threads_list: List[Thread] = []
 		self.__lock = Lock()
 		self.__worker = worker
-
-		if name is None:
-			name = "Thread"
-		else:
-			name = f"Thread {name}"
 
 		for thread_id in range(1, self.__threads + 1):
 			thread = Thread(
@@ -137,6 +134,9 @@ class Queue:
 	def end(self):
 		for _ in range(self.__threads):
 			self.add(None)
+
+	def length(self):
+		return len(self.__queue)
 
 	@staticmethod
 	def wait_for_end(timeout_per_threads: float | None = None):
