@@ -1,4 +1,5 @@
 import logging
+import time
 import traceback
 from logging import Logger
 from typing import Dict
@@ -45,6 +46,7 @@ class DiscordBot:
 				"deezer": DeezerSearch(),
 			}
 		)
+		self.__started = time.time()
 
 		intents = discord.Intents.default()
 		# intents.members = True
@@ -59,7 +61,12 @@ class DiscordBot:
 		self.__logger.info("Discord bot creating with discord.py v%s ...", discord.__version__)
 		self.listeners = BotListener(self.bot, self.__logger, self.__information)
 		self.cmd = BotCmd(
-			self.bot, self.__get_guild_cmd, self.__logger, self.__information, self.__environment
+			self.bot,
+			self.__get_guild_cmd,
+			self.__logger,
+			self.__information,
+			self.__environment,
+			self.__started,
 		)
 
 		@self.bot.event

@@ -1,5 +1,6 @@
 import math
 from logging import Logger
+import time
 from typing import Callable, List
 
 from discord import AppInfo, ClientUser, Color, Embed, Guild, Interaction
@@ -9,7 +10,8 @@ from discord.user import BaseUser
 from connector.discord.guild_cmd import GuildCmd
 from data.environment import Environment
 from data.functional.application_info import ApplicationInfo
-from tools.message_sender import MessageSender
+from data.functional.messages.message_sender_queued import MessageSenderQueued
+import tools.utils
 
 
 class BotCmd:
@@ -20,17 +22,21 @@ class BotCmd:
 		logger: Logger,
 		info: ApplicationInfo,
 		environment: Environment,
+		started: float,
 	):
 		self.__bot = bot
 		self.__get_guild_cmd = get_guild_cmd
 		self.__logger = logger
 		self.__info = info
 		self.__environment = environment
+		self.__started = started
 
 	def register(self):
 		bot = self.__bot
 
-		@bot.tree.command(name="ping", description="Displays response time between bot and dioscord")
+		@bot.tree.command(
+			name="ping", description="Displays response time between bot and dioscord"
+		)
 		async def cmd_ping(ctx: Interaction):
 			await ctx.response.send_message(f"Pong ! ({math.trunc(bot.latency * 1000)}ms)")
 
@@ -80,12 +86,17 @@ class BotCmd:
 				value=self.__environment.name.capitalize(),
 				inline=True,
 			)
+			embed.add_field(
+				name="Uptime",
+				value=tools.utils.time_to_duration(int(round(time.time() - self.__started))),
+				inline=True,
+			)
 
 			await ctx.response.send_message(embed=embed)
 
 		@bot.tree.command(name="help", description="List all commands")
 		async def cmd_help(ctx: Interaction):
-			all_commands: List[Command] = bot.tree.get_commands() # type: ignore
+			all_commands: List[Command] = bot.tree.get_commands()  # type: ignore
 			commands_dict = {command.name: command.description for command in all_commands}
 			embed_template = Embed(title="List of every commands available", color=Color.gold())
 			max_embed = 10
@@ -104,7 +115,7 @@ class BotCmd:
 
 			# Sending the first embed as a response and subsequent follow-up embeds
 			for i in range(0, len(embeds), max_embed):
-				embeds_chunk = embeds[i:i + max_embed]
+				embeds_chunk = embeds[i : i + max_embed]
 				if i == 0:
 					await ctx.response.send_message(embeds=embeds_chunk)
 				else:
@@ -114,91 +125,111 @@ class BotCmd:
 		async def cmd_play(ctx: Interaction, input: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.play(ctx, input)
+			await guild_cmd.play(ms, ctx, input)
 
 		@bot.tree.command(name="play_next", description="Play a single track next to the current")
 		async def cmd_play_next(ctx: Interaction, input: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.play(ctx, input, at_end=False)
+			await guild_cmd.play(ms, ctx, input, at_end=False)
 
 		@bot.tree.command(name="pause", description="Pause music")
 		async def cmd_pause(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.pause(ctx)
+			await guild_cmd.pause(ms, ctx)
 
 		@bot.tree.command(name="resume", description="Resume music")
 		async def cmd_resume(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.resume(ctx)
+			await guild_cmd.resume(ms, ctx)
 
 		@bot.tree.command(name="stop", description="Stop music and exit channel")
 		async def cmd_stop(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.stop(ctx)
+			await guild_cmd.stop(ms, ctx)
 
 		@bot.tree.command(name="next", description="Next track")
 		async def cmd_next(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.next(ctx)
+			await guild_cmd.next(ms, ctx)
 
 		@bot.tree.command(name="shuffle", description="Randomize the queue")
 		async def cmd_shuffle(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.suffle(ctx)
+			await guild_cmd.suffle(ms, ctx)
 
 		@bot.tree.command(name="remove", description="Remove an element in the queue")
 		async def cmd_remove(ctx: Interaction, number_in_queue: int):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.remove(ctx, number_in_queue)
+			await guild_cmd.remove(ms, ctx, number_in_queue)
 
 		@bot.tree.command(name="goto", description="Go to an element in the queue")
 		async def cmd_goto(ctx: Interaction, number_in_queue: int):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.goto(ctx, number_in_queue)
+			await guild_cmd.goto(ms, ctx, number_in_queue)
 
 		@bot.tree.command(name="queue", description="List the track queue")
 		async def cmd_queue(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.queue_list(ctx)
+			guild_cmd.queue_list(ms, ctx)
 
 		@bot.tree.command(
 			name="search",
@@ -207,10 +238,12 @@ class BotCmd:
 		async def cmd_search(ctx: Interaction, input: str, engine: str | None):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.search(ctx, input, engine)
+			guild_cmd.search(ms, ctx, input, engine)
 
 		@bot.tree.command(
 			name="play_multiple", description="Plays the first 10 songs of the search"
@@ -218,40 +251,48 @@ class BotCmd:
 		async def cmd_play_multiple(ctx: Interaction, input: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.play_multiple(ctx, input)
+			await guild_cmd.play_multiple(ms, ctx, input)
 
-		@bot.tree.command(name="play_url", description="Plays track, artist, album or playlist by URL")
+		@bot.tree.command(
+			name="play_url", description="Plays track, artist, album or playlist by URL"
+		)
 		async def cmd_play_url(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.play_url(ctx, url)
+			await guild_cmd.play_url(ms, ctx, url)
 
-		@bot.tree.command(name="play_url_next", description="Plays track, artist, album or playlist by URL next to the current")
+		@bot.tree.command(
+			name="play_url_next",
+			description="Plays track, artist, album or playlist by URL next to the current",
+		)
 		async def cmd_play_url_next(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.play_url(ctx, url, at_end=False)
+			await guild_cmd.play_url(ms, ctx, url, at_end=False)
 
 		@bot.tree.command(name="spam", description="Test spam")
 		async def cmd_spam(ctx: Interaction):
-			ms = MessageSender(ctx)
+			ms = MessageSenderQueued(ctx)
+			await ms.waiting()
 
 			for i in range(100):
-				await ms.add_message(f"Spam n°{i}")
+				ms.add_message(f"Spam n°{i}")
 			await ctx.response.send_message("Spam ended")
-
-		# @bot.command()
-		# async def ignore_none_slash_cmd():
-		# 	pass
 
 	async def __use_on_guild_only(self, ctx: Interaction) -> bool:
 		if ctx.guild is None:

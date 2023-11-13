@@ -13,13 +13,15 @@ from deezer.client import DeezerErrorResponse
 from data.track import TrackMinimalDeezer
 from data.a_search import ASearch
 
+DEFAULT_LIMIT = 100
+
 
 class DeezerSearch(ASearch):
 	def __init__(self):
 		self.client = Client()
 		self.tools = DeezerTools()
 		self.strict = False
-		self.default_limit = 10
+		self.default_limit = DEFAULT_LIMIT
 
 	def search_track(self, search) -> TrackMinimalDeezer | None:
 		search_results = self.client.search(query=search)
@@ -34,7 +36,7 @@ class DeezerSearch(ASearch):
 			return None
 		return TrackMinimalDeezer(track)
 
-	def search_tracks(self, search, limit=10) -> list[TrackMinimalDeezer] | None:
+	def search_tracks(self, search, limit=DEFAULT_LIMIT) -> list[TrackMinimalDeezer] | None:
 		search_results = self.client.search(query=search, strict=self.strict)
 
 		if not search_results or len(search_results) == 0:
@@ -107,7 +109,7 @@ class DeezerSearch(ASearch):
 			return None
 		return [TrackMinimalDeezer(element) for element in album.get_tracks()], []
 
-	def get_top_artist(self, artist_name, limit=10) -> list[TrackMinimalDeezer] | None:
+	def get_top_artist(self, artist_name, limit=DEFAULT_LIMIT) -> list[TrackMinimalDeezer] | None:
 		search_results = self.client.search_artists(query=artist_name, strict=self.strict)
 		if not search_results or len(search_results) == 0:
 			return None
@@ -116,7 +118,7 @@ class DeezerSearch(ASearch):
 		return [TrackMinimalDeezer(element) for element in top_tracks]
 
 	def get_top_artist_by_id(
-		self, artist_id: int, limit=10
+		self, artist_id: int, limit=DEFAULT_LIMIT
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
 		artist = self.client.get_artist(artist_id)  # TODO handle HTTP errors
 		if not artist:
@@ -176,6 +178,7 @@ class DeezerSearch(ASearch):
 			i = err_json["code"]  # type: ignore
 			if int(i) == 4:
 				time.sleep(5)
+				logging.warning("Search RateLimit %s - %s", artist_name, track_title)
 				return self.search_exact_track(artist_name, album_title, track_title)
 			else:
 				raise err

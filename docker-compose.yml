@@ -1,13 +1,26 @@
 version: '3.7'
+name: 'pyramid-dev'
 
 services:
 
   pyramid:
     image: tristiisch/pyramid:latest
     volumes:
-    - ./config.yml:/app/config.yml
-    - ./logs:/app/logs
-    - ./songs:/app/songs
+      - type: bind
+        source: ./config.yml
+        target: /app/config.yml
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./logs
+        target: /app/logs
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ./songs
+        target: /app/songs
+        bind:
+          create_host_path: true
     restart: always
     networks:
     - pyramid_network

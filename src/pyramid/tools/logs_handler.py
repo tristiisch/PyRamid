@@ -50,8 +50,8 @@ class LogsHandler:
 		file_handler = logging.handlers.RotatingFileHandler(
 			filename=log_filename,
 			encoding="utf-8",
-			maxBytes=10 * 1024 * 1024, # 10 Mo
-			backupCount=10
+			maxBytes=10 * 1024 * 1024,  # 10 Mo
+			backupCount=10,
 		)
 
 		formatter = logging.Formatter(self.__file_format, self.__date, style="{")
@@ -79,7 +79,7 @@ class LogsHandler:
 	def set_log_level(self, mode: Environment):
 		if mode == Environment.PRODUCTION:
 			self.logger.setLevel("INFO")
-			coloredlogs.set_level("INFO")
 		else:
 			self.logger.setLevel("DEBUG")
-			coloredlogs.set_level("DEBUG")
+			# coloredlogs.set_level("DEBUG")
+		coloredlogs.set_level("INFO")

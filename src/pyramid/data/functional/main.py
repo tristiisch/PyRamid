@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 from datetime import datetime
+from threading import Thread
 
 import tools.utils as tools
 from data.functional.application_info import ApplicationInfo
@@ -63,7 +64,7 @@ class Main:
 		# Songs folder clear
 		tools.clear_directory(self._config.deezer_folder)
 
-	def init(self):
+	def start(self):
 		# Create Deezer player instance
 		deezer_dl = DeezerDownloader(self._config.deezer_arl, self._config.deezer_folder)
 
@@ -73,8 +74,16 @@ class Main:
 		)
 		# Create bot
 		discord_bot.create()
+
 		# Connect bot to Discord servers
-		discord_bot.start()
+		thread = Thread(
+			name="Discord",
+			target=discord_bot.start
+		)
+		thread.start()
+		thread.join()
 
 	def stop(self):
+		logging.info("Wait for background tasks to stop")
 		Queue.wait_for_end(5)
+		logging.info("Bye bye")

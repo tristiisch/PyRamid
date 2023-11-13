@@ -57,6 +57,7 @@ q.start()
 
 exit_handler_executed = False
 
+
 def exit_handler():
 	print("exit_handler")
 	q.end()
@@ -75,6 +76,7 @@ def exit_handler():
 
 	global exit_handler_executed
 	exit_handler_executed = True
+
 
 atexit.register(exit_handler)
 

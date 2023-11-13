@@ -1,7 +1,7 @@
-import argparse
 import asyncio
 import logging
 import os
+import time
 from typing import Callable
 
 import pydeezer.util
@@ -9,7 +9,9 @@ from pydeezer import Deezer
 from pydeezer.constants import track_formats
 from pydeezer.exceptions import LoginError
 
-from data.track import Track, TrackMinimal
+from data.track import Track
+from connector.deezer.downloader_progress_bar import DownloaderProgressBar
+from urllib3.exceptions import MaxRetryError
 
 
 class DeezerDownloader:
@@ -49,21 +51,6 @@ class DeezerDownloader:
 		track_downloaded = Track(track_info["DATA"], file_path)
 		return track_downloaded
 
-	def get_track_by_name(self, name) -> TrackMinimal | None:
-		tracks_found = self.__deezer_dl_api.search_tracks(name)
-		if not tracks_found:
-			return None
-		track = TrackMinimal(tracks_found[0])
-		return track
-
-	async def dl_track_by_name(self, name) -> Track | None:
-		track: TrackMinimal | None = self.get_track_by_name(name)
-		if track is None:
-			return None
-
-		track_downloaded = await self.dl_track_by_id(track.id)
-		return track_downloaded
-
 	def __dl_track(self, func: Callable[..., None], track_info, file_name: str) -> bool:
 		try:
 			func(
@@ -77,35 +64,15 @@ class DeezerDownloader:
 				False,  # lyrics
 				", ",  # separator for multiple artists
 				False,  # show messages
-				None,  # Custom progress bar
+				DownloaderProgressBar(),  # Custom progress bar
 			)
 			return True
+		except MaxRetryError:
+			track = Track(track_info["DATA"], None)
+			logging.warning("Downloader MaxRetryError %s", track)
+			time.sleep(5)
+			return self.__dl_track(func, track_info, file_name)
 		except Exception:
 			track = Track(track_info["DATA"], None)
 			logging.warning("Unable to dl track %s", track, exc_info=True)
 			return False
-
-
-async def cli():
-	folder_path = "./songs/"
-
-	parser = argparse.ArgumentParser()
-	parser.add_argument("-t", help="song title", metavar="title")
-	parser.add_argument("-id", help="id of the track", metavar="id")
-	parser.add_argument("-arl", help="arl deezer account", metavar="arl")
-
-	args = parser.parse_args()
-
-	if args.arl:
-		deezer_dl = DeezerDownloader(args.arl, folder_path)
-	else:
-		print("Missing Deezer ARL")
-		exit(1)
-
-	if args.id:
-		print("Asked Track ", args.t)
-		await deezer_dl.dl_track_by_id(args.id)
-	elif args.t:
-		await deezer_dl.dl_track_by_name(args.t.replace("%20", " "))
-	else:
-		print("Missing Args")

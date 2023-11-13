@@ -8,7 +8,7 @@ from data.track import Track
 from data.tracklist import TrackList
 from data.guild_data import GuildData
 from connector.discord.music_player_interface import MusicPlayerInterface
-from tools.message_sender import MessageSender
+from data.functional.messages.message_sender import MessageSender
 
 
 class GuildQueue:
