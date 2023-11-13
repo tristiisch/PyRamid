@@ -135,13 +135,9 @@ jobs:
         run: |
           python -m compileall ${{ env.SRC }}
 
-      - name: Units tests
-        run: |
-          python -m unittest discover -v -s ${{ env.TEST }} -p ${{ env.TEST_FILES }}
-
   docker_push:
     name: "Docker Push"
-    needs: unit_test
+    needs: ["compile", "unit_test"]
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
 
