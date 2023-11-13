@@ -13,16 +13,13 @@ from discord.ext.commands import Bot, Context
 from discord.ext.commands.errors import CommandNotFound, MissingPermissions, MissingRequiredArgument
 
 from data.functional.application_info import ApplicationInfo
-from data.a_search import ASearch
 from data.environment import Environment
 from data.guild_data import GuildData
-from connector.deezer.downloader import DeezerDownloader
-from connector.deezer.search import DeezerSearch
 from connector.discord.bot_cmd import BotCmd
 from connector.discord.bot_listener import BotListener
 from connector.discord.guild_cmd import GuildCmd
 from connector.discord.guild_queue import GuildQueue
-from connector.spotify.search import SpotifySearch
+from data.functional.engine_source import EngineSource
 from tools.configuration import Configuration
 
 
@@ -31,21 +28,14 @@ class DiscordBot:
 		self,
 		logger: logging.Logger,
 		information: ApplicationInfo,
-		config: Configuration,
-		deezer_dl: DeezerDownloader,
+		config: Configuration
 	):
 		self.__logger = logger
 		self.__information = information
 		self.__token = config.discord_token
 		self.__ffmpeg = config.discord_ffmpeg
 		self.__environment: Environment = config.mode
-		self.__deezer_dl = deezer_dl
-		self.__search_engines: Dict[str, ASearch] = dict(
-			{
-				"spotify": SpotifySearch(config.spotify_client_id, config.spotify_client_secret),
-				"deezer": DeezerSearch(),
-			}
-		)
+		self.__engine_source = EngineSource(config)
 		self.__started = time.time()
 
 		intents = discord.Intents.default()
@@ -110,9 +100,8 @@ class DiscordBot:
 			self.guilds_instances[guild.id] = GuildInstances(
 				guild,
 				self.__logger.getChild(guild.name),
-				self.__deezer_dl,
-				self.__ffmpeg,
-				self.__search_engines,
+				self.__engine_source,
+				self.__ffmpeg
 			)
 
 		return self.guilds_instances[guild.id].cmds
@@ -123,10 +112,9 @@ class GuildInstances:
 		self,
 		guild: Guild,
 		logger: Logger,
-		deezer_downloader: DeezerDownloader,
-		ffmpeg_path: str,
-		search_engines: Dict[str, ASearch],
+		engine_source: EngineSource,
+		ffmpeg_path: str
 	):
-		self.data = GuildData(guild, search_engines)
+		self.data = GuildData(guild, engine_source)
 		self.songs = GuildQueue(self.data, ffmpeg_path)
-		self.cmds = GuildCmd(logger, self.data, self.songs, deezer_downloader)
+		self.cmds = GuildCmd(logger, self.data, self.songs, engine_source)

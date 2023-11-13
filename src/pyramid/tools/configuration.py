@@ -44,3 +44,5 @@ class Configuration:
 			self.mode = Environment.PRODUCTION
 
 		self.config_version = config_data["version"]
+
+		self.default_limit_track = int(config_data["general"]["default_limit_tracks"])

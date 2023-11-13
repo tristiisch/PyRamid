@@ -30,3 +30,27 @@ class ASearch(ABC):
 		self, url
 	) -> tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None:
 		pass
+
+
+class ASearchId(ABC):
+	@abc.abstractmethod
+	def get_track_by_id(self, track_id: int | str) -> TrackMinimal | None:
+		pass
+
+	@abc.abstractmethod
+	def get_playlist_tracks_by_id(
+		self, playlist_id: int | str
+	) -> tuple[list[TrackMinimal], list[TrackMinimal]] | None:
+		pass
+
+	@abc.abstractmethod
+	def get_album_tracks_by_id(
+		self, album_id: int | str
+	) -> tuple[list[TrackMinimal], list[TrackMinimal]] | None:
+		pass
+
+	@abc.abstractmethod
+	def get_top_artist_by_id(
+		self, artist_id: int | str, limit: int | None = None
+	) -> tuple[list[TrackMinimal], list[TrackMinimal]] | None:
+		pass

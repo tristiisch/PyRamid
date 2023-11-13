@@ -1,14 +1,13 @@
-from typing import Dict
 from discord import Guild, VoiceClient
 
-from data.a_search import ASearch
 from data.tracklist import TrackList
+from data.functional.engine_source import EngineSource
 
 
 class GuildData:
-	def __init__(self, guild: Guild, search_engines: Dict[str, ASearch]):
+	def __init__(self, guild: Guild, engine_source: EngineSource):
 		self.guild: Guild = guild
 		self.track_list: TrackList = TrackList()
 		self.voice_client: VoiceClient = None  # type: ignore
-		self.search_engines = search_engines
-		self.search_engine = self.search_engines["deezer"]
+		self.search_engines = engine_source
+		self.search_engine = engine_source

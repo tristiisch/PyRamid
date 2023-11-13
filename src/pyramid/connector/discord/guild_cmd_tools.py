@@ -3,9 +3,9 @@ from discord import Member, User, VoiceChannel, VoiceClient, VoiceState
 from data.track import Track, TrackMinimal
 from data.guild_data import GuildData
 from data.tracklist import TrackList
-from connector.deezer.downloader import DeezerDownloader
 from connector.discord.guild_queue import GuildQueue
 from data.functional.messages.message_sender_queued import MessageSenderQueued
+from data.functional.engine_source import EngineSource
 
 
 class GuildCmdTools:
@@ -13,9 +13,9 @@ class GuildCmdTools:
 		self,
 		guild_data: GuildData,
 		guild_queue: GuildQueue,
-		deezer_dl: DeezerDownloader,
+		engine_source: EngineSource,
 	):
-		self.deezer_dl = deezer_dl
+		self.engine_source = engine_source
 		self.data = guild_data
 		self.queue = guild_queue
 
@@ -91,7 +91,7 @@ class GuildCmdTools:
 
 		cant_dl = 0
 		for i, track in enumerate(tracks):
-			track_downloaded: Track | None = await self.deezer_dl.dl_track_by_id(track.id)
+			track_downloaded: Track | None = await self.engine_source.download_track(track)
 			if not track_downloaded:
 				ms.add_message(content=f"ERROR > **{track.get_full_name()}** can't be downloaded.")
 				cant_dl += 1
@@ -129,7 +129,7 @@ class GuildCmdTools:
 		tl: TrackList = self.data.track_list
 		ms.response_message(content=f"**{track.get_full_name()}** found ! Downloading ...")
 
-		track_downloaded: Track | None = await self.deezer_dl.dl_track_by_id(track.id)
+		track_downloaded: Track | None = await self.engine_source.download_track(track)
 		if not track_downloaded:
 			ms.response_message(content=f"ERROR > **{track.get_full_name()}** can't be downloaded.")
 			return False
