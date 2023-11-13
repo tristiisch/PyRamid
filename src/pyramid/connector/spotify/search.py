@@ -155,20 +155,19 @@ class SpotifyTools(AEngineTools):
 		# Extract ID and type using regex
 		pattern = r"(?<=open.spotify.com/)(\w+)/(\w+)"
 		match = re.search(pattern, url)
-		if match:
-			type_str = match.group(1).upper()
-			if type_str == "PLAYLIST":
-				type = SpotifyType.PLAYLIST
-			elif type_str == "ARTIST":
-				type = SpotifyType.ARTIST
-			elif type_str == "ALBUM":
-				type = SpotifyType.ALBUM
-			elif type_str == "TRACK":
-				type = SpotifyType.TRACK
-			else:
-				type = None
-
-			id = match.group(2)
-			return id, type
-		else:
+		if not match:
 			return None, None
+		type_str = match.group(1).upper()
+		if type_str == "PLAYLIST":
+			type = SpotifyType.PLAYLIST
+		elif type_str == "ARTIST":
+			type = SpotifyType.ARTIST
+		elif type_str == "ALBUM":
+			type = SpotifyType.ALBUM
+		elif type_str == "TRACK":
+			type = SpotifyType.TRACK
+		else:
+			type = None
+
+		id = match.group(2)
+		return id, type

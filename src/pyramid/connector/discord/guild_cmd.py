@@ -220,7 +220,7 @@ class GuildCmd(GuildCmdTools):
 
 		result: (
 			tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None
-		) = await self.data.search_engine.default_engine.get_by_url(url)
+		) = await self.data.search_engine.search_by_url(url)
 		if not result:
 			ms.response_message(content=f"**{url}** not found.")
 			return False

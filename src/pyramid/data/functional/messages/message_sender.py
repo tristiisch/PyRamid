@@ -21,12 +21,6 @@ class MessageSender:
 		self.last_reponse: Message | WebhookMessage | None = None
 		self.loop: asyncio.AbstractEventLoop = ctx.client.loop
 
-	"""
-	Add a message as a response or follow-up. If no message has been sent yet, the message is sent as a response.
-	Otherwise, the message will be linked to the response (sent as a follow-up message).
-	If the message exceeds the maximum character limit, it will be truncated.
-	"""
-
 	async def add_message(
 		# def add_message(
 		self,
@@ -34,6 +28,11 @@ class MessageSender:
 		callback: Callable | None = None,
 		# ) -> None:
 	) -> Message:
+		"""
+		Add a message as a response or follow-up. If no message has been sent yet, the message is sent as a response.
+		Otherwise, the message will be linked to the response (sent as a follow-up message).
+		If the message exceeds the maximum character limit, it will be truncated.
+		"""
 		if content != MISSING and content != "":
 			new_content, is_used = tools.substring_with_end_msg(
 				content, MAX_MSG_LENGTH, "{} more characters..."
@@ -50,17 +49,16 @@ class MessageSender:
 			)
 		return msg
 
-	"""
-	Send a message as a response. If the response has already been sent, it will be modified.
-	If it is not possible to modify it, a new message will be sent as a follow-up.
-	If the message exceeds the maximum character limit, it will be truncated.
-	"""
-
 	async def response_message(
 		# def response_message(
 		self,
 		content: str = MISSING,
 	):
+		"""
+		Send a message as a response. If the response has already been sent, it will be modified.
+		If it is not possible to modify it, a new message will be sent as a follow-up.
+		If the message exceeds the maximum character limit, it will be truncated.
+		"""
 		if content != MISSING and content != "":
 			new_content, is_used = tools.substring_with_end_msg(
 				content, MAX_MSG_LENGTH, "{} more characters..."
@@ -106,11 +104,10 @@ class MessageSender:
 			# 	)
 			# )
 
-	"""
-	Send a message with markdown code formatting. If the character limit is exceeded, send multiple messages.
-	"""
-
 	async def add_code_message(self, content: str, prefix=None, suffix=None):
+		"""
+		Send a message with markdown code formatting. If the character limit is exceeded, send multiple messages.
+		"""
 		# def add_code_message(self, content: str, prefix=None, suffix=None):
 		max_length = MAX_MSG_LENGTH
 		if prefix is None:

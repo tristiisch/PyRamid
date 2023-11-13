@@ -36,5 +36,18 @@ class EngineSource:
 
 		return await self.__downloader.dl_track_by_id(track_used.id)
 
+	async def search_by_url(self, url: str):
+		"""
+		Search for tracks by URL using multiple search engines.
+
+		:param url: The URL to search for.
+		"""
+		for engine in self.__search_engines.values():
+			result = await engine.get_by_url(url)
+			if result is not None:
+				return result
+
+		return None
+
 	def get_engine(self, name: str):
 		return self.__search_engines.get(name.lower())

@@ -72,6 +72,9 @@ spotify:
   client_id: <client id of your spotify application>
   client_secret: <client secret of your spotify application>
 
+general:
+  default_limit_tracks: 100
+
 # Available value: production, pre-production, development
 # Change message level in logs
 mode: production

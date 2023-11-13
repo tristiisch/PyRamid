@@ -8,7 +8,7 @@ from data.track import Track
 from data.tracklist import TrackList
 from data.guild_data import GuildData
 from connector.discord.music_player_interface import MusicPlayerInterface
-from data.functional.messages.message_sender import MessageSender
+from data.functional.messages.message_sender_queued import MessageSenderQueued
 
 
 class GuildQueue:
@@ -35,7 +35,7 @@ class GuildQueue:
 			return True
 		return False
 
-	async def play(self, msg_sender: MessageSender) -> bool:
+	async def play(self, msg_sender: MessageSenderQueued) -> bool:
 		tl: TrackList = self.data.track_list
 		vc: VoiceClient = self.data.voice_client
 
@@ -164,14 +164,14 @@ class GuildQueue:
 		return humain_str_array
 
 	# Called after song played
-	async def __song_end(self, err: Exception | None, msg_sender: MessageSender):
+	async def __song_end(self, err: Exception | None, msg_sender: MessageSenderQueued):
 		if err is not None:
-			await msg_sender.add_message(f"An error occurred while playing song: {err}")
+			msg_sender.add_message(f"An error occurred while playing song: {err}")
 
 		await self.song_end_action(err, msg_sender)
 		self.song_end_action = self.__song_end_continue
 
-	async def __song_end_continue(self, err: Exception | None, msg_sender: MessageSender):
+	async def __song_end_continue(self, err: Exception | None, msg_sender: MessageSenderQueued):
 		tl: TrackList = self.data.track_list
 		vc: VoiceClient = self.data.voice_client
 
@@ -180,11 +180,11 @@ class GuildQueue:
 
 		if tl.is_empty():
 			await vc.disconnect()
-			await msg_sender.response_message(content="Bye bye")
+			msg_sender.response_message(content="Bye bye")
 		else:
 			await self.play(msg_sender)
 
-	async def __song_end_next(self, err: Exception | None, msg_sender: MessageSender):
+	async def __song_end_next(self, err: Exception | None, msg_sender: MessageSenderQueued):
 		tl: TrackList = self.data.track_list
 
 		if tl.is_empty() is False:
@@ -194,7 +194,7 @@ class GuildQueue:
 			raise Exception("They is no song to play after")
 		await self.play(msg_sender)
 
-	async def __song_end_stop(self, err: Exception | None, msg_sender: MessageSender):
+	async def __song_end_stop(self, err: Exception | None, msg_sender: MessageSenderQueued):
 		tl: TrackList = self.data.track_list
 
 		tl.clear()
