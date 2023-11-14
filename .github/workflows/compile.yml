@@ -77,6 +77,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+            clean: false
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
@@ -122,9 +124,9 @@ jobs:
         uses: actions/cache@v3
         with:
             path: ~/.cache/pip
-            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ matrix.python-version }}
+            key: ${{ runner.os }}-python_${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ matrix.python-version }}
             restore-keys: |
-              ${{ runner.os }}-pip
+              ${{ runner.os }}-python_${{ matrix.python-version }}-pip
 
       - name: Install dependencies
         run: |
@@ -168,7 +170,7 @@ jobs:
         if: steps.docker_tag.outputs.tag == 'latest'
         id: get_last_release
         run: |
-          RESPONSE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .tag_name)
+          RESPONSE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest")
           if [[ $(echo "$RESPONSE" | jq -r .message) == "Not Found" ]]; then
             LAST_RELEASE_TAG=$(git rev-list --max-parents=0 HEAD)
           else
@@ -206,11 +208,11 @@ jobs:
         if: steps.docker_tag.outputs.tag != 'latest'
         id: get_last_unstable_release
         run: |
-          RESPONSE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '.[0].tag_name')
+          RESPONSE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases")
           if [[ $(echo "$RESPONSE" | jq -r .message) == "Not Found" ]]; then
             LAST_RELEASE_TAG=${{ github.event.before }}
           else
-            LAST_RELEASE_TAG=$(echo "$RESPONSE" | jq -r .tag_name)
+            LAST_RELEASE_TAG=$(echo "$RESPONSE" | jq -r '.[0].tag_name')
           fi
           echo "last_release_tag=${LAST_RELEASE_TAG}" >> $GITHUB_OUTPUT
 
