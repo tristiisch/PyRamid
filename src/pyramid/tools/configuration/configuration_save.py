@@ -1,5 +1,6 @@
 from abc import ABC
 from enum import Enum
+from typing import Any
 
 import yaml
 
@@ -16,7 +17,7 @@ class ConfigurationToYAML(ABC):
 				else:
 					yaml.dump({section: data}, yaml_file, default_flow_style=False)
 
-	def __flatten_dict(self, d, parent_key="", sep="."):
+	def __flatten_dict(self, d: dict[str, Any], parent_key="", sep="."):
 		"""
 		Flatten a nested dictionary and separate keys with the specified separator.
 		"""
