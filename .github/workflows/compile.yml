@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.12", "3.13.0-alpha.1"]
     continue-on-error: true
 
     steps:
@@ -135,9 +135,117 @@ jobs:
         run: |
           python -m compileall ${{ env.SRC }}
 
+  publish_release:
+    name: "Publish release"
+    needs: ["compile", "unit_test"]
+    runs-on: ubuntu-latest
+    outputs:
+      docker_tag: ${{ steps.docker_tag.outputs.tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+
+      - name: Set Docker Image Tag
+        id: docker_tag
+        run: |
+          if [ ${{ github.ref }} = 'refs/heads/main' ]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          elif [ ${{ github.ref }} = 'refs/heads/pre-prod' ]; then
+            echo "tag=pre-prod" >> $GITHUB_OUTPUT
+          else
+            echo "tag=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get commit messages
+        id: get_commit_messages
+        run: |
+          COMMIT_MESSAGES=$(git log --pretty=format:"%s" ${{ github.event.before }}..${{ github.sha }} | sed -e 's/^/* /')
+          echo "commit_messages=${COMMIT_MESSAGES}" >> $GITHUB_OUTPUT
+
+      - name: Get last release tag
+        if: steps.docker_tag.outputs.tag == 'latest'
+        id: get_last_release
+        run: |
+          RESPONSE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .tag_name)
+          if [[ $(echo "$RESPONSE" | jq -r .message) == "Not Found" ]]; then
+            LAST_RELEASE_TAG=$(git rev-list --max-parents=0 HEAD)
+          else
+            LAST_RELEASE_TAG=$(echo "$RESPONSE" | jq -r .tag_name)
+          fi
+          echo "last_release_tag=${LAST_RELEASE_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Create stable Release
+        if: steps.docker_tag.outputs.tag == 'latest'
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.compile.outputs.version }}
+          release_name: Stable Release v${{ needs.compile.outputs.version }}
+          body: |
+            This has been deployed on the Discord bot `PyRamid#6882`.
+            To use the latest version the bot, please refer to the instructions outlined at https://github.com/tristiisch/PyRamid/#usage.
+
+            ## Changes
+            ${{ steps.get_last_release.outputs.commit_messages }}
+          
+            ## Docker
+            This version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.
+          
+            ### Images creation
+            * ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
+
+            ### Images update
+            * ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.docker_tag.outputs.tag }}
+          draft: true
+          prerelease: false
+
+      - name: Get last pre-release tag
+        if: steps.docker_tag.outputs.tag != 'latest'
+        id: get_last_unstable_release
+        run: |
+          RESPONSE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '.[0].tag_name')
+          if [[ $(echo "$RESPONSE" | jq -r .message) == "Not Found" ]]; then
+            LAST_RELEASE_TAG=${{ github.event.before }}
+          else
+            LAST_RELEASE_TAG=$(echo "$RESPONSE" | jq -r .tag_name)
+          fi
+          echo "last_release_tag=${LAST_RELEASE_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Create unstable Release
+        if: steps.docker_tag.outputs.tag != 'latest'
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_RELEASE }}
+        with:
+          tag_name: ${{ steps.docker_tag.outputs.tag }}
+          release_name: Unstable release v${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
+          body: |
+            This has been deployed on the Discord bot `PyRamid PRÉ-PROD#6277`.
+            Feel free to put it to the test by joining the development server at https://discord.gg/pNrZp7U34d.
+
+            ## Changes
+            ${{ steps.get_last_unstable_release.outputs.commit_messages }}
+          
+            ## Docker
+            This version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.
+          
+            ### Images creation
+            * ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
+
+            ### Images update
+            * ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.docker_tag.outputs.tag }}
+            * ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}
+
+          draft: false
+          prerelease: true
+
+
   docker_push:
     name: "Docker Push"
-    needs: ["compile", "unit_test"]
+    needs: ["compile", "publish_release"]
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
 
@@ -158,25 +266,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set Docker Tag
-        run: |
-          if [ ${{ github.ref }} = 'refs/heads/main' ]; then
-            echo "tag=latest" >> $GITHUB_OUTPUT
-          elif [ ${{ github.ref }} = 'refs/heads/pre-prod' ]; then
-            echo "tag=pre-prod" >> $GITHUB_OUTPUT
-          else
-            echo "tag=dev" >> $GITHUB_OUTPUT
-          fi
-        id: set_tag
-
       - name: Build and push PROD
-        if: steps.set_tag.outputs.tag == 'latest'
+        if: needs.publish_release.outputs.docker_tag == 'latest'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.set_tag.outputs.tag }},
+            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.publish_release.outputs.docker_tag }},
             ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }},
             ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
 
@@ -184,13 +281,13 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push DEV
-        if: steps.set_tag.outputs.tag != 'latest'
+        if: needs.publish_release.outputs.docker_tag != 'latest'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.set_tag.outputs.tag }},
+            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.publish_release.outputs.docker_tag }},
             ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
 
           cache-from: type=gha
