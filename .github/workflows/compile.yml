@@ -202,6 +202,7 @@ jobs:
 
             ### Images update
             * ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.docker_tag.outputs.tag }}
+            * ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}
           draft: true
           prerelease: false
 
@@ -240,7 +241,6 @@ jobs:
 
             ### Images update
             * ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ steps.docker_tag.outputs.tag }}
-            * ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}
 
           draft: false
           prerelease: true
