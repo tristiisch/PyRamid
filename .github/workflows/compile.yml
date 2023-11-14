@@ -192,7 +192,7 @@ jobs:
             To use the latest version the bot, please refer to the instructions outlined at https://github.com/tristiisch/PyRamid/#usage.
 
             ## Changes
-            ${{ steps.get_last_release.outputs.commit_messages }}
+            ${{ steps.get_commit_messages.outputs.commit_messages }}
           
             ## Docker
             This version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.
@@ -230,7 +230,7 @@ jobs:
             Feel free to put it to the test by joining the development server at https://discord.gg/pNrZp7U34d.
 
             ## Changes
-            ${{ steps.get_last_unstable_release.outputs.commit_messages }}
+            ${{ steps.get_commit_messages.outputs.commit_messages }}
           
             ## Docker
             This version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.
