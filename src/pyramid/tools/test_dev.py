@@ -13,7 +13,9 @@ class TestDev:
 
 	def test_spotify(self, input):
 		spotify_search = SpotifySearch(
-			self._config.spotify_client_id, self._config.spotify_client_secret
+			self._config.default_limit_track,
+			self._config.spotify_client_id,
+			self._config.spotify_client_secret,
 		)
 		res = spotify_search.search_tracks(input, limit=10)
 		if res is None:
@@ -22,7 +24,7 @@ class TestDev:
 			self.logger.info(track)
 
 	def test_deezer(self, input):
-		deezer_search = DeezerSearch()
+		deezer_search = DeezerSearch(self._config.default_limit_track)
 		res = deezer_search.search_tracks(input, limit=10)
 		if res is None:
 			return

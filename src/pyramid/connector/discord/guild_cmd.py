@@ -5,10 +5,10 @@ from discord import Interaction, VoiceChannel
 import data.tracklist as utils_list_track
 from data.guild_data import GuildData
 from data.track import TrackMinimal
-from connector.deezer.downloader import DeezerDownloader
 from connector.discord.guild_cmd_tools import GuildCmdTools
 from connector.discord.guild_queue import GuildQueue
 from data.functional.messages.message_sender_queued import MessageSenderQueued
+from data.functional.engine_source import EngineSource
 
 
 class GuildCmd(GuildCmdTools):
@@ -17,10 +17,10 @@ class GuildCmd(GuildCmdTools):
 		logger: Logger,
 		guild_data: GuildData,
 		guild_queue: GuildQueue,
-		deezer_dl: DeezerDownloader,
+		engine_source: EngineSource,
 	):
 		self.logger = logger
-		self.deezer_dl = deezer_dl
+		self.engine_source = engine_source
 		self.data = guild_data
 		self.queue = guild_queue
 
@@ -31,7 +31,7 @@ class GuildCmd(GuildCmdTools):
 
 		ms.response_message(content=f"Searching **{input}**")
 
-		track: TrackMinimal | None = self.data.search_engine.search_track(input)
+		track: TrackMinimal | None = self.data.search_engine.default_engine.search_track(input)
 		if not track:
 			ms.response_message(content=f"**{input}** not found.")
 			return False
@@ -178,9 +178,9 @@ class GuildCmd(GuildCmdTools):
 		self, ms: MessageSenderQueued, ctx: Interaction, input: str, engine: str | None
 	) -> bool:
 		if engine is None:
-			search_engine = self.data.search_engine
+			search_engine = self.data.search_engine.default_engine
 		else:
-			test_value = self.data.search_engines.get(engine.lower())
+			test_value = self.data.search_engines.get_engine(engine)
 			if not test_value:
 				ms.response_message(content=f"Search engine **{engine}** not found.")
 				return False
@@ -204,7 +204,7 @@ class GuildCmd(GuildCmdTools):
 
 		ms.response_message(content=f"Searching **{input}** ...")
 
-		tracks: list[TrackMinimal] | None = self.data.search_engine.search_tracks(input)
+		tracks: list[TrackMinimal] | None = self.data.search_engine.default_engine.search_tracks(input)
 		if not tracks:
 			ms.response_message(content=f"**{input}** not found.")
 			return False
@@ -218,21 +218,20 @@ class GuildCmd(GuildCmdTools):
 
 		ms.response_message(content=f"Searching **{url}** ...")
 
-		# ctx.client.loop
-		res: (
+		result: (
 			tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None
-		) = await self.data.search_engine.get_by_url(url)
-		if not res:
+		) = await self.data.search_engine.search_by_url(url)
+		if not result:
 			ms.response_message(content=f"**{url}** not found.")
 			return False
 
-		if isinstance(res, tuple):
-			tracks, tracks_unfindable = res
+		if isinstance(result, tuple):
+			tracks, tracks_unfindable = result
 			return await self._execute_play_multiple(
 				ms, voice_channel, tracks, tracks_unfindable, at_end=at_end
 			)
-		elif isinstance(res, TrackMinimal):
-			tracks = res
+		elif isinstance(result, TrackMinimal):
+			tracks = result
 			return await self._execute_play(ms, voice_channel, tracks, at_end=at_end)
 		else:
 			raise Exception("Unknown type 'res'")

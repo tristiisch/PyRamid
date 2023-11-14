@@ -285,14 +285,14 @@ class BotCmd:
 
 			await guild_cmd.play_url(ms, ctx, url, at_end=False)
 
-		@bot.tree.command(name="spam", description="Test spam")
-		async def cmd_spam(ctx: Interaction):
-			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+		# @bot.tree.command(name="spam", description="Test spam")
+		# async def cmd_spam(ctx: Interaction):
+		# 	ms = MessageSenderQueued(ctx)
+		# 	await ms.waiting()
 
-			for i in range(100):
-				ms.add_message(f"Spam n°{i}")
-			await ctx.response.send_message("Spam ended")
+		# 	for i in range(100):
+		# 		ms.add_message(f"Spam n°{i}")
+		# 	await ctx.response.send_message("Spam ended")
 
 	async def __use_on_guild_only(self, ctx: Interaction) -> bool:
 		if ctx.guild is None:
