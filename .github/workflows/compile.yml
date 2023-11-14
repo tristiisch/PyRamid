@@ -165,7 +165,7 @@ jobs:
         id: get_commit_messages
         run: |
           COMMIT_MESSAGES=$(git log --pretty=format:"* %s" ${{ github.event.before }}..${{ github.sha }})
-          echo "commit_messages=\"${COMMIT_MESSAGES}\"" >> $GITHUB_OUTPUT
+          echo "commit_messages=$COMMIT_MESSAGES" >> $GITHUB_OUTPUT
 
       - name: Get last release tag
         if: steps.docker_tag.outputs.tag == 'latest'
