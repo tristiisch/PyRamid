@@ -223,7 +223,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_RELEASE }}
         with:
-          tag_name: ${{ steps.docker_tag.outputs.tag_github }}_${{ needs.compile.outputs.commit_id }}
+          tag_name: ${{ steps.docker_tag.outputs.tag_github }}-${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
           release_name: Unstable release v${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
           body: |
             This has been deployed on the Discord bot `PyRamid PRÉ-PROD#6277`.
