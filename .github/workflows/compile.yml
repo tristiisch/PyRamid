@@ -183,9 +183,9 @@ jobs:
         if: steps.docker_tag.outputs.tag == 'latest'
         uses: actions/create-release@latest
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN_RELEASE }}
         with:
-          tag_name: ${{ needs.compile.outputs.version }}
+          tag_name: ${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
           release_name: Stable Release v${{ needs.compile.outputs.version }}
           body: |
             This has been deployed on the Discord bot `PyRamid#6882`.
