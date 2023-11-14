@@ -7,7 +7,7 @@ from threading import Thread
 import tools.utils as tools
 from data.functional.application_info import ApplicationInfo
 from connector.discord.bot import DiscordBot
-from tools.configuration import Configuration
+from tools.configuration.configuration import Configuration
 from tools.logs_handler import LogsHandler
 from tools.queue import Queue
 
@@ -54,14 +54,15 @@ class Main:
 
 	def config(self):
 		# Config load
-		self._config = Configuration()
-		self._config.load()
+		self._config = Configuration(self.logger)
+		if not self._config.load():
+			sys.exit(201)
 
 		self._logs_handler.set_log_level(self._config.mode)
 
 	def clean_data(self):
 		# Songs folder clear
-		tools.clear_directory(self._config.deezer_folder)
+		tools.clear_directory(self._config.deezer__folder)
 
 	def start(self):
 		# Discord Bot Instance

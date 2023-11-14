@@ -20,7 +20,7 @@ from connector.discord.bot_listener import BotListener
 from connector.discord.guild_cmd import GuildCmd
 from connector.discord.guild_queue import GuildQueue
 from data.functional.engine_source import EngineSource
-from tools.configuration import Configuration
+from tools.configuration.configuration import Configuration
 
 
 class DiscordBot:
@@ -32,8 +32,8 @@ class DiscordBot:
 	):
 		self.__logger = logger
 		self.__information = information
-		self.__token = config.discord_token
-		self.__ffmpeg = config.discord_ffmpeg
+		self.__token = config.discord__token
+		self.__ffmpeg = config.discord__ffmpeg
 		self.__environment: Environment = config.mode
 		self.__engine_source = EngineSource(config)
 		self.__started = time.time()

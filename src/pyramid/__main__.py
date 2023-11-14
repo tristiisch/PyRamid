@@ -10,7 +10,8 @@ main.git_info()
 main.config()
 main.clean_data()
 
-test_dev = TestDev(main._config, main.logger)
+# test_dev = TestDev(main._config, main.logger)
 # test_dev.test_deezer()
+
 main.start()
 main.stop()
