@@ -48,16 +48,16 @@ class ConfigurationFromYAML(ABC):
 		r.append(self.__check(v, "version"))
 
 		def mode_validation(input: str):
-			input = input.upper()
+			input = input.replace("-", "_").upper()
 			if input not in Environment.__members__:
 				return "The value should be one of %s" % ", ".join(Environment.__members__)
 			return None
 
-		def mode_str_to_enum(input):
-			mode_upper = str(input).replace("-", "_").upper()
+		def mode_str_to_enum(input: str):
+			input = input.replace("-", "_").upper()
 			return (
-				Environment[mode_upper]
-				if mode_upper in Environment.__members__
+				Environment[input]
+				if input in Environment.__members__
 				else Environment.PRODUCTION
 			)
 
