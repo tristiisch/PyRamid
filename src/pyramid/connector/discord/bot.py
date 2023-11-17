@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 import traceback
@@ -88,12 +89,22 @@ class DiscordBot:
 		self.listeners.register()
 		self.cmd.register()
 
-	def start(self):
-		self.__logger.info("Discord bot starting")
+	async def start(self):
 		try:
-			self.bot.run(self.__token, log_handler=None)
+			# self.bot.run(self.__token, log_handler=None)
+			self.__logger.info("Discord bot login")
+			await self.bot.login(self.__token)
+			self.__logger.info("Discord bot connecting")
+			await self.bot.connect()
 		except PrivilegedIntentsRequired as ex:
 			raise ex
+
+
+	async def stop(self):
+		# self.bot.clear()
+		logging.info("Discord bot stop")
+		await self.bot.close()
+		logging.info("Discord bot stopped")
 
 	def __get_guild_cmd(self, guild: Guild) -> GuildCmd:
 		if guild.id not in self.guilds_instances:
