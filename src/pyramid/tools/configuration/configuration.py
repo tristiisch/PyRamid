@@ -22,6 +22,12 @@ class Configuration(ConfigurationFromYAML, ConfigurationToYAML, ConfigurationFro
 		self.spotify__client_id: str = ""
 		self.spotify__client_secret: str = ""
 		self.general__limit_tracks: int = 0
+		self.database__type: str = ""
+		self.database__host: str = ""
+		self.database__port: int = 0
+		self.database__name: str = ""
+		self.database__username: str = ""
+		self.database__password: str = ""
 		self.mode: Environment = Environment.PRODUCTION
 		self.version: str = ""
 
@@ -31,7 +37,7 @@ class Configuration(ConfigurationFromYAML, ConfigurationToYAML, ConfigurationFro
 			self.__logger = logger
 		super().__init__(self.__logger)
 
-	def load(self, config_file: str = "config.yml", use_env_vars: bool = True) -> bool:
+	def load(self, config_file: str = "config.yml", use_env_vars: bool = True) -> None:
 		"""
 		Loads configuration values from environment variables and/or a configuration file.
 
@@ -44,11 +50,11 @@ class Configuration(ConfigurationFromYAML, ConfigurationToYAML, ConfigurationFro
 		keys_length = tools.utils.count_public_variables(self)
 
 		# Load from environment variables if enabled
-		result_1 = True
+		env_var_ok = True
 		if use_env_vars:
 			raw_values_env = self._get_env_vars()
 			result_values = self._transform_all(raw_values_env, keys_length)
-			result_1 = self._validate_all(
+			env_var_ok = self._validate_all(
 				raw_values_env, result_values, "env vars", True, keys_length
 			)
 
@@ -56,18 +62,12 @@ class Configuration(ConfigurationFromYAML, ConfigurationToYAML, ConfigurationFro
 		try:
 			raw_values_file = self._get_file_vars(config_file)
 			result_values = self._transform_all(raw_values_file, keys_length)
-			result_2 = self._validate_all(
+			self._validate_all(
 				raw_values_file, result_values, "file", keys_length=keys_length
 			)
 		except FileNotFoundError as err:
-			if not result_1:
-				self.__logger.critical(
-					"Unable to read configuration file '%s' :\n%s", config_file, err
-				)
-				return False
-			result_2 = True
-
-		return result_1 and result_2
+			if not env_var_ok:
+				raise Exception("Unable to read configuration file '%s' :\n%s" % (config_file, err))
 
 	def save(self, file_name):
 		"""

@@ -6,7 +6,7 @@ import shutil
 import typing
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 
 def create_parent_directories(file_path):
@@ -37,7 +37,7 @@ def keep_latest_files(
 				logging.warning("Error occurred while removing %s due to %s", file, e)
 
 
-def clear_directory(directory):
+def clear_directory(directory: str):
 	if not os.path.exists(directory):
 		return
 
@@ -50,7 +50,7 @@ def clear_directory(directory):
 			logging.warning("Failed to delete %s due to %s", file_path, e)
 
 
-def split_string_by_length(string, max_length) -> typing.Generator[str, None, None]:
+def split_string_by_length(string: str, max_length: int) -> typing.Generator[str, None, None]:
 	n = len(string)
 	start = 0
 	while start < n:
@@ -62,7 +62,7 @@ def split_string_by_length(string, max_length) -> typing.Generator[str, None, No
 		start = end
 
 
-def substring_with_end_msg(text, max_length, end_msg) -> tuple[str, bool]:
+def substring_with_end_msg(text: str, max_length: int, end_msg: str) -> tuple[str, bool]:
 	if len(text) <= max_length:
 		return text, False
 	remaining_chars = len(text) - max_length
@@ -71,7 +71,7 @@ def substring_with_end_msg(text, max_length, end_msg) -> tuple[str, bool]:
 	return f"{substring}{end_msg.format(remaining_chars)}", True
 
 
-def human_string_array(data, columns) -> str:
+def human_string_array(data: list[list[Any]], columns: list[str]) -> str:
 	col_widths = [max(len(str(x)) for x in column) for column in zip(*data, columns)]
 	lines = [" | ".join((col.ljust(width) for col, width in zip(columns, col_widths)))]
 	lines.append("-" * (sum(col_widths) + 3 * len(columns) - 1))
@@ -81,7 +81,7 @@ def human_string_array(data, columns) -> str:
 
 
 @contextmanager
-def temp_locale(name):
+def temp_locale(name: str):
 	saved_locale = locale.setlocale(locale.LC_TIME)
 	try:
 		yield locale.setlocale(locale.LC_TIME, name)
@@ -217,10 +217,51 @@ def get_available_space(path: str = "."):
 
 
 def count_public_variables(obj):
-	attributes = inspect.getmembers(obj, lambda a: not(inspect.isroutine(a)))
-	
+	attributes = inspect.getmembers(obj, lambda a: not (inspect.isroutine(a)))
+
 	# Filter names that don't start with an underscore
-	public_variables = [name for name, _ in attributes if not name.startswith('_')]
-	
+	public_variables = [name for name, _ in attributes if not name.startswith("_")]
+
 	# Return the count of public variables
 	return len(public_variables)
+
+
+def print_human_readable(obj):
+	# Get the class name
+	class_name = obj.__class__.__name__
+
+	# Get a list of attributes and their values
+	attributes = [
+		(attr, getattr(obj, attr))
+		for attr in dir(obj)
+		if not callable(getattr(obj, attr)) and not attr.startswith("__")
+	]
+
+	# Filter out attributes with None or non-string values
+	attributes = [(name, value) for name, value in attributes if value is not None and isinstance(value, (str, int, float, bool))]
+
+	# Create the formatted string
+	formatted_string = "%s(%s)" % (
+		class_name,
+		" ".join([f"{name}[{value}]" for name, value in attributes]),
+	)
+
+	# Print the result
+	return formatted_string
+
+def plurial_humain_readable(list: list):
+	lenght_list = len(list)
+
+	# Check if the list contains only strings
+	if not all(isinstance(item, str) for item in list):
+		# Convert non-string elements to strings
+		list = [str(item) for item in list]
+
+	if lenght_list != 1:
+		sep = "\n- "
+		prefix_sep = sep
+	else:
+		sep = ", "
+		prefix_sep =  " "
+	list_str = sep.join(list)
+	return prefix_sep + list_str

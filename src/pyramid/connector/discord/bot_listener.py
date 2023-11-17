@@ -1,13 +1,16 @@
+from datetime import datetime
 import discord
 
 from logging import Logger
 from discord import (
 	Guild,
+	Member,
 	Role,
 	Status,
 )
 from discord.ext.commands import Bot
 from data.functional.application_info import ApplicationInfo
+from connector.database.user import User, UserHandler
 
 
 class BotListener:
@@ -39,13 +42,25 @@ class BotListener:
 			for guild in bot.guilds:
 				self.show_info_guild(guild)
 				self.__logger.info("----------------------")
+
+			self.__logger.info("Checkings all members")
+			uh = UserHandler()
+			for guild in bot.guilds:
+				async for member in guild.fetch_members(limit=None):
+					UserHandler.save(User.from_discord_user(member._user), uh)
 			self.__logger.info("Discord bot ready")
-			# await client.close()
+
+		@bot.event
+		async def on_member_update(before, after):
+			UserHandler.save(User.from_discord_user(after))
 
 		@bot.event
 		async def on_guild_join(guild: Guild):
 			self.__logger.info("Bot join guild :")
 			self.show_info_guild(guild)
+			uh = UserHandler()
+			async for member in guild.fetch_members(limit=None):
+				UserHandler.save(User.from_discord_user(member._user), uh)
 
 		@bot.event
 		async def on_guild_remove(guild: Guild):

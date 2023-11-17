@@ -1,12 +1,11 @@
-import argparse
 import logging
-import sys
 from datetime import datetime
 from threading import Thread
 
 import tools.utils as tools
-from data.functional.application_info import ApplicationInfo
+from connector.database.connection import DatabaseConnection
 from connector.discord.bot import DiscordBot
+from data.functional.application_info import ApplicationInfo
 from tools.configuration.configuration import Configuration
 from tools.logs_handler import LogsHandler
 from tools.queue import Queue
@@ -16,24 +15,6 @@ class Main:
 	def __init__(self):
 		# Program information
 		self._info = ApplicationInfo()
-
-	# Argument management
-	def args(self):
-		parser = argparse.ArgumentParser(description="Music Bot Discord using Deezer.")
-		parser.add_argument("--version", action="store_true", help="Print version", required=False)
-		parser.add_argument(
-			"--git", action="store_true", help="Print git informations", required=False
-		)
-		args = parser.parse_args()
-
-		if args.version:
-			self._info.load_git_info()
-			print(f"{self._info.to_json()}")
-			sys.exit(0)
-		elif args.git:
-			self._info.load_git_info()
-			print(f"{self._info.git_info.to_json()}")
-			sys.exit(0)
 
 	# Logs management
 	def logs(self):
@@ -55,10 +36,13 @@ class Main:
 	def config(self):
 		# Config load
 		self._config = Configuration(self.logger)
-		if not self._config.load():
-			sys.exit(201)
+		self._config.load()
 
 		self._logs_handler.set_log_level(self._config.mode)
+
+	def database(self):
+		# Database connection
+		self.database_connection = DatabaseConnection(self._config)
 
 	def clean_data(self):
 		# Songs folder clear
@@ -66,17 +50,12 @@ class Main:
 
 	def start(self):
 		# Discord Bot Instance
-		discord_bot = DiscordBot(
-			self.logger.getChild("Discord"), self._info, self._config
-		)
+		discord_bot = DiscordBot(self.logger.getChild("Discord"), self._info, self._config)
 		# Create bot
 		discord_bot.create()
 
 		# Connect bot to Discord servers
-		thread = Thread(
-			name="Discord",
-			target=discord_bot.start
-		)
+		thread = Thread(name="Discord", target=discord_bot.start)
 		thread.start()
 		thread.join()
 

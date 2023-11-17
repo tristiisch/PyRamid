@@ -1,12 +1,12 @@
 $ErrorActionPreference = "Stop"
 $LocalName = "pyramid-local"
 $LocalTag = "latest"
-
 $RemoteName="tristiisch/pyramid"
 $RemoteTag="dev"
+$RequirementFile="requirements.txt"
 
 function Install-Requirement() {
-	pip install --upgrade -r .\requirements.txt
+	pip install --upgrade -r $RequirementFile
 }
 
 function Add-Lib($lib) {
@@ -15,17 +15,44 @@ function Add-Lib($lib) {
 	$version = (pip freeze | Select-String -Pattern "$lib==" -CaseSensitive -SimpleMatch).Line -replace "$lib=="
 	$higherMajorVersion = "$([int]($version -Split "\." | Select-Object -First 1) + 1).0.0"
 	$newVersionSpecifier = "$lib>=$version,<$higherMajorVersion"
-	Write-Output $newVersionSpecifier | Out-File -Append -FilePath requirements.txt
+	Write-Output $newVersionSpecifier | Out-File -Append -FilePath $RequirementFile
+}
+
+function Remove-Lib($lib) {
+	pip uninstall $lib -y
+
+	$content = Get-Content -Path $RequirementFile -Raw
+	$newContent = $content -split "`r?`n" | Where-Object { $_ -notlike "$lib*" }
+	$newContent -join "`r`n" | Out-File -NoNewline -FilePath $RequirementFile
 }
 
 function Create-Docker() {
-	$data = (python src/pyramid --git) -Join "`n"
-	$Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
-	[System.IO.File]::WriteAllLines(".\git_info.json", $data, $Utf8NoBomEncoding)
+	$Dispose = Create-Git-Info
 
 	docker build -t ${LocalName}:${LocalTag} .
 
-	Remove-Item -r git_info.json
+	$Dispose
+}
+
+function Create-Docker-Compose() {
+	$Dispose = Create-Git-Info
+
+	docker compose create --build
+
+	$Dispose
+}
+
+function Create-Git-Info() {
+	$file_name = "git_info.json"
+	$data = (python src/pyramid --git) -Join "`n"
+	$Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
+	[System.IO.File]::WriteAllLines($file_name, $data, $Utf8NoBomEncoding)
+
+	docker build -t ${LocalName}:${LocalTag} .
+    function Dispose {
+		Remove-Item -r $file_name
+    }
+	return $function:Dispose
 }
 
 function Run-Docker() {

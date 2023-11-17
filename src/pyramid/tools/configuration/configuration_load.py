@@ -13,6 +13,7 @@ class ConfigurationFromEnv(ABC):
 		# Load values from environment variables
 		return {str(key).lower(): str(value) for key, value in os.environ.items()}
 
+
 class ConfigurationFromYAML(ABC):
 	def __init__(self, logger: Logger):
 		self.__logger = logger
@@ -45,6 +46,18 @@ class ConfigurationFromYAML(ABC):
 		r.append(self.__check(v, "spotify.client_id", r"^[a-zA-Z0-9]{32}$"))
 		r.append(self.__check(v, "spotify.client_secret", r"^[a-zA-Z0-9]{32}$"))
 		r.append(self.__check(v, "general.limit_tracks", is_int=True))
+		r.append(self.__check(v, "database.type", r"^[A-Za-z0-9_]+$"))
+		r.append(
+			self.__check(
+				v,
+				"database.host",
+				r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$|^\[?[A-Fa-f0-9:]+\]?$|^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$",
+			)
+		)
+		r.append(self.__check(v, "database.port", r"^(-1|[1-9][0-9]{0,4})$", is_int=True, is_positive_int=False))
+		r.append(self.__check(v, "database.name", r"^[A-Za-z0-9_]{1,63}$"))
+		r.append(self.__check(v, "database.username", r"^[A-Za-z0-9_]{1,63}$"))
+		r.append(self.__check(v, "database.password", r"^[A-Za-z0-9_]{1,63}$"))
 		r.append(self.__check(v, "version"))
 
 		def mode_validation(input: str):
@@ -92,7 +105,7 @@ class ConfigurationFromYAML(ABC):
 						continue
 					elif isinstance(self_value, int) and self_value != 0:
 						continue
-				self.__logger.warning(f"'{key_with_dot}' in {type} is not set")
+				errors_msg.append(f"'{key_with_dot}' in {type} is not set")
 				continue
 			errors_msg.append(f"'{key_with_dot}' with value '{value}' : {err}")
 
@@ -117,8 +130,7 @@ class ConfigurationFromYAML(ABC):
 		if ignore is True:
 			self.__logger.warning(full_error)
 			return True
-		self.__logger.critical(full_error)
-		return False
+		raise Exception(full_error)
 
 	def __check(
 		self,
@@ -142,6 +154,8 @@ class ConfigurationFromYAML(ABC):
 				result = validation_func(value)
 				if result is not None:
 					return key_with_dot, value, result
+			elif regex_pattern is not None and not re.match(regex_pattern, str(value)):
+				return key_with_dot, value, "Invalid format"
 
 			if transform_func:
 				value = transform_func(value)
@@ -152,8 +166,6 @@ class ConfigurationFromYAML(ABC):
 			elif is_path:
 				if not os.path.exists(value):
 					return key_with_dot, value, "Path didn't exist"
-			elif regex_pattern is not None and not re.match(regex_pattern, str(value)):
-				return key_with_dot, value, "Invalid format"
 		except ValueError as e:
 			return key_with_dot, value, f"{str(e)}"
 

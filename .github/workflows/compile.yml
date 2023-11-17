@@ -28,11 +28,11 @@ jobs:
   compile:
     name: "Compile Python 3.11"
     runs-on: ubuntu-latest
-    outputs:
-      json: ${{ steps.version.outputs.json }}
-      version: ${{ steps.version.outputs.version }}
-      commit_id: ${{ steps.version.outputs.commit_id }}
-      last_author: ${{ steps.version.outputs.last_author }}
+    # outputs:
+    #   json: ${{ steps.version.outputs.json }}
+    #   version: ${{ steps.version.outputs.version }}
+    #   commit_id: ${{ steps.version.outputs.commit_id }}
+    #   last_author: ${{ steps.version.outputs.last_author }}
 
     steps:
       - name: Checkout repository
@@ -60,14 +60,14 @@ jobs:
         run: |
           python -m compileall ${{ env.SRC }}
 
-      - name: Save version
-        run: |
-          FULL_JSON=$(python ${{ env.SRC }} --version)
-          echo "json=$(echo $FULL_JSON | jq -c)" >> $GITHUB_OUTPUT
-          echo "version=$(echo $FULL_JSON | jq -r '.version')" >> $GITHUB_OUTPUT
-          echo "commit_id=$(echo $FULL_JSON | jq -r '.git_info.commit_id')" >> $GITHUB_OUTPUT
-          echo "last_author=$(echo $FULL_JSON | jq -r '.git_info.last_author')" >> $GITHUB_OUTPUT
-        id: version
+    #   - name: Save version
+    #     run: |
+    #       FULL_JSON=$(python ${{ env.SRC }} --version)
+    #       echo "json=$(echo $FULL_JSON | jq -c)" >> $GITHUB_OUTPUT
+    #       echo "version=$(echo $FULL_JSON | jq -r '.version')" >> $GITHUB_OUTPUT
+    #       echo "commit_id=$(echo $FULL_JSON | jq -r '.git_info.commit_id')" >> $GITHUB_OUTPUT
+    #       echo "last_author=$(echo $FULL_JSON | jq -r '.git_info.last_author')" >> $GITHUB_OUTPUT
+    #     id: version
 
   unit_test:
     name: "Unit tests Python"
@@ -256,9 +256,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set git info
-        run: |
-          echo '${{ needs.compile.outputs.json }}' | jq -r '.git_info' > git_info.json
+    #   - name: Set git info
+    #     run: |
+    #       echo '${{ needs.compile.outputs.json }}' | jq -r '.git_info' > git_info.json
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
