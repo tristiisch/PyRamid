@@ -23,7 +23,7 @@ class BotListener:
 		bot = self.__bot
 
 		@bot.event
-		async def on_ready():
+		async def on_ready(): # TODO changed to -> await bot.setup_hook()
 			await bot.tree.sync()
 			await bot.change_presence(
 				status=Status.online,
