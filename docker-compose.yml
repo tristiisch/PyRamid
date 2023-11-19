@@ -23,6 +23,8 @@ services:
       postgreSQL:
         condition: service_healthy
     restart: always
+    ports:
+    - 49149:49150
     networks:
     - pyramid_network
     container_name : pyramid
@@ -51,6 +53,10 @@ services:
     hostname: postgreSQL
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
+      # Docker Engine version 25.0
+      # start_period: 30s
+      # start_interval: 1s
+
       interval: 1s
       timeout: 5s
       retries: 60

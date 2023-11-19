@@ -1,11 +1,12 @@
 from data.functional.main import Main
-from tools.test_dev import TestDev
+from test_dev import TestDev
 
 main = Main()
 
 main.logs()
 main.git_info()
 main.config()
+main.open_socket()
 main.database()
 main.clean_data()
 

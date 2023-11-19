@@ -90,3 +90,25 @@ function Clean-Python-Cache() {
 	$DirToDelete | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
 	Write-Host "$($DirToDelete.Length) directories of Python cache have been deleted."
 }
+
+function Get-Container-IP($containerName) {
+	# Get the container object by name
+	$container_id = docker ps -qf "name=$containerName"
+
+	# Check if the container exists
+	if ($null -eq $container_id) {
+		Write-Host "Container $containerName not found."
+		return $null
+	} else {
+		# Get the network settings for the container
+		# Extract the private IP address
+		$privateIP = docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container_id
+
+		return $privateIP
+	}
+}
+function Test-Health-Docker-Compose() {
+	$containerName = "pyramid"
+	$ip = Get-Container-IP $containerName
+	python.exe .\src\pyramid\cli.py health --host $ip --port 49149
+}

@@ -10,15 +10,16 @@ from data.environment import Environment
 
 
 class LogsHandler:
-	def __init__(self, info: ApplicationInfo, logs_dir, log_filename, error_filename):
+	def __init__(self):
+		self.__date = "%d/%m/%Y %H:%M:%S"
+		self.__console_format = "%(asctime)s %(levelname)s %(message)s"
+		self.__file_format = "[{asctime}] [{levelname:<8}] {name}: {message}"
+
+	def init(self, info: ApplicationInfo, logs_dir, log_filename, error_filename):
 		self.__info = info
 		self.__logs_dir = logs_dir
 		self.__log_filename = log_filename
 		self.__error_filename = error_filename
-
-		self.__date = "%d/%m/%Y %H:%M:%S"
-		self.__console_format = "%(asctime)s %(levelname)s %(message)s"
-		self.__file_format = "[{asctime}] [{levelname:<8}] {name}: {message}"
 
 		self.logger = logging.getLogger()
 
