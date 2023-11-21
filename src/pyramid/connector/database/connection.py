@@ -1,13 +1,17 @@
 import logging
+import threading
+import time
 from typing import Any, List
 
-from sqlalchemy import Column, Engine, Inspector, Table, create_engine, inspect, text
-from sqlalchemy_utils import database_exists, create_database
-from sqlalchemy.engine.interfaces import ReflectedColumn
-from sqlalchemy.ext.declarative import DeclarativeMeta
-from sqlalchemy.orm.mapper import Mapper
-from tools.configuration.configuration import Configuration
 import tools.utils
+from sqlalchemy import Column, Engine, Inspector, Table, create_engine, inspect, text
+from sqlalchemy.engine.interfaces import ReflectedColumn
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm.mapper import Mapper
+from sqlalchemy_utils import create_database, database_exists
+from tools.configuration.configuration import Configuration
 
 
 class DatabaseConnection:
@@ -23,9 +27,13 @@ class DatabaseConnection:
 			f":{config.database__port}" if config.database__port > 0 else "",
 			config.database__name,
 		)
+		self._logger = logging.getLogger("database")
 
 		self.__engine = create_engine(database_url, echo=False)
 		DatabaseConnection.ENGINE = self.__engine
+
+	def connect(self):
+		self.ping_database(5, False)
 
 		if not database_exists(self.__engine.url):
 			create_database(self.__engine.url)
@@ -35,6 +43,40 @@ class DatabaseConnection:
 				DatabaseConnection.create_table(base)
 
 			DatabaseConnection.BASES.clear()
+
+		ping_thread = threading.Thread(target=self.ping_database, daemon=True)
+		ping_thread.start()
+
+	def ping_database(self, interval: int = 30, infinite: bool = True):
+		Session = sessionmaker(bind=self.__engine)
+		last_error_message = None
+
+		while True:
+			with Session() as session:
+				error = self.check_connection(session)
+				if not error:
+					if last_error_message is not None:
+						self._logger.info("Database is now available !")
+					last_error_message = None
+					if not infinite:
+						if last_error_message is None:
+							self._logger.info("Database is available")
+						break
+					time.sleep(interval)
+					continue
+				error_message = str(error)
+				if error_message != last_error_message:
+					last_error_message = error_message
+					self._logger.warning("Database is unavailable:\n%s", error)
+				time.sleep(interval)
+
+	def check_connection(self, session: Session) -> None | DBAPIError:
+		try:
+			session.execute(text("SELECT 1"))
+			session.commit()
+			return None
+		except DBAPIError as err:
+			return err
 
 	@staticmethod
 	def create_table(base: DeclarativeMeta):
@@ -145,7 +187,9 @@ class DatabaseConnection:
 				remote_column["name"],
 				remote_column["type"],
 				True if remote_column["name"] in primary_columns else False,
-				True if any(remote_column["name"] in item["column_names"] for item in uniques_columns) else False,
+				True
+				if any(remote_column["name"] in item["column_names"] for item in uniques_columns)
+				else False,
 				remote_column["nullable"],
 				remote_column["default"],
 				remote_column.get("autoincrement", None),

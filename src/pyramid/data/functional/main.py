@@ -45,6 +45,7 @@ class Main:
 	def database(self):
 		# Database connection
 		self.database_connection = DatabaseConnection(self._config)
+		self.database_connection.connect()
 
 	def clean_data(self):
 		# Songs folder clear
