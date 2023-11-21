@@ -19,21 +19,26 @@ class DatabaseConnection:
 	BASES: list[DeclarativeMeta] = []
 
 	def __init__(self, config: Configuration):
-		database_url = "%s://%s:%s@%s%s/%s" % (
+		DBMS_url = "%s://%s:%s@%s%s" % (
 			config.database__type,
 			config.database__username,
 			config.database__password,
 			config.database__host,
-			f":{config.database__port}" if config.database__port > 0 else "",
+			f":{config.database__port}" if config.database__port > 0 else ""
+		)
+		database_url = "%s/%s" % (
+			DBMS_url,
 			config.database__name,
 		)
 		self._logger = logging.getLogger("database")
 
+		self.__engine_DBMS = create_engine(DBMS_url, echo=False)
 		self.__engine = create_engine(database_url, echo=False)
 		DatabaseConnection.ENGINE = self.__engine
 
 	def connect(self):
-		self.ping_database(5, False)
+		self.ping_database(5, False, self.__engine_DBMS)
+		del self.__engine_DBMS
 
 		if not database_exists(self.__engine.url):
 			create_database(self.__engine.url)
@@ -47,8 +52,10 @@ class DatabaseConnection:
 		ping_thread = threading.Thread(target=self.ping_database, daemon=True)
 		ping_thread.start()
 
-	def ping_database(self, interval: int = 30, infinite: bool = True):
-		Session = sessionmaker(bind=self.__engine)
+	def ping_database(self, interval: int = 30, infinite: bool = True, engine = None):
+		if not engine:
+			engine = self.__engine
+		Session = sessionmaker(bind=engine)
 		last_error_message = None
 
 		while True:
@@ -99,7 +106,7 @@ class DatabaseConnection:
 				mapper, local_table_name
 			)
 			if not inspector.has_table(local_table_name):
-				logging.info(
+				logging.debug(
 					"Table '%s' does not exist in the database. Skipping checking columns...",
 					local_table_name,
 				)
@@ -129,9 +136,9 @@ class DatabaseConnection:
 						break
 
 				if is_added is True:
-					logging.info("Column '%s' added successfully", column.key)
+					logging.info("[%s] Column '%s' added successfully", local_table_name, column.key)
 				else:
-					logging.info("Failed to add column '%s'", column.key)
+					logging.warning("[%s] Failed to add column '%s'", local_table_name, column.key)
 
 		base.metadata.create_all(engine)
 
@@ -173,7 +180,7 @@ class DatabaseConnection:
 				"dialect_options",
 			],
 		)
-		logging.debug("Columns of table defined in code '%s'\n%s\n", table_name, hsa)
+		logging.debug("[%s] Columns in code :\n%s\n", table_name, hsa)
 
 		return local_columns
 
@@ -216,7 +223,7 @@ class DatabaseConnection:
 				"dialect_options",
 			],
 		)
-		logging.debug("Columns of table in remote database '%s'\n%s\n", table_name, hsa)
+		logging.debug("[%s] Columns in remote database :\n%s\n", table_name, hsa)
 
 		return remote_columns
 

@@ -3,7 +3,6 @@ from typing import Self
 
 import discord
 import tools.utils
-from connector.database.history import history_table
 from connector.database.sql_methods import SQLMethods
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, Column, DateTime, Sequence, String
 
@@ -12,9 +11,9 @@ from sqlalchemy import BigInteger, Boolean, CheckConstraint, Column, DateTime, S
 class User(SQLMethods):
 	__tablename__ = "users"
 
-	id = Column(BigInteger, Sequence("user_id_seq"), primary_key=True)
+	id = Column(BigInteger, Sequence(f"{__name__.lower()}_id_seq"), primary_key=True)
+	discord_id = Column(BigInteger, CheckConstraint("discord_id >= 0"), unique=True)
 	identifier = Column(String(37), unique=True, nullable=True)
-	discord_id = Column(BigInteger, CheckConstraint("discord_id  >= 0"))
 	created_at = Column(DateTime(timezone=True))
 	is_bot = Column(Boolean)
 
@@ -34,12 +33,6 @@ class User(SQLMethods):
 class UserHandler:
 	def __init__(self):
 		self.__session = User.create_session()()
-
-	@classmethod
-	def save(cls, user: User, self: Self | None = None):
-		if not self:
-			self = cls()
-		self.add_or_update(user)
 
 	def __del__(self):
 		self.__session.close()

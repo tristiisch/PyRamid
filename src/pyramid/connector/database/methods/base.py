@@ -49,12 +49,15 @@ class SQLMethodsBase(Base):
 			raise ValueError(f"{column} is not a unique column in {cls.__name__}")
 
 	@classmethod
-	def _check_duplicate(cls, session: Session, obj: Self):
+	def _check_duplicate(cls, session: Session, obj: Self, raise_err = True) -> list[Self] | None:
 		result = cls._get_duplicate(session, obj)
 
 		lenght_result = len(result)
 		if lenght_result == 0:
-			return
+			return None
+
+		if not raise_err:
+			return result
 
 		plural_form = "s" if lenght_result != 1 else ""
 		msg_error = "Similar object%s of '%s' already exists :%s" % (

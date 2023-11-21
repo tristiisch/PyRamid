@@ -4,7 +4,7 @@ import random
 # from faker import Faker
 from connector.deezer.search import DeezerSearch
 from data.functional.git_info import GitInfo
-from connector.database.user import User, UserHandler
+from connector.database.obj.user import User, UserHandler
 from tools.configuration.configuration import Configuration
 from connector.spotify.search import SpotifySearch
 

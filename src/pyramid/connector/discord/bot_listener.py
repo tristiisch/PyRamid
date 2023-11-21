@@ -3,14 +3,14 @@ import discord
 
 from logging import Logger
 from discord import (
-	Guild,
 	Member,
 	Role,
 	Status,
 )
 from discord.ext.commands import Bot
 from data.functional.application_info import ApplicationInfo
-from connector.database.user import User, UserHandler
+from connector.database.obj.user import User, UserHandler
+from connector.database.obj.guild import Guild
 
 
 class BotListener:
@@ -23,7 +23,7 @@ class BotListener:
 		bot = self.__bot
 
 		@bot.event
-		async def on_ready(): # TODO changed to -> await bot.setup_hook()
+		async def on_ready():  # TODO changed to -> await bot.setup_hook()
 			await bot.tree.sync()
 			await bot.change_presence(
 				status=Status.online,
@@ -46,28 +46,41 @@ class BotListener:
 			self.__logger.info("Checkings all members")
 			uh = UserHandler()
 			for guild in bot.guilds:
+				discord_guild = Guild.from_discord_guild(guild)
+				Guild.add_or_update(discord_guild, True)
+
 				async for member in guild.fetch_members(limit=None):
-					UserHandler.save(User.from_discord_user(member._user), uh)
+					discord_user = User.from_discord_user(member._user)
+					uh.add_or_update(discord_user)
 			self.__logger.info("Discord bot ready")
 
 		@bot.event
 		async def on_member_update(before, after):
-			UserHandler.save(User.from_discord_user(after))
+			uh = UserHandler()
+			uh.add_or_update(User.from_discord_user(after))
 
 		@bot.event
-		async def on_guild_join(guild: Guild):
+		async def on_guild_join(guild: discord.Guild):
 			self.__logger.info("Bot join guild :")
 			self.show_info_guild(guild)
+
+			discord_guild = Guild.from_discord_guild(guild)
+			Guild.add_or_update(discord_guild, True)
+
 			uh = UserHandler()
 			async for member in guild.fetch_members(limit=None):
-				UserHandler.save(User.from_discord_user(member._user), uh)
+				discord_user = User.from_discord_user(member._user)
+				uh.add_or_update(discord_user)
 
 		@bot.event
-		async def on_guild_remove(guild: Guild):
+		async def on_guild_remove(guild: discord.Guild):
 			self.__logger.info("Bot leave guild '%s'", guild.name)
 			self.show_info_guild(guild)
 
-	def show_info_guild(self, guild: Guild):
+			discord_guild = Guild.from_discord_guild(guild)
+			Guild.add_or_update(discord_guild, True)
+
+	def show_info_guild(self, guild: discord.Guild):
 		self.__logger.info(
 			"'%s' has %d members. Creator is %s.",
 			guild.name,

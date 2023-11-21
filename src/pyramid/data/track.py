@@ -1,6 +1,8 @@
 from datetime import datetime
 
 import deezer.resources
+from sqlalchemy import false
+from connector.database.obj.track import TrackStored
 import tools.utils as tools
 
 
@@ -71,6 +73,10 @@ class TrackMinimalDeezer(TrackMinimal):
 			self.available = False
 		else:
 			self.available = True
+		track_stored = TrackStored(
+			dl_id=self.id, name=self.name, artist=self.author_name, album=self.album_title
+		)
+		TrackStored.add_if_not_exists(track_stored, False)
 
 
 class Track(TrackMinimal):
