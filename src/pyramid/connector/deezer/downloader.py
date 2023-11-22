@@ -31,8 +31,7 @@ class DeezerDownloader:
 		# 	return None  # Track unvailable in this country
 
 		if not track_to_dl:
-			logging.error(f"Unable to find deezer song to download {track_id} : Unknown error")
-			return None
+			raise Exception(f"Unable to find deezer song to download {track_id} : Unknown error")
 
 		track_info = track_to_dl["info"]
 		file_name = pydeezer.util.clean_filename(

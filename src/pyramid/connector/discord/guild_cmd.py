@@ -8,7 +8,7 @@ from data.track import TrackMinimal
 from connector.discord.guild_cmd_tools import GuildCmdTools
 from connector.discord.guild_queue import GuildQueue
 from data.functional.messages.message_sender_queued import MessageSenderQueued
-from data.functional.engine_source import EngineSource
+from data.functional.engine_source import EngineSource, SourceType
 
 
 class GuildCmd(GuildCmdTools):
@@ -24,14 +24,14 @@ class GuildCmd(GuildCmdTools):
 		self.data = guild_data
 		self.queue = guild_queue
 
-	async def play(self, ms: MessageSenderQueued, ctx: Interaction, input: str, at_end=True) -> bool:
+	async def play(self, ms: MessageSenderQueued, ctx: Interaction, input: str, engine: SourceType | None, at_end=True) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
 			return False
 
 		ms.response_message(content=f"Searching **{input}**")
 
-		track: TrackMinimal | None = self.data.search_engine.default_engine.search_track(input)
+		track: TrackMinimal | None = self.data.search_engine.search_track(input, engine)
 		if not track:
 			ms.response_message(content=f"**{input}** not found.")
 			return False
@@ -175,41 +175,17 @@ class GuildCmd(GuildCmdTools):
 		return True
 
 	def search(
-		self, ms: MessageSenderQueued, ctx: Interaction, input: str, engine: str | None
+		self, ms: MessageSenderQueued, ctx: Interaction, input: str, engine: SourceType | None
 	) -> bool:
-		if engine is None:
-			search_engine = self.data.search_engine.default_engine
-		else:
-			test_value = self.data.search_engines.get_engine(engine)
-			if not test_value:
-				ms.response_message(content=f"Search engine **{engine}** not found.")
-				return False
-			else:
-				search_engine = test_value
-
-		result: list[TrackMinimal] | None = search_engine.search_tracks(input)
+		result: list[TrackMinimal] | None = self.data.search_engines.search_tracks(input, engine)
 
 		if not result:
 			ms.response_message(content=f"**{input}** not found.")
 			return False
 
-		hsa = utils_list_track.to_str.tracks(result)
+		hsa = utils_list_track.to_str(result)
 		ms.add_code_message(hsa, prefix="Here are the results of your search :")
 		return True
-
-	async def play_multiple(self, ms: MessageSenderQueued, ctx: Interaction, input: str) -> bool:
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
-		if not voice_channel:
-			return False
-
-		ms.response_message(content=f"Searching **{input}** ...")
-
-		tracks: list[TrackMinimal] | None = self.data.search_engine.default_engine.search_tracks(input)
-		if not tracks:
-			ms.response_message(content=f"**{input}** not found.")
-			return False
-
-		return await self._execute_play_multiple(ms, voice_channel, tracks)
 
 	async def play_url(self, ms: MessageSenderQueued, ctx: Interaction, url: str, at_end=True) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)

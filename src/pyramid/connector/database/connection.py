@@ -64,11 +64,11 @@ class DatabaseConnection:
 				if not error:
 					if last_error_message is not None:
 						self._logger.info("Database is now available !")
-					last_error_message = None
 					if not infinite:
 						if last_error_message is None:
 							self._logger.info("Database is available")
 						break
+					last_error_message = None
 					time.sleep(interval)
 					continue
 				error_message = str(error)
