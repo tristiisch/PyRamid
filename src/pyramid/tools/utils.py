@@ -1,3 +1,4 @@
+import inspect
 import locale
 import logging
 import os
@@ -213,3 +214,13 @@ def time_to_duration(time_in_sec: int) -> str:
 def get_available_space(path: str = "."):
 	total, used, free = shutil.disk_usage(path)
 	return free
+
+
+def count_public_variables(obj):
+	attributes = inspect.getmembers(obj, lambda a: not(inspect.isroutine(a)))
+	
+	# Filter names that don't start with an underscore
+	public_variables = [name for name, _ in attributes if not name.startswith('_')]
+	
+	# Return the count of public variables
+	return len(public_variables)

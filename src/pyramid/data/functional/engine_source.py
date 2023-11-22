@@ -4,15 +4,15 @@ from connector.deezer.search import DeezerSearch
 from connector.spotify.search import SpotifySearch
 from data.a_search import ASearch
 from data.track import Track, TrackMinimal, TrackMinimalDeezer
-from tools.configuration import Configuration
+from tools.configuration.configuration import Configuration
 
 
 class EngineSource:
 	def __init__(self, config: Configuration):
-		self.__downloader = DeezerDownloader(config.deezer_arl, config.deezer_folder)
-		self.__deezer_search = DeezerSearch(config.default_limit_track)
+		self.__downloader = DeezerDownloader(config.deezer__arl, config.deezer__folder)
+		self.__deezer_search = DeezerSearch(config.general__limit_tracks)
 		self.__spotify_search = SpotifySearch(
-			config.default_limit_track, config.spotify_client_id, config.spotify_client_secret
+			config.general__limit_tracks, config.spotify__client_id, config.spotify__client_secret
 		)
 		self.default_engine: ASearch = self.__deezer_search
 		self.__downloader_search = self.__deezer_search

@@ -1,13 +1,15 @@
 import argparse
+import asyncio
 import logging
 import sys
+import signal
 from datetime import datetime
 from threading import Thread
 
 import tools.utils as tools
 from data.functional.application_info import ApplicationInfo
 from connector.discord.bot import DiscordBot
-from tools.configuration import Configuration
+from tools.configuration.configuration import Configuration
 from tools.logs_handler import LogsHandler
 from tools.queue import Queue
 
@@ -54,14 +56,15 @@ class Main:
 
 	def config(self):
 		# Config load
-		self._config = Configuration()
-		self._config.load()
+		self._config = Configuration(self.logger)
+		if not self._config.load():
+			sys.exit(201)
 
 		self._logs_handler.set_log_level(self._config.mode)
 
 	def clean_data(self):
 		# Songs folder clear
-		tools.clear_directory(self._config.deezer_folder)
+		tools.clear_directory(self._config.deezer__folder)
 
 	def start(self):
 		# Discord Bot Instance
@@ -71,13 +74,35 @@ class Main:
 		# Create bot
 		discord_bot.create()
 
-		# Connect bot to Discord servers
-		thread = Thread(
-			name="Discord",
-			target=discord_bot.start
-		)
+		loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
+
+		def running(loop: asyncio.AbstractEventLoop):
+			asyncio.set_event_loop(loop)
+
+			# Run the asynchronous function in the thread without blocking it
+			loop.create_task(discord_bot.start())
+			try:
+				# Run tasks in thread infinitly
+				loop.run_forever()
+			finally:
+				loop.close()
+
+		async def shutdown(loop: asyncio.AbstractEventLoop):
+			await discord_bot.stop()
+			loop.stop()
+
+		def handle_signal(signum: int, frame):
+			logging.info(f"Received signal {signum}. shutting down ...")
+			asyncio.run_coroutine_threadsafe(shutdown(loop), loop)
+
+		previous_handler = signal.signal(signal.SIGTERM, handle_signal)
+
+		# Connect bot to Discord servers in his own thread
+		thread = Thread(name="Discord", target=running, args=(loop,))
 		thread.start()
 		thread.join()
+
+		signal.signal(signal.SIGTERM, previous_handler)
 
 	def stop(self):
 		logging.info("Wait for background tasks to stop")

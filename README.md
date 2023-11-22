@@ -36,60 +36,11 @@ Feel free to pull the appropriate Docker image based on your requirements.
 
 ## Configuration
 
-The default configuration file for PyRamid is `config.example.yml`, which needs to be renamed and modified to `config.yml` with the following structure:
+The default configuration file for PyRamid is [config.example.yml](https://github.com/tristiisch/PyRamid/blob/main/config.exemple.yml), which should be renamed and modified to `config.yml`. Ensure you replace the placeholder values in `config.yml` with your specific configuration details.
 
-```yaml
-discord:
-  # To create your Discord bot, visit: https://discord.com/developers/applications
-  #
-  # CRUCIAL: Activate the MESSAGE CONTENT INTENT, which is located in the Privileged Gateway Intents tab under the Privileged Gateway Intents section.
-  # For adding your bot to a guild with the appropriate permissions, replace the client_id with your own: https://discord.com/api/oauth2/authorize?client_id=1162155331124736101&permissions=380174863936&scope=bot
-  # Then, locate the token in the Bot tab and click on the "Reset Token" button.
-  # You must enter this token below to utilize the newly created bot.
-  token: <token bot discord>
+Alternatively, you can utilize environment variables to define the configuration. The keys remain the same, separated by underscores. For example, the Discord token would be set as follows: `DISCORD_TOKEN: <your_discord_bot_token>`.
 
-  # You must install the ffmpeg software, as it enables the playback of audio files.
-  # On a Linux kernel, once installed, you can typically locate this file at /usr/bin/ffmpeg.
-  # If this isn't the case, run `which ffmpeg` to identify the binary file's location.
-  #
-  # For Windows, you'll need to install the program and link it to the .exe file.
-  # Many applications utilize this utility, which means it might already be installed.
-  # Please search your computer for further verification.
-  ffmpeg: <path to ffmpeg.exe>
-
-
-deezer:
-  # The directory housing the downloaded music.
-  folder: ./songs
-
-  # You need an "ARL" from a deezer account to download music
-  # You can find documentation on https://github.com/nathom/streamrip/wiki/Finding-Your-Deezer-ARL-Cookie
-  # While there is no strict limitation, it's advisable to set up a dedicated account specifically for this task using private browsing mode.
-  # This prevents accidental usage of Deezer's "disconnect" button, which alters the ARL (Authentication Request Link).
-  arl: <deezer arl of an account>
-
-
-# You need to create a spotify application to make spotify search
-# Documentation is available at https://developer.spotify.com/documentation/web-api/concepts/apps
-spotify:
-  client_id: <client id of your spotify application>
-  client_secret: <client secret of your spotify application>
-
-general:
-  default_limit_tracks: 100
-
-# Available value: production, pre-production, development
-# Change message level in logs
-mode: production
-
-# Please refrain from making any changes to this.
-# This represents the formatted version of the configuration.
-# If the version isn't up to date, it suggests that the file might have been altered to ensure compatibility with the latest version.
-# The program will make every effort to handle these adjustments without requiring human intervention.
-version: 0.1
-```
-
-Make sure to replace the placeholder values with your actual configuration details.
+Keep in mind that the configuration file takes precedence over environment variables. In other words, if a configuration value is defined both in the file and as an environment variable, the value from the file will be used. Ensure your configuration is appropriately set in either the file or as environment variables, depending on your preferred method of configuration.
 
 ## Contributions & Forks
 

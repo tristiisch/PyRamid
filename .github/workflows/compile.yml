@@ -186,7 +186,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN_RELEASE }}
         with:
           tag_name: ${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
-          release_name: Stable Release v${{ needs.compile.outputs.version }}
+          release_name: Stable Auto-Release v${{ needs.compile.outputs.version }}
           body: |
             This has been deployed on the Discord bot `PyRamid#6882`.
             To use the latest version the bot, please refer to the instructions outlined at https://github.com/tristiisch/PyRamid/#usage.
@@ -225,7 +225,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN_RELEASE }}
         with:
           tag_name: ${{ steps.docker_tag.outputs.tag_github }}-${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
-          release_name: Unstable release v${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
+          release_name: Unstable Auto-Release v${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
           body: |
             This has been deployed on the Discord bot `PyRamid PRÉ-PROD#6277`.
             Feel free to put it to the test by joining the development server at https://discord.gg/pNrZp7U34d.

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 import traceback
@@ -20,7 +21,7 @@ from connector.discord.bot_listener import BotListener
 from connector.discord.guild_cmd import GuildCmd
 from connector.discord.guild_queue import GuildQueue
 from data.functional.engine_source import EngineSource
-from tools.configuration import Configuration
+from tools.configuration.configuration import Configuration
 
 
 class DiscordBot:
@@ -32,8 +33,8 @@ class DiscordBot:
 	):
 		self.__logger = logger
 		self.__information = information
-		self.__token = config.discord_token
-		self.__ffmpeg = config.discord_ffmpeg
+		self.__token = config.discord__token
+		self.__ffmpeg = config.discord__ffmpeg
 		self.__environment: Environment = config.mode
 		self.__engine_source = EngineSource(config)
 		self.__started = time.time()
@@ -88,12 +89,22 @@ class DiscordBot:
 		self.listeners.register()
 		self.cmd.register()
 
-	def start(self):
-		self.__logger.info("Discord bot starting")
+	async def start(self):
 		try:
-			self.bot.run(self.__token, log_handler=None)
+			# self.bot.run(self.__token, log_handler=None)
+			self.__logger.info("Discord bot login")
+			await self.bot.login(self.__token)
+			self.__logger.info("Discord bot connecting")
+			await self.bot.connect()
 		except PrivilegedIntentsRequired as ex:
 			raise ex
+
+
+	async def stop(self):
+		# self.bot.clear()
+		logging.info("Discord bot stop")
+		await self.bot.close()
+		logging.info("Discord bot stopped")
 
 	def __get_guild_cmd(self, guild: Guild) -> GuildCmd:
 		if guild.id not in self.guilds_instances:

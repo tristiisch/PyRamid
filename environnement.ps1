@@ -6,16 +6,16 @@ $RemoteName="tristiisch/pyramid"
 $RemoteTag="dev"
 
 function Install-Requirement() {
-    pip install -r .\requirements.txt
-}
-
-function Update-Requirement() {
-    pip install --upgrade -r .\requirements.txt
+	pip install --upgrade -r .\requirements.txt
 }
 
 function Add-Lib($lib) {
-    pip install $lib
-    pip freeze | grep -i $lib >> requirements.txt
+	pip install $lib
+
+	$version = (pip freeze | Select-String -Pattern "$lib==" -CaseSensitive -SimpleMatch).Line -replace "$lib=="
+	$higherMajorVersion = "$([int]($version -Split "\." | Select-Object -First 1) + 1).0.0"
+	$newVersionSpecifier = "$lib>=$version,<$higherMajorVersion"
+	Write-Output $newVersionSpecifier | Out-File -Append -FilePath requirements.txt
 }
 
 function Create-Docker() {
@@ -38,7 +38,9 @@ function Run-Docker() {
 		# docker stop -t 5 $containerName
 		docker rm -v -f $containerName
 	}
-	docker run --name $LocalName --mount type=bind,source=$($(Get-Item .).FullName)\config.yml,target=/app/config.yml -it ${LocalName}:${LocalTag}
+	docker run --name $LocalName `
+		--mount type=bind,source=$($(Get-Item .).FullName)\config.yml,target=/app/config.yml `
+		-it ${LocalName}:${LocalTag}
 }
 
 function Push-Docker() {
