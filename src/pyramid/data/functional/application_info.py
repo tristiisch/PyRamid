@@ -9,7 +9,7 @@ class ApplicationInfo:
 	def __init__(self):
 		self.name = "pyramid"
 		self.os = get_os().lower()
-		self.version = "0.3.1"
+		self.version = "0.3.2"
 		self.git_info = GitInfo()
 
 	def load_git_info(self):
@@ -59,6 +59,6 @@ def __get_linux_distro() -> str:
 					if line.startswith("PRETTY_NAME"):
 						dist_info = line.split("=")[1].strip().strip('"')
 						return dist_info
-				return "Linux distribution information not available."
 		except FileNotFoundError:
-			return "Linux distribution information not available."
+			pass
+		return "Linux distribution information not available."
