@@ -180,7 +180,7 @@ class GuildQueue:
 
 		if tl.is_empty():
 			await vc.disconnect()
-			msg_sender.response_message(content="Bye bye")
+			msg_sender.add_message("Bye bye")
 		else:
 			await self.play(msg_sender)
 

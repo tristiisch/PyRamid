@@ -126,7 +126,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -137,7 +137,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -148,7 +148,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -159,7 +159,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -170,7 +170,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -181,7 +181,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -192,7 +192,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -203,7 +203,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -214,7 +214,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -225,7 +225,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -239,7 +239,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -252,7 +252,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -265,7 +265,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
@@ -279,7 +279,7 @@ class BotCmd:
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
-			await ms.waiting()
+			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 

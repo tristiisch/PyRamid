@@ -29,7 +29,7 @@ class GuildCmdTools:
 
 		# only play music if user is in a voice channel
 		if member.voice is None:
-			ms.response_message(content="You're not in a channel.")
+			ms.edit_message("You're not in a channel.")
 			return None
 		voice_state: VoiceState = member.voice
 
@@ -42,7 +42,7 @@ class GuildCmdTools:
 		bot: Member = self.data.guild.me
 		permissions = voice_channel.permissions_for(bot)
 		if not permissions.connect:
-			ms.response_message(content=f"I can't go to {voice_channel.mention}")
+			ms.edit_message(f"I can't go to {voice_channel.mention}")
 			return None
 
 		if not permissions.speak:
@@ -54,7 +54,7 @@ class GuildCmdTools:
 		vc: VoiceClient = self.data.voice_client
 
 		if vc.channel.id != channel.id:
-			ms.response_message(content="You're not in the bot channel.")
+			ms.edit_message("You're not in the bot channel.")
 			return False
 		return True
 
@@ -87,7 +87,7 @@ class GuildCmdTools:
 				ms.add_message(content=f"Can't find the audio for this track:\n* {out}")
 
 		length = len(tracks)
-		ms.response_message(content=f"Downloading ... 0/{length}")
+		ms.edit_message(f"Downloading ... 0/{length}", "download")
 
 		cant_dl = 0
 		for i, track in enumerate(tracks):
@@ -96,54 +96,51 @@ class GuildCmdTools:
 				ms.add_message(content=f"ERROR > **{track.get_full_name()}** can't be downloaded.")
 				cant_dl += 1
 				continue
-			if (
-				at_end is True
-				and not (tl.add_track(track_downloaded)
-				or tl.add_track_after(track_downloaded))
+			if at_end is True and not (
+				tl.add_track(track_downloaded) or tl.add_track_after(track_downloaded)
 			):
 				ms.add_message(
 					content=f"ERROR > **{track.get_full_name()}** can't be add to the queue."
 				)
 				cant_dl += 1
 				continue
-			ms.response_message(
-				content=f"Downloading ... {i + 1 - cant_dl}/{length - cant_dl}"
-			)
+			ms.edit_message(f"Downloading ... {i + 1 - cant_dl}/{length - cant_dl}", "download")
 			if i == 0:
 				await self.queue.goto_channel(voice_channel)
 				await self.queue.play(ms)
 
 		if length == cant_dl:
-			ms.response_message(content="None of the music could be downloaded")
+			ms.edit_message("None of the music could be downloaded", "download")
 			return False
 
 		await self.queue.goto_channel(voice_channel)
 
 		if await self.queue.play(ms) is False:
-			ms.response_message(content=f"**{length}** tracks have been added to the queue")
+			ms.edit_message(f"**{length}** tracks have been added to the queue", "download")
 		return True
 
 	async def _execute_play(
 		self, ms: MessageSenderQueued, voice_channel: VoiceChannel, track: TrackMinimal, at_end=True
 	) -> bool:
 		tl: TrackList = self.data.track_list
-		ms.response_message(content=f"**{track.get_full_name()}** found ! Downloading ...")
+		ms.edit_message(f"**{track.get_full_name()}** found ! Downloading ...", "download")
 
 		track_downloaded: Track | None = await self.engine_source.download_track(track)
 		if not track_downloaded:
-			ms.response_message(content=f"ERROR > **{track.get_full_name()}** can't be downloaded.")
+			ms.add_message(f"ERROR > **{track.get_full_name()}** can't be downloaded.")
 			return False
 
-		if (
-			(at_end is True and not tl.add_track(track_downloaded))
-			or not tl.add_track_after(track_downloaded)
+		if (at_end is True and not tl.add_track(track_downloaded)) or not tl.add_track_after(
+			track_downloaded
 		):
-			ms.add_message(content=f"ERROR > **{track.get_full_name()}** can't be add to the queue.")
+			ms.add_message(
+				content=f"ERROR > **{track.get_full_name()}** can't be add to the queue."
+			)
 			return False
 		await self.queue.goto_channel(voice_channel)
 
 		if await self.queue.play(ms) is False:
-			ms.response_message(content=f"**{track.get_full_name()}** is added to the queue")
+			ms.edit_message(f"**{track.get_full_name()}** is added to the queue", "download")
 		else:
-			ms.response_message(content=f"Playing **{track.get_full_name()}**")
+			ms.edit_message(f"Playing **{track.get_full_name()}**", "download")
 		return True
