@@ -91,24 +91,22 @@ class MessageSender:
 		Send a message with markdown code formatting. If the character limit is exceeded, send multiple messages.
 		"""
 		max_length = MAX_MSG_LENGTH
-		if prefix is None:
-			prefix = "```"
-		else:
-			prefix += "\n```"
-		if suffix is None:
-			suffix = "```"
-		else:
-			suffix += "\n```"
+		sep = "```"
+		if prefix is not None:
+			prefix += "\n"
+		if suffix is not None:
+			raise NotImplementedError("Suffix is not implemented")
+			suffix = "\n" + suffix
 
-		max_length -= len(prefix) + len(suffix)
+		max_length -= len(sep) * 2
 
-		substrings_generator = tools.split_string_by_length(content, max_length)
+		substrings_generator = tools.split_string_by_length(content, max_length, len(prefix) if prefix is not None else None)
 
 		first_substring = next(substrings_generator, None)
 		if first_substring is None:
 			return
 
-		first_substring_formatted = f"```{first_substring}```"
+		first_substring_formatted = f"{prefix}{sep}{first_substring}{sep}"
 		if not self.ctx.is_expired() and self.ctx.response.is_done():
 			self.last_message = await self.ctx.followup.send(first_substring_formatted, wait=True)
 		else:
@@ -116,7 +114,7 @@ class MessageSender:
 
 		last_channel_message = None
 		for substring in substrings_generator:
-			substring_formatted = f"```{substring}```"
+			substring_formatted = f"{sep}{substring}{sep}"
 
 			last_channel_message = await self._get_last_channel_message()
 

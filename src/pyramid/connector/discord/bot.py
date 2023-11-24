@@ -19,7 +19,6 @@ from discord.ext.commands.errors import (
 	CommandError,
 )
 from discord.app_commands.errors import AppCommandError, CommandInvokeError
-from discord.abc import Messageable
 from data.functional.application_info import ApplicationInfo
 from data.environment import Environment
 from data.guild_data import GuildData
@@ -29,6 +28,7 @@ from connector.discord.guild_cmd import GuildCmd
 from connector.discord.guild_queue import GuildQueue
 from data.functional.engine_source import EngineSource
 from data.exceptions import DiscordMessageException
+from data.functional.messages.message_sender_queued import MessageSenderQueued
 from tools.configuration.configuration import Configuration
 
 
@@ -86,8 +86,7 @@ class DiscordBot:
 			# await bot.send_message(message.channel, "You caused an error!")
 
 		async def on_tree_error(ctx: Interaction, app_error: AppCommandError, /):
-			# if not ctx.response.is_done():
-			# 	await ctx.response.defer(thinking=True)
+			ms = MessageSenderQueued(ctx)
 
 			if isinstance(app_error, CommandInvokeError):
 				msg = ", ".join(app_error.args)
@@ -100,25 +99,23 @@ class DiscordBot:
 
 			discord_explanation = ":warning: You caused an error!"
 			if isinstance(error, DiscordMessageException):
-				discord_explanation = str(error)
+				ms.add_message(discord_explanation)
 			else:
 				attributes_dict = vars(ctx.namespace)
 				formatted_attributes = " ".join(
 					f"{key}: {value}" for key, value in attributes_dict.items()
 				)
 				discord_explanation = (
-					":warning: An error occurred while processing the command `/%s%s`%s"
+					":warning: An error occurred while processing the command `/%s%s`"
 					% (
 						ctx.command.name if ctx.command else "<unknown command>",
-						f" {formatted_attributes}" if formatted_attributes != "" else "",
-						f"\n```{trace}```" if self.__environment is not Environment.PRODUCTION else "",
+						f" {formatted_attributes}" if formatted_attributes != "" else ""
 					)
 				)
-
-			if ctx.response.is_done():
-				await ctx.followup.send(discord_explanation)
-			elif isinstance(ctx.channel, Messageable):
-				await ctx.channel.send(content=f"{ctx.user.mention} {discord_explanation}")
+				if self.__environment is not Environment.PRODUCTION:
+					ms.add_code_message(trace, discord_explanation)
+				else:
+					ms.add_message(discord_explanation)
 
 		self.bot.tree.on_error = on_tree_error
 
