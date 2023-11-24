@@ -46,14 +46,21 @@ class DiscordBot:
 		# intents.members = True
 		intents.message_content = True
 
-		bot = Bot(command_prefix="$$", intents=intents)
+		bot = Bot(
+			command_prefix="$$",
+			intents=intents,
+			activity=discord.Activity(
+				type=discord.ActivityType.listening,
+				name=f"{self.__information.get_version()}",
+			),
+		)
 		self.bot = bot
 
 		self.guilds_instances: Dict[int, GuildInstances] = {}
 
 	def create(self):
 		self.__logger.info("Discord bot creating with discord.py v%s ...", discord.__version__)
-		self.listeners = BotListener(self.bot, self.__logger, self.__information)
+		self.listeners = BotListener(self.bot, self.__logger)
 		self.cmd = BotCmd(
 			self.bot,
 			self.__get_guild_cmd,
@@ -109,7 +116,7 @@ class DiscordBot:
 					":warning: An error occurred while processing the command `/%s%s`"
 					% (
 						ctx.command.name if ctx.command else "<unknown command>",
-						f" {formatted_attributes}" if formatted_attributes != "" else ""
+						f" {formatted_attributes}" if formatted_attributes != "" else "",
 					)
 				)
 				if self.__environment is not Environment.PRODUCTION:
