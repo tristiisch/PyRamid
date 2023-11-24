@@ -164,7 +164,7 @@ jobs:
       - name: Get commit messages
         id: get_commit_messages
         run: |
-          COMMIT_MESSAGES=$(git log --pretty=format:"* %s" ${{ github.event.before }}..${{ github.sha }})
+          COMMIT_MESSAGES=$(git log ${{ github.event.before }}..${{ github.sha }} --oneline | sed 's/^/* /')
           echo "commit_messages=$COMMIT_MESSAGES" >> $GITHUB_OUTPUT
 
       - name: Get last release tag
