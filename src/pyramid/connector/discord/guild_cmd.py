@@ -1,4 +1,6 @@
+import asyncio
 from logging import Logger
+from threading import Thread
 
 from discord import Interaction, VoiceChannel
 
@@ -29,11 +31,11 @@ class GuildCmd(GuildCmdTools):
 		if not voice_channel:
 			return False
 
-		ms.response_message(content=f"Searching **{input}**")
+		ms.edit_message(f"Searching **{input}**", "search")
 
 		track: TrackMinimal | None = self.data.search_engine.default_engine.search_track(input)
 		if not track:
-			ms.response_message(content=f"**{input}** not found.")
+			ms.edit_message("**{input}** not found.", "search")
 			return False
 
 		return await self._execute_play(ms, voice_channel, track, at_end=at_end)
@@ -45,10 +47,10 @@ class GuildCmd(GuildCmdTools):
 
 		self.data.track_list.clear()
 		if await self.queue.exit() is False:
-			ms.response_message(content="The bot does not currently play music")
+			ms.add_message("The bot does not currently play music")
 			return False
 
-		ms.response_message(content="Music stop")
+		ms.add_message("Music stop")
 		return True
 
 	async def pause(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
@@ -57,10 +59,10 @@ class GuildCmd(GuildCmdTools):
 			return False
 
 		if self.queue.pause() is False:
-			ms.response_message(content="The bot does not currently play music")
+			ms.add_message("The bot does not currently play music")
 			return False
 
-		ms.response_message(content="Music paused")
+		ms.add_message("Music paused")
 		return True
 
 	async def resume(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
@@ -69,10 +71,10 @@ class GuildCmd(GuildCmdTools):
 			return False
 
 		if self.queue.resume() is False:
-			ms.response_message(content="The bot is not currently paused")
+			ms.add_message("The bot is not currently paused")
 			return False
 
-		ms.response_message(content="Music resume")
+		ms.add_message("Music resume")
 		return True
 
 	async def next(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
@@ -82,18 +84,18 @@ class GuildCmd(GuildCmdTools):
 
 		if self.queue.has_next() is False:
 			if self.queue.stop() is False:
-				ms.response_message(content="The bot does not currently play music")
+				ms.add_message("The bot does not currently play music")
 				return False
 			else:
-				ms.response_message(content="The bot didn't have next music")
+				ms.add_message("The bot didn't have next music")
 				return True
 
 		await self.queue.goto_channel(voice_channel)
 		if self.queue.next() is False:
-			ms.response_message(content="Unable to play next music")
+			ms.add_message("Unable to play next music")
 			return False
 
-		ms.response_message(content="Skip musique")
+		ms.add_message("Skip musique")
 		return True
 
 	async def suffle(self, ms: MessageSenderQueued, ctx: Interaction):
@@ -102,10 +104,10 @@ class GuildCmd(GuildCmdTools):
 			return False
 
 		if not self.queue.shuffle():
-			ms.response_message(content="No need to shuffle the queue.")
+			ms.add_message("No need to shuffle the queue.")
 			return False
 
-		ms.response_message(content="The queue has been shuffled.")
+		ms.add_message("The queue has been shuffled.")
 		return True
 
 	async def remove(self, ms: MessageSenderQueued, ctx: Interaction, number_in_queue: int):
@@ -114,25 +116,25 @@ class GuildCmd(GuildCmdTools):
 			return False
 
 		if number_in_queue <= 0:
-			ms.response_message(
+			ms.add_message(
 				content=f"Unable to remove element with the number {number_in_queue} in the queue"
 			)
 			return False
 
 		if number_in_queue == 1:
-			ms.response_message(
+			ms.add_message(
 				content="Unable to remove the current track from the queue. Use `next` instead"
 			)
 			return False
 
 		track_deleted = self.queue.remove(number_in_queue - 1)
 		if track_deleted is None:
-			ms.response_message(
+			ms.add_message(
 				content=f"There is no element with the number {number_in_queue} in the queue"
 			)
 			return False
 
-		ms.response_message(
+		ms.add_message(
 			content=f"**{track_deleted.get_full_name()}** has been removed from queue"
 		)
 		return True
@@ -143,32 +145,32 @@ class GuildCmd(GuildCmdTools):
 			return False
 
 		if number_in_queue <= 0:
-			ms.response_message(
+			ms.add_message(
 				content=f"Unable to go to element with number {number_in_queue} in the queue"
 			)
 			return False
 
 		if number_in_queue == 1:
-			ms.response_message(
+			ms.add_message(
 				content="Unable to remove the current track from the queue. Use `next` instead"
 			)
 			return False
 
 		tracks_removed = self.queue.goto(number_in_queue - 1)
 		if tracks_removed <= 0:
-			ms.response_message(
+			ms.add_message(
 				content=f"There is no element with the number {number_in_queue} in the queue"
 			)
 			return False
 
 		# +1 for current track
-		ms.response_message(content=f"f{tracks_removed + 1} tracks has been skipped")
+		ms.add_message(f"f{tracks_removed + 1} tracks has been skipped")
 		return True
 
 	def queue_list(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
 		queue: str | None = self.queue.queue_list()
 		if queue is None:
-			ms.response_message(content="Queue is empty")
+			ms.add_message("Queue is empty")
 			return False
 
 		ms.add_code_message(queue, prefix="Here's the music in the queue :")
@@ -182,7 +184,7 @@ class GuildCmd(GuildCmdTools):
 		else:
 			test_value = self.data.search_engines.get_engine(engine)
 			if not test_value:
-				ms.response_message(content=f"Search engine **{engine}** not found.")
+				ms.add_message(f"Search engine **{engine}** not found.")
 				return False
 			else:
 				search_engine = test_value
@@ -190,7 +192,7 @@ class GuildCmd(GuildCmdTools):
 		result: list[TrackMinimal] | None = search_engine.search_tracks(input)
 
 		if not result:
-			ms.response_message(content=f"**{input}** not found.")
+			ms.add_message(f"**{input}** not found.")
 			return False
 
 		hsa = utils_list_track.to_str.tracks(result)
@@ -202,11 +204,11 @@ class GuildCmd(GuildCmdTools):
 		if not voice_channel:
 			return False
 
-		ms.response_message(content=f"Searching **{input}** ...")
+		ms.edit_message(f"Searching **{input}** ...", "search")
 
 		tracks: list[TrackMinimal] | None = self.data.search_engine.default_engine.search_tracks(input)
 		if not tracks:
-			ms.response_message(content=f"**{input}** not found.")
+			ms.edit_message(f"**{input}** not found.", "search")
 			return False
 
 		return await self._execute_play_multiple(ms, voice_channel, tracks)
@@ -216,20 +218,19 @@ class GuildCmd(GuildCmdTools):
 		if not voice_channel:
 			return False
 
-		ms.response_message(content=f"Searching **{url}** ...")
+		ms.edit_message(f"Searching **{url}** ...", "search")
 
 		result: (
 			tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None
 		) = await self.data.search_engine.search_by_url(url)
 		if not result:
-			ms.response_message(content=f"**{url}** not found.")
+			ms.edit_message(f"**{url}** not found.", "search")
 			return False
 
 		if isinstance(result, tuple):
 			tracks, tracks_unfindable = result
-			return await self._execute_play_multiple(
-				ms, voice_channel, tracks, tracks_unfindable, at_end=at_end
-			)
+			self._informs_unfindable_tracks(ms, tracks_unfindable)
+			return await self._execute_play_multiple(ms, voice_channel, tracks, at_end=at_end)
 		elif isinstance(result, TrackMinimal):
 			tracks = result
 			return await self._execute_play(ms, voice_channel, tracks, at_end=at_end)

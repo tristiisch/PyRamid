@@ -1,34 +1,22 @@
-import discord
-
 from logging import Logger
 from discord import (
 	Guild,
 	Role,
-	Status,
 )
 from discord.ext.commands import Bot
-from data.functional.application_info import ApplicationInfo
 
 
 class BotListener:
-	def __init__(self, bot: Bot, logger: Logger, info: ApplicationInfo):
+	def __init__(self, bot: Bot, logger: Logger):
 		self.__bot = bot
 		self.__logger = logger
-		self.__info = info
 
 	def register(self):
 		bot = self.__bot
 
 		@bot.event
-		async def on_ready(): # TODO changed to -> await bot.setup_hook()
+		async def on_ready():  # TODO changed to -> await bot.setup_hook()
 			await bot.tree.sync()
-			await bot.change_presence(
-				status=Status.online,
-				activity=discord.Activity(
-					type=discord.ActivityType.listening,
-					name=f"{self.__info.get_version()}",
-				),
-			)
 
 			if bot.user is None:
 				self.__logger.warning("Unable to get discord bot name")

@@ -1,5 +1,6 @@
 import discord
-from discord import Embed, Locale, Message, TextChannel
+from discord import Embed, Locale, Message
+from discord.abc import Messageable
 
 from data.track import Track
 from data.tracklist import TrackList
@@ -11,16 +12,20 @@ class MusicPlayerInterface:
 		self.last_message: Message | None = None
 		self.track_list = track_list
 
-	async def send_player(self, txt_channel: TextChannel, track: Track):
+	async def send_player(self, txt_channel: Messageable, track: Track):
 		embed = self.__embed_track(track)
 
-		if self.last_message is not None:
-			if txt_channel.last_message_id == self.last_message.id:
-				self.last_message = await self.last_message.edit(content="", embed=embed)
+		last_channel_message = None
+		history = txt_channel.history(limit=1)
+		async for message in history:
+			last_channel_message = message
+
+		if last_channel_message and self.last_message is not None:
+			if last_channel_message.id == self.last_message.id:
+				self.last_message = await last_channel_message.edit(content="", embed=embed)
 				return
 			else:
 				await self.last_message.delete()
-				# await self.last_message.edit(content="", suppress=True)
 		self.last_message = await txt_channel.send(content="", embed=embed)
 
 	def __embed_track(self, track: Track) -> Embed:

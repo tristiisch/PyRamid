@@ -1,9 +1,7 @@
-import logging
-from typing import Callable
+from typing import Any, Callable
 
-import tools.utils as tools
 from data.functional.messages.message_sender import MessageSender
-from discord import Interaction
+from discord import Interaction, Message, WebhookMessage
 from discord.utils import MISSING
 from tools.queue import Queue, QueueItem
 
@@ -19,73 +17,30 @@ class MessageSenderQueued(MessageSender):
 		self.ctx = ctx
 		super().__init__(ctx)
 
-	async def waiting(self):
-		await super().response_message("Waiting for result ...")
-
 	def add_message(
 		self,
 		content: str = MISSING,
-		callback: Callable | None = None,
+		callback: Callable[[Message | WebhookMessage], Any] | None = None,
 	) -> None:
 		queue.add(
-			QueueItem(
-				"add_message", super().add_message, self.loop, content=content, callback=callback
-			)
+			QueueItem("add_message", super().add_message, self.loop, callback, content=content)
 		)
 
-	def response_message(
+	def edit_message(
 		self,
 		content: str = MISSING,
+		surname_content: str | None = None,
+		callback: Callable[[Message | WebhookMessage], Any] | None = None,
 	):
-		if content != MISSING and content != "":
-			new_content, is_used = tools.substring_with_end_msg(
-				content, MAX_MSG_LENGTH, "{} more characters..."
-			)
-			if is_used:
-				content = new_content
-
-		if self.last_reponse is not None:
-			queue.add(
-				QueueItem(
-					"Edit last response",
-					self.last_reponse.edit,
-					self.loop,
-					content=content,
-				)
-			)
-
-		elif self.ctx.response.is_done():
-			def on_error(err):
-				if err.code == 50027:  # 401 Unauthorized : Invalid Webhook Token
-					logging.warning(
-						"Unable to modify original response, send message instead", exc_info=True
-					)
-					self.add_message(content, lambda msg: setattr(self, "last_response", msg))
-				else:
-					raise err
-
-			queue.add(
-				QueueItem(
-					"Edit response",
-					self.ctx.edit_original_response,
-					self.loop,
-					None,
-					on_error,
-					content=content,
-				)
-			)
-		else:
-			queue.add(
-				QueueItem(
-					"Send followup as response",
-					self.ctx.response.send_message,
-					self.loop,
-					content=content,
-				)
-			)
-
 		queue.add(
-			QueueItem("response_message", super().response_message, self.loop, content=content)
+			QueueItem(
+				"response_message",
+				super().edit_message,
+				self.loop,
+				callback,
+				content=content,
+				surname_content=surname_content,
+			)
 		)
 
 	def add_code_message(self, content: str, prefix=None, suffix=None):

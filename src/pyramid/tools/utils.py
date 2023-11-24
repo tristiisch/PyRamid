@@ -50,16 +50,31 @@ def clear_directory(directory):
 			logging.warning("Failed to delete %s due to %s", file_path, e)
 
 
-def split_string_by_length(string, max_length) -> typing.Generator[str, None, None]:
-	n = len(string)
-	start = 0
-	while start < n:
-		end = min(n, start + max_length)
-		if end < n:
-			while end > start and string[end] != "\n":
-				end -= 1
-		yield string[start:end]
-		start = end
+def split_string_by_length(string, max_length: int, first_max_length=None, last_max_length=None) -> typing.Generator[str, None, None]:
+    n = len(string)
+    start = 0
+    end = min(n, start + (first_max_length or max_length))
+
+    while start < n:
+        if end < n:
+            while end > start and string[end] != "\n":
+                end -= 1
+        yield string[start:end]
+
+        start = end
+        if start == n:
+            break
+
+        if start == 0:
+            end = min(n, start + (first_max_length or max_length))
+        elif start == n - 1:
+            end = n
+        else:
+            end = min(n, start + max_length)
+
+    if last_max_length:
+        last_start = max(0, n - last_max_length)
+        yield string[last_start:n]
 
 
 def substring_with_end_msg(text, max_length, end_msg) -> tuple[str, bool]:
