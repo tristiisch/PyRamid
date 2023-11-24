@@ -58,16 +58,11 @@ class GuildCmdTools:
 			return False
 		return True
 
-	async def _execute_play_multiple(
+	def _informs_unfindable_tracks(
 		self,
 		ms: MessageSenderQueued,
-		voice_channel: VoiceChannel,
-		tracks: list[TrackMinimal],
-		tracks_unfindable: list[TrackMinimal] | None = None,
-		at_end=True,
-	) -> bool:
-		tl: TrackList = self.data.track_list
-
+		tracks_unfindable: list[TrackMinimal] | None = None
+	):
 		if tracks_unfindable is not None and len(tracks_unfindable) != 0:
 			track_unvailable_names = []
 			tracks_unfindable_names = []
@@ -85,6 +80,15 @@ class GuildCmdTools:
 			if len(tracks_unfindable_names) != 0:
 				out = "\n* ".join(tracks_unfindable_names)
 				ms.add_message(content=f"Can't find the audio for this track:\n* {out}")
+
+	async def _execute_play_multiple(
+		self,
+		ms: MessageSenderQueued,
+		voice_channel: VoiceChannel,
+		tracks: list[TrackMinimal],
+		at_end=True,
+	) -> bool:
+		tl: TrackList = self.data.track_list
 
 		length = len(tracks)
 		ms.edit_message(f"Downloading ... 0/{length}", "download")

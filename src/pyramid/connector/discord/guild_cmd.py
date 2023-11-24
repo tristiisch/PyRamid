@@ -1,4 +1,6 @@
+import asyncio
 from logging import Logger
+from threading import Thread
 
 from discord import Interaction, VoiceChannel
 
@@ -227,9 +229,8 @@ class GuildCmd(GuildCmdTools):
 
 		if isinstance(result, tuple):
 			tracks, tracks_unfindable = result
-			return await self._execute_play_multiple(
-				ms, voice_channel, tracks, tracks_unfindable, at_end=at_end
-			)
+			self._informs_unfindable_tracks(ms, tracks_unfindable)
+			return await self._execute_play_multiple(ms, voice_channel, tracks, at_end=at_end)
 		elif isinstance(result, TrackMinimal):
 			tracks = result
 			return await self._execute_play(ms, voice_channel, tracks, at_end=at_end)
