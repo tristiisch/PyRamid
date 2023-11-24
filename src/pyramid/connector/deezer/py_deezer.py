@@ -1,3 +1,4 @@
+import asyncio
 from os import path
 
 import aiofiles
@@ -110,13 +111,11 @@ class PyDeezer(Deezer):
 				total_filesize = int(res.headers["Content-Length"])
 				i = 0
 
-				data_iter = res.content.iter_chunked(2048)
-
 				if not progress_handler:
 					progress_handler = DefaultProgressHandler()
 
 				progress_handler.initialize(
-					data_iter,
+					None,
 					title,
 					quality_key,
 					total_filesize,
@@ -127,7 +126,11 @@ class PyDeezer(Deezer):
 				async with aiofiles.open(download_path, "wb") as f:
 					await f.seek(0)
 
-					async for chunk in data_iter:
+					while True:
+						try:
+							chunk = await res.content.readexactly(chunk_size)
+						except asyncio.IncompleteReadError:
+							break
 						current_chunk_size = len(chunk)
 
 						if i % 3 > 0:
