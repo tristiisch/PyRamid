@@ -99,8 +99,9 @@ class MessageSender:
 			suffix = "\n" + suffix
 
 		max_length -= len(sep) * 2
+		first_max_length = len(prefix) + max_length if prefix is not None else None
 
-		substrings_generator = tools.split_string_by_length(content, max_length, len(prefix) if prefix is not None else None)
+		substrings_generator = tools.split_string_by_length(content, max_length, first_max_length)
 
 		first_substring = next(substrings_generator, None)
 		if first_substring is None:
