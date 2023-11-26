@@ -93,9 +93,9 @@ class TrackList:
 
 def to_str(list_of_track: list[TrackMinimal] | list[Track]) -> str:
 	data = [
-		[i + 1, track.author_name, track.name, track.album_title]
+		[str(i + 1), track.author_name, track.name, track.album_title]
 		for i, track in enumerate(list_of_track)
 	]
 	columns = ["n°", "Author", "Title", "Album"]
-	hsa = tools.human_string_array(data, columns)
+	hsa = tools.human_string_array(data, columns, 50)
 	return hsa

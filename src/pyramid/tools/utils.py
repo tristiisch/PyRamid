@@ -51,30 +51,30 @@ def clear_directory(directory):
 
 
 def split_string_by_length(string, max_length: int, first_max_length=None, last_max_length=None) -> typing.Generator[str, None, None]:
-    n = len(string)
-    start = 0
-    end = min(n, start + (first_max_length or max_length))
+	n = len(string)
+	start = 0
+	end = min(n, start + (first_max_length or max_length))
 
-    while start < n:
-        if end < n:
-            while end > start and string[end] != "\n":
-                end -= 1
-        yield string[start:end]
+	while start < n:
+		if end < n:
+			while end > start and string[end] != "\n":
+				end -= 1
+		yield string[start:end]
 
-        start = end
-        if start == n:
-            break
+		start = end
+		if start == n:
+			break
 
-        if start == 0:
-            end = min(n, start + (first_max_length or max_length))
-        elif start == n - 1:
-            end = n
-        else:
-            end = min(n, start + max_length)
+		if start == 0:
+			end = min(n, start + (first_max_length or max_length))
+		elif start == n - 1:
+			end = n
+		else:
+			end = min(n, start + max_length)
 
-    if last_max_length:
-        last_start = max(0, n - last_max_length)
-        yield string[last_start:n]
+	if last_max_length:
+		last_start = max(0, n - last_max_length)
+		yield string[last_start:n]
 
 
 def substring_with_end_msg(text, max_length, end_msg) -> tuple[str, bool]:
@@ -86,14 +86,57 @@ def substring_with_end_msg(text, max_length, end_msg) -> tuple[str, bool]:
 	return f"{substring}{end_msg.format(remaining_chars)}", True
 
 
-def human_string_array(data, columns) -> str:
-	col_widths = [max(len(str(x)) for x in column) for column in zip(*data, columns)]
-	lines = [" | ".join((col.ljust(width) for col, width in zip(columns, col_widths)))]
-	lines.append("-" * (sum(col_widths) + 3 * len(columns) - 1))
-	for row in data:
-		lines.append(" | ".join((str(col).ljust(width) for col, width in zip(row, col_widths))))
-	return "\n".join(lines)
+def human_string_array(data: list[list[str]], columns: list[str], max_row_size: int | None = None) -> str:
+    # Calculate the original column sizes
+    col_widths = [max(len(str(x)) if isinstance(x, str) else 0 for x in column) for column in zip(*data, columns)]
 
+    # Check if reduction is needed
+    if max_row_size is not None:
+        # Reduce columns one by one in descending order of their original size
+        sorted_columns = sorted(enumerate(col_widths), key=lambda x: x[1], reverse=True)
+
+        for index, original_width in sorted_columns:
+            # Calculate the proportional reduction factor based on the maximum row size
+            scaling_factor = min(1, max_row_size / original_width)
+
+            # Apply the reduction to the current column
+            col_widths[index] = int(original_width * scaling_factor)
+
+            # Ensure that the reduced size is within the bounds
+            col_widths[index] = max(1, col_widths[index])
+
+    # Build the table string using the calculated column sizes
+    lines = [" | ".join((col if isinstance(col, int) else col[:width].ljust(width) if len(col) > width else col.ljust(width) for col, width in zip(columns, col_widths)))]
+    lines.append("-" * (sum(col_widths) + 3 * len(columns) - 1))
+
+    # Add rows to the table with truncated column data
+    for row in data:
+        row_str = " | ".join((str(col) if isinstance(col, int) else col[:width].ljust(width) if len(col) > width else col.ljust(width) for col, width in zip(row, col_widths)))
+        lines.append(row_str)
+
+    return "\n".join(lines)
+
+def reduce_columns(column_sizes, total_max_size):
+	# Calculate the sum of the original column sizes
+	total_current_size = sum(column_sizes)
+
+	# Check if the total current size is greater than the total max size
+	if total_current_size > total_max_size:
+		# Calculate the scaling factor
+		scaling_factor = total_max_size / total_current_size
+
+		# Reduce each column size proportionally
+		reduced_column_sizes = [int(size * scaling_factor) for size in column_sizes]
+
+		# Ensure that the reduced sizes still add up to the total max size
+		while sum(reduced_column_sizes) > total_max_size:
+			# Reduce the size of the last column by 1 until the sum is equal to the total max size
+			reduced_column_sizes[-1] -= 1
+
+		return reduced_column_sizes
+
+	# If the total current size is already less than or equal to the total max size, no reduction is needed
+	return column_sizes
 
 @contextmanager
 def temp_locale(name):

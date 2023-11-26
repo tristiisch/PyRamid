@@ -195,7 +195,7 @@ class GuildCmd(GuildCmdTools):
 			ms.add_message(f"**{input}** not found.")
 			return False
 
-		hsa = utils_list_track.to_str.tracks(result)
+		hsa = utils_list_track.to_str(result)
 		ms.add_code_message(hsa, prefix="Here are the results of your search :")
 		return True
 
