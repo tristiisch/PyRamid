@@ -20,7 +20,7 @@ class SpotifySearchBase(ASearch):
 		self.client = spotipy.Spotify(client_credentials_manager=self.client_credentials_manager)
 		self.tools = SpotifyTools()
 
-	def _get_all_tracks(self, results: Any, item_name = "items") -> None | list[dict[str, Any]]:
+	def _get_all_tracks(self, results: Any, item_name="items") -> None | list[dict[str, Any]]:
 		if not results:
 			return None
 		tracks: list = results[item_name]
@@ -117,7 +117,9 @@ class SpotifySearch(SpotifySearchId):
 		tracks = results["tracks"]["items"]
 		return [TrackMinimalSpotify(element) for element in tracks]
 
-	def get_top_artist(self, artist_name, limit: int | None = None) -> list[TrackMinimalSpotify] | None:
+	def get_top_artist(
+		self, artist_name, limit: int | None = None
+	) -> list[TrackMinimalSpotify] | None:
 		results = self.client.search(q=artist_name, limit=1, type="artist")
 
 		if not results or not results.get("tracks") or not results["tracks"].get("items"):

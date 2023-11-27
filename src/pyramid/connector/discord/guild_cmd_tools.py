@@ -59,9 +59,7 @@ class GuildCmdTools:
 		return True
 
 	def _informs_unfindable_tracks(
-		self,
-		ms: MessageSenderQueued,
-		tracks_unfindable: list[TrackMinimal] | None = None
+		self, ms: MessageSenderQueued, tracks_unfindable: list[TrackMinimal] | None = None
 	):
 		if tracks_unfindable is not None and len(tracks_unfindable) != 0:
 			track_unvailable_names = []

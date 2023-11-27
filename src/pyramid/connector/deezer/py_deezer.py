@@ -11,8 +11,8 @@ from pydeezer.ProgressHandler import BaseProgressHandler, DefaultProgressHandler
 from functools import partial
 from pydeezer.exceptions import LoginError
 
-class DecryptDeezer:
 
+class DecryptDeezer:
 	def __init__(self, blowfish_key: bytes, progress_handler: BaseProgressHandler) -> None:
 		self.chunk_length = 6144
 		self.decrypt_chunk_length = 2048
@@ -28,18 +28,19 @@ class DecryptDeezer:
 		async with aiofiles.open(file_path, "wb") as f:
 			self.f = f
 			await f.seek(0)
-			
+
 			chunk_index = 0
 			downloaded_size = 0
 			previous_chunk = None
 			async for chunk, _ in res.content.iter_chunks():
-
 				chunk_size = len(chunk)
 				self.progress_handler.update(current_chunk_size=chunk_size)
 
 				downloaded_size += chunk_size
 				if previous_chunk:
-					previous_chunk, chunks_used = await self._transform_chunk(previous_chunk + chunk)
+					previous_chunk, chunks_used = await self._transform_chunk(
+						previous_chunk + chunk
+					)
 				else:
 					previous_chunk, chunks_used = await self._transform_chunk(chunk)
 				chunk_index += chunks_used
@@ -57,7 +58,7 @@ class DecryptDeezer:
 
 		# Iterate over the chunks and call the callback for each one
 		for i in range(chunks_nb - 1):
-			chunk = bytes_chunked[i * self.chunk_length: (i + 1) * self.chunk_length]
+			chunk = bytes_chunked[i * self.chunk_length : (i + 1) * self.chunk_length]
 			await self._write_file(chunk)
 
 		last_chunk_start = (chunks_nb - 1) * self.chunk_length
@@ -69,18 +70,21 @@ class DecryptDeezer:
 			return None, chunks_nb
 		elif last_length < self.chunk_length:
 			return last_chunk, chunks_nb - 1
-		raise Exception("Last chunk has wrong size %d (under %d is excepted)", last_length, self.chunk_length)
+		raise Exception(
+			"Last chunk has wrong size %d (under %d is excepted)", last_length, self.chunk_length
+		)
 
 	async def _write_file(self, new_chunk: bytes):
 		chunk_size = len(new_chunk)
 		if self.decrypt_chunk_length > chunk_size:
 			await self.f.write(new_chunk)
 		else:
-			chunk_to_decrypt = new_chunk[:self.decrypt_chunk_length]
+			chunk_to_decrypt = new_chunk[: self.decrypt_chunk_length]
 			decryptor = self.cipher.decryptor()
 			dec_data = decryptor.update(chunk_to_decrypt) + decryptor.finalize()
 			await self.f.write(dec_data)
-			await self.f.write(new_chunk[self.decrypt_chunk_length:])
+			await self.f.write(new_chunk[self.decrypt_chunk_length :])
+
 
 class PyDeezer(Deezer):
 	def __init__(self, arl=None):
@@ -107,16 +111,16 @@ class PyDeezer(Deezer):
 		"""Downloads the given track
 
 		Arguments:
-										track {dict} -- Track dictionary, similar to the {info} value that is returned {using get_track()}
-										download_dir {str} -- Directory (without {filename}) where the file is to be saved.
+		                                                                track {dict} -- Track dictionary, similar to the {info} value that is returned {using get_track()}
+		                                                                download_dir {str} -- Directory (without {filename}) where the file is to be saved.
 
 		Keyword Arguments:
-										quality {str} -- Use values from {constants.track_formats}, will get the default quality if None or an invalid is given. (default: {None})
-										filename {str} -- Filename with or without the extension (default: {None})
-										renew {bool} -- Will renew the track object (default: {False})
-										with_metadata {bool} -- If true, will write id3 tags into the file. (default: {True})
-										with_lyrics {bool} -- If true, will find and save lyrics of the given track. (default: {True})
-										tag_separator {str} -- Separator to separate multiple artists (default: {", "})
+		                                                                quality {str} -- Use values from {constants.track_formats}, will get the default quality if None or an invalid is given. (default: {None})
+		                                                                filename {str} -- Filename with or without the extension (default: {None})
+		                                                                renew {bool} -- Will renew the track object (default: {False})
+		                                                                with_metadata {bool} -- If true, will write id3 tags into the file. (default: {True})
+		                                                                with_lyrics {bool} -- If true, will find and save lyrics of the given track. (default: {True})
+		                                                                tag_separator {str} -- Separator to separate multiple artists (default: {", "})
 		"""
 
 		if with_lyrics:
@@ -211,7 +215,7 @@ class PyDeezer(Deezer):
 		"""Gets the data of the user, this will only work arl is the cookie. Make sure you have run login_via_arl() before using this.
 
 		Raises:
-				LoginError: Will raise if the arl given is not identified by Deezer
+		                LoginError: Will raise if the arl given is not identified by Deezer
 		"""
 
 		data = (await self._api_call(api_methods.GET_USER_DATA))["results"]
@@ -248,10 +252,10 @@ class PyDeezer(Deezer):
 		"""Gets the track info using the Deezer API
 
 		Arguments:
-				track_id {str} -- Track Id
+		                track_id {str} -- Track Id
 
 		Returns:
-				dict -- Dictionary that contains the {info}, {download} partial function, {tags}, and {get_tag} partial function.
+		                dict -- Dictionary that contains the {info}, {download} partial function, {tags}, and {get_tag} partial function.
 		"""
 
 		method = api_methods.SONG_GET_DATA
@@ -295,4 +299,3 @@ class PyDeezer(Deezer):
 					raise APIRequestError("{0} : {1}".format(error_type, error_message))
 
 		return data
-

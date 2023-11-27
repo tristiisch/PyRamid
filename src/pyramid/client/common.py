@@ -35,11 +35,10 @@ class SocketCommon:
 		# 	client_socket.send(chunk.encode("utf-8"))
 		client_socket.send(response.encode("utf-8"))
 
-
 	def serialize(self, obj):
 		def default(obj):
 			if hasattr(obj, "__dict__"):
-			# if isinstance(obj, SocketResponse):
+				# if isinstance(obj, SocketResponse):
 				return obj.__dict__
 				# return {key: default(value) for key, value in obj.__dict__.items()}
 			else:
@@ -47,7 +46,7 @@ class SocketCommon:
 
 		return json.dumps(obj, default=default)
 
-	def deserialize(self, obj: str, object_hook = None):
+	def deserialize(self, obj: str, object_hook=None):
 		return json.loads(obj, object_hook=object_hook)
 
 

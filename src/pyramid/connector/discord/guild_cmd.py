@@ -1,6 +1,4 @@
-import asyncio
 from logging import Logger
-from threading import Thread
 
 from discord import Interaction, VoiceChannel
 
@@ -26,7 +24,9 @@ class GuildCmd(GuildCmdTools):
 		self.data = guild_data
 		self.queue = guild_queue
 
-	async def play(self, ms: MessageSenderQueued, ctx: Interaction, input: str, at_end=True) -> bool:
+	async def play(
+		self, ms: MessageSenderQueued, ctx: Interaction, input: str, at_end=True
+	) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
 			return False
@@ -134,9 +134,7 @@ class GuildCmd(GuildCmdTools):
 			)
 			return False
 
-		ms.add_message(
-			content=f"**{track_deleted.get_full_name()}** has been removed from queue"
-		)
+		ms.add_message(content=f"**{track_deleted.get_full_name()}** has been removed from queue")
 		return True
 
 	async def goto(self, ms: MessageSenderQueued, ctx: Interaction, number_in_queue: int):
@@ -206,14 +204,18 @@ class GuildCmd(GuildCmdTools):
 
 		ms.edit_message(f"Searching **{input}** ...", "search")
 
-		tracks: list[TrackMinimal] | None = self.data.search_engine.default_engine.search_tracks(input)
+		tracks: list[TrackMinimal] | None = self.data.search_engine.default_engine.search_tracks(
+			input
+		)
 		if not tracks:
 			ms.edit_message(f"**{input}** not found.", "search")
 			return False
 
 		return await self._execute_play_multiple(ms, voice_channel, tracks)
 
-	async def play_url(self, ms: MessageSenderQueued, ctx: Interaction, url: str, at_end=True) -> bool:
+	async def play_url(
+		self, ms: MessageSenderQueued, ctx: Interaction, url: str, at_end=True
+	) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
 			return False

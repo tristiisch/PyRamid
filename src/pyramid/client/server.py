@@ -49,7 +49,9 @@ class SocketServer:
 
 				if response_to_send:
 					# Convert the response data to JSON
-					response_json = self.__common.serialize(response_to_send.to_json(self.__common.serialize))
+					response_json = self.__common.serialize(
+						response_to_send.to_json(self.__common.serialize)
+					)
 
 					# Send the JSON response back to the client
 					# self.__logger.debug("[%s:%d] <- %s", client_ip, client_port, response_json)
@@ -90,5 +92,7 @@ class SocketServer:
 
 		# If the action is unknown, respond with an error message
 		response.create(ResponseCode.ERROR, "Unknown action")
-		self.__logger.info("[%s:%d] <- Unknown action '%s'", client_ip, client_port, json_data.action)
+		self.__logger.info(
+			"[%s:%d] <- Unknown action '%s'", client_ip, client_port, json_data.action
+		)
 		return response

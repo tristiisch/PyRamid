@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-from typing import Callable, Coroutine
 
 import pydeezer.util
 from pydeezer.constants import track_formats
@@ -12,6 +11,7 @@ from connector.deezer.downloader_progress_bar import DownloaderProgressBar
 from urllib3.exceptions import MaxRetryError
 
 from connector.deezer.py_deezer import PyDeezer
+
 
 class DeezerDownloader:
 	def __init__(self, arl, folder):

@@ -77,9 +77,7 @@ class Main:
 
 	def start(self):
 		# Discord Bot Instance
-		discord_bot = DiscordBot(
-			self.logger.getChild("Discord"), self._info, self._config
-		)
+		discord_bot = DiscordBot(self.logger.getChild("Discord"), self._info, self._config)
 		# Create bot
 		discord_bot.create(self._health)
 

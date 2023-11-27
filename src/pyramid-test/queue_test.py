@@ -71,14 +71,14 @@ class MediumQueue(unittest.TestCase):
 
 		for i in range(1, 10):
 			item = QueueItem(
-				f"test{i}", lambda n : n, None, lambda result: results.append(result), n=i
+				f"test{i}", lambda n: n, None, lambda result: results.append(result), n=i
 			)
 			queue.add(item)
 
 		queue.start()
 		queue.end()
 		queue.join()
-	
+
 		self.assertEqual(results, results_excepted)
 
 	def test_order_reverse(self):
@@ -89,14 +89,14 @@ class MediumQueue(unittest.TestCase):
 
 		for i in range(1, 10):
 			item = QueueItem(
-				f"test{i}", lambda n : n, None, lambda result: results.append(result), n=i
+				f"test{i}", lambda n: n, None, lambda result: results.append(result), n=i
 			)
 			queue.add_at_start(item)
 
 		queue.start()
 		queue.end()
 		queue.join()
-	
+
 		self.assertEqual(results, results_excepted)
 
 	def test_order_mixed(self):
@@ -107,26 +107,26 @@ class MediumQueue(unittest.TestCase):
 
 		for i in range(10, 20):
 			item = QueueItem(
-				f"test{i}", lambda n : n, None, lambda result: results.append(result), n=i
+				f"test{i}", lambda n: n, None, lambda result: results.append(result), n=i
 			)
 			queue.add(item)
 
 		for i in range(9, 0, -1):
 			item = QueueItem(
-				f"test{i}", lambda n : n, None, lambda result: results.append(result), n=i
+				f"test{i}", lambda n: n, None, lambda result: results.append(result), n=i
 			)
 			queue.add_at_start(item)
 
 		for i in range(20, 100):
 			item = QueueItem(
-				f"test{i}", lambda n : n, None, lambda result: results.append(result), n=i
+				f"test{i}", lambda n: n, None, lambda result: results.append(result), n=i
 			)
 			queue.add(item)
 
 		queue.start()
 		queue.end()
 		queue.join()
-	
+
 		self.assertEqual(results, results_excepted)
 
 	def test_order_multi_thread(self):
@@ -135,7 +135,7 @@ class MediumQueue(unittest.TestCase):
 		queue = Queue(threads=thread_nb)
 		results = []
 		results_excepted = list(range(1, items))
-		
+
 		def sleep_and_return_n(n):
 			time.sleep(n / 1000)
 			return n
@@ -149,7 +149,7 @@ class MediumQueue(unittest.TestCase):
 		queue.start()
 		queue.end()
 		queue.join()
-	
+
 		self.assertEqual(results, results_excepted)
 
 	def test_wait_for_end_shutdown_threads(self):

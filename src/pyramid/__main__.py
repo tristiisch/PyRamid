@@ -1,5 +1,4 @@
 from data.functional.main import Main
-from tools.test_dev import TestDev
 
 
 main = Main()

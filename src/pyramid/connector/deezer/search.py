@@ -114,7 +114,9 @@ class DeezerSearch(ASearchId, ASearch):
 			return None
 		return [TrackMinimalDeezer(element) for element in album.get_tracks()], []
 
-	def get_top_artist(self, artist_name, limit: int | None = None) -> list[TrackMinimalDeezer] | None:
+	def get_top_artist(
+		self, artist_name, limit: int | None = None
+	) -> list[TrackMinimalDeezer] | None:
 		if limit is None:
 			limit = self.default_limit
 		search_results = self.client.search_artists(query=artist_name, strict=self.strict)

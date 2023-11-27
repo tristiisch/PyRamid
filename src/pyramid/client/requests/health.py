@@ -14,9 +14,7 @@ class HealthRequest(ARequest):
 	def load_data(self, **data) -> HealthModules:
 		return HealthModules(**data)
 
-	def client_receive(
-		self, header: ResponseHeader, data: HealthModules
-	):
+	def client_receive(self, header: ResponseHeader, data: HealthModules):
 		data_json = json.dumps(data.__dict__, indent=4)
 
 		if not data.is_ok():

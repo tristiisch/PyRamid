@@ -63,6 +63,7 @@ def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):
 					"".join(traceback.format_exception(type(err), err, err.__traceback__)),
 				)
 
+
 def run_task(func: Callable, loop: asyncio.AbstractEventLoop | None, **kwargs):
 	# Async func
 	if inspect.iscoroutinefunction(func) or inspect.isasyncgenfunction(func):
@@ -70,14 +71,13 @@ def run_task(func: Callable, loop: asyncio.AbstractEventLoop | None, **kwargs):
 		if loop is not None:
 			# Async func in loop closed
 			if loop.is_closed():
-				raise Exception("Unable to call %s.%s cause the loop is closed",
+				raise Exception(
+					"Unable to call %s.%s cause the loop is closed",
 					func.__module__,
-					func.__qualname__
+					func.__qualname__,
 				)
 			# Async func in loop open
-			result = asyncio.run_coroutine_threadsafe(
-				func(**kwargs), loop
-			).result()
+			result = asyncio.run_coroutine_threadsafe(func(**kwargs), loop).result()
 		# Async func classic
 		else:
 			result = asyncio.run(func(**kwargs))
@@ -85,6 +85,7 @@ def run_task(func: Callable, loop: asyncio.AbstractEventLoop | None, **kwargs):
 	else:
 		result = func(**kwargs)
 	return result
+
 
 class Queue:
 	all_queue = deque()
