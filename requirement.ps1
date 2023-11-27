@@ -87,24 +87,26 @@ function Find-Libs([PythonLibrary[]]$libObjects, [string]$libName) {
 	return $itemFind
 }
 
+function Find-Libs([PythonLibrary[]]$libObjects, [PythonLibrary[]]$libObjects2) {
+    $itemFind = $libObjects | Where-Object { $libObjects2.Name.ToLower() -eq $_.Name.ToLower() }
+	return $itemFind
+}
+
 function Get-Local-Requirement-Libs() {
     $localLibs = Get-Local-Libs
     $requirementLibs = Get-Requirement-Libs
-	$localRequirementLibs = Find-Libs $localLibs $requirementLibs.Name
+	$localRequirementLibs = Find-Libs $localLibs $requirementLibs
 
     return $localRequirementLibs
 }
 
 function Update-Libs() {
-	pip install --upgrade -r $requirementFile
-	if (!($?)) {
-		return
-	}
+	Install-Requirement
 	$requirementLibs = Get-Requirement-Libs
 	$localRequirementLibs = Get-Local-Requirement-Libs
 	$requirementLibsToUpdate = $requirementLibs | Where-Object {
 		$item = $_
-		$matchingItem = Find-Libs $localRequirementLibs $item.Name
+		$matchingItem = Find-Libs $localRequirementLibs $item
 		$matchingItem.Smallest_Version -Ne $_.Smallest_Version
 	}
 	if ($requirementLibsToUpdate.count -Eq 0) {
@@ -113,7 +115,7 @@ function Update-Libs() {
 	}
 	Write-Host "Libraries updated :" -ForegroundColor Green
 	foreach ($requirementLibToUpdate in $requirementLibsToUpdate) {
-		$localLib = Find-Libs $localRequirementLibs $requirementLibToUpdate.Name
+		$localLib = Find-Libs $localRequirementLibs $requirementLibToUpdate
 		Write-Host $requirementLibToUpdate.Name $requirementLibToUpdate.Smallest_Version "->" $localLib.Smallest_Version
 
 		$requirementLibToUpdate.Smallest_Version = $localLib.Smallest_Version
@@ -142,9 +144,6 @@ function Add-Lib([string]$libName) {
 			"$($local.Smallest_Version_Symbol) $($local.Smallest_Version)" -ForegroundColor Red
 	} else {
 		pip install $libName
-		if (!($?)) {
-			return
-		}
 		$localLibs = Get-Local-Libs
 		$local = Find-Libs $localLibs $libName
 	}
