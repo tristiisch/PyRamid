@@ -1,5 +1,6 @@
 import re
 from enum import Enum
+from typing import Any
 
 import spotipy
 from data.a_engine_tools import AEngineTools
@@ -19,11 +20,21 @@ class SpotifySearchBase(ASearch):
 		self.client = spotipy.Spotify(client_credentials_manager=self.client_credentials_manager)
 		self.tools = SpotifyTools()
 
+	def _get_all_tracks(self, results: Any, item_name = "items") -> None | list[dict[str, Any]]:
+		if not results:
+			return None
+		tracks: list = results[item_name]
+
+		while results["next"]:
+			results = self.client.next(results)
+			tracks.extend(results[item_name])
+
+		return tracks
+
 
 class SpotifySearchId(ASearchId, SpotifySearchBase):
 	def __init__(self, default_limit: int, client_id: str, client_secret: str):
 		super().__init__(default_limit, client_id, client_secret)
-
 
 	def get_track_by_id(self, track_id: str) -> TrackMinimalSpotify | None:
 		results = self.client.track(track_id=track_id)
@@ -33,23 +44,17 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 	def get_playlist_tracks_by_id(
 		self, playlist_id: str
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
-		results = self.client.playlist(playlist_id=playlist_id)
-
-		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+		tracks = self._get_all_tracks(self.client.playlist_tracks(playlist_id=playlist_id))
+		if not tracks:
 			return None
-
-		tracks = results["tracks"]["items"]
 		return [TrackMinimalSpotify(element["track"]) for element in tracks], []
 
 	def get_album_tracks_by_id(
 		self, album_id: str
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
-		results = self.client.album(album_id=album_id)
-
-		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+		tracks = self._get_all_tracks(self.client.album_tracks(album_id=album_id))
+		if not tracks:
 			return None
-
-		tracks = results["tracks"]["items"]
 		return [TrackMinimalSpotify(element["track"]) for element in tracks], []
 
 	def get_top_artist_by_id(
@@ -57,11 +62,11 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
 		results = self.client.artist_top_tracks(artist_id=artist_id)
 
-		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+		if not results or not results.get("tracks"):
 			return None
 
-		tracks = results["tracks"]["items"]
-		return [TrackMinimalSpotify(element["track"]) for element in tracks], []
+		tracks = results["tracks"]
+		return [TrackMinimalSpotify(element) for element in tracks], []
 
 
 class SpotifySearch(SpotifySearchId):
@@ -153,11 +158,11 @@ class SpotifyType(Enum):
 class SpotifyTools(AEngineTools):
 	def extract_from_url(self, url) -> tuple[str, SpotifyType | None] | tuple[None, None]:
 		# Extract ID and type using regex
-		pattern = r"(?<=open.spotify.com/)(\w+)/(\w+)"
+		pattern = r"(?<=open.spotify.com/)(intl-(?P<intl>\w+)/)(?P<type>\w+)/(?P<id>\w+)"
 		match = re.search(pattern, url)
 		if not match:
 			return None, None
-		type_str = match.group(1).upper()
+		type_str = match.group("type").upper()
 		if type_str == "PLAYLIST":
 			type = SpotifyType.PLAYLIST
 		elif type_str == "ARTIST":
@@ -169,5 +174,5 @@ class SpotifyTools(AEngineTools):
 		else:
 			type = None
 
-		id = match.group(2)
+		id = match.group("id")
 		return id, type
