@@ -1,6 +1,6 @@
 # Builder image
 # Used to retrieve information from this version
-FROM python:3.11-alpine AS builder
+FROM python:3.12-alpine AS builder
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ COPY ./.git/logs/HEAD ./.git/logs/HEAD
 RUN python src/git.py > git_info.json
 
 # Executable image
-FROM python:3.11-alpine
+FROM python:3.12-alpine
 
 LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid"
 
