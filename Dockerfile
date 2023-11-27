@@ -17,6 +17,8 @@ RUN python src/git.py > git_info.json
 # Executable image
 FROM python:3.11-alpine
 
+LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid"
+
 # Install multimedia framework that can decode, encode, transcode, mux, demux, stream, filter, and play a wide variety of multimedia files
 RUN apk update
 RUN apk add build-base libffi-dev openssl-dev libgcc python3-dev ffmpeg libsodium opus-dev
