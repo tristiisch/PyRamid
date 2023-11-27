@@ -18,12 +18,6 @@ updates:
     interval: daily
     time: "06:00"
 
-- package-ecosystem: docker
-  directory: "/"
-  schedule:
-    interval: daily
-    time: "06:00"
-
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
