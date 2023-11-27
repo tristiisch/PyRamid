@@ -10,7 +10,7 @@ class GitInfo:
 		self.branch: str | None = None
 		self.last_author: str | None = None
 
-	def get(self, base_path=None, max_length=8) -> bool:
+	def get(self, base_path=None, max_length=7) -> bool:
 		if not base_path:
 			directory = pathlib.Path()
 		else:
@@ -24,18 +24,41 @@ class GitInfo:
 		if not git_head.exists():
 			return False
 
-		with (git_head).open("r") as head:
-			ref = head.readline().split(" ")[-1].strip()
-
-		git_ref = git_dir / ref
-		if git_ref.exists():
-			with (git_ref).open("r") as git_hash:
-				commit_id = git_hash.readline().strip()
-			self.commit_id = commit_id[:max_length]
-
+		ref = None
+		commit_hash = None
 		with (git_head).open("r") as f:
-			head = f.read().strip()
-			self.branch = head.split("ref: refs/heads/")[1]
+			head_file = f.read().strip()
+			
+			prefix = "ref: "
+			if head_file.startswith(prefix):
+				head_file = head_file[len(prefix):]
+				ref = head_file
+				prefix = "refs/heads/"
+				if head_file.startswith(prefix):
+					head_file = head_file[len(prefix):]
+				self.branch = head_file
+
+				git_ref = git_dir / ref
+				if git_ref.exists():
+					with (git_ref).open("r") as git_hash:
+						commit_id = git_hash.readline().strip()
+					self.commit_id = commit_id[:max_length]
+
+			# Repo is in detached HEAD
+			else:
+				commit_hash = head_file
+				self.commit_id = commit_hash[:max_length]
+
+				heads_path = git_dir / "refs" / "heads"
+				for root, dirs, files in os.walk(heads_path):
+					for branch_name in files:
+						branch_path = os.path.join(root, branch_name)
+						with open(branch_path, 'r') as branch_file:
+							if branch_file.read().strip() == commit_hash:
+								self.branch = os.path.relpath(branch_path, heads_path).replace("\\", "/")
+								break
+					if self.branch is not None:
+						break
 
 		git_log_head = git_dir / "logs" / "HEAD"
 		if git_log_head.exists():

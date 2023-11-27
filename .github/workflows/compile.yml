@@ -62,6 +62,7 @@ jobs:
 
       - name: Save version
         run: |
+          python ${{ env.SRC }} --version
           FULL_JSON=$(python ${{ env.SRC }} --version)
           echo "json=$(echo $FULL_JSON | jq -c)" >> $GITHUB_OUTPUT
           echo "version=$(echo $FULL_JSON | jq -r '.version')" >> $GITHUB_OUTPUT
