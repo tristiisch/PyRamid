@@ -282,3 +282,13 @@ def count_public_variables(obj):
 	
 	# Return the count of public variables
 	return len(public_variables)
+
+def format_bytes_speed(bytes_per_second):
+	units = ["bps", "Kbps", "Mbps", "Gbps", "Tbps"]
+	factor = 1000
+	for unit in units:
+		if bytes_per_second < factor:
+			return f"{round(bytes_per_second)} {unit}"
+		bytes_per_second /= factor
+
+	return f"{round(bytes_per_second)} {units[-1]}"

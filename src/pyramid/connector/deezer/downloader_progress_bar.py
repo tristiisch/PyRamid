@@ -1,17 +1,7 @@
 import logging
 import time
 from pydeezer.ProgressHandler import BaseProgressHandler
-
-
-def convert_bytes_to_appropriate_unit(bytes_per_second):
-	units = ["bps", "Kbps", "Mbps", "Gbps", "Tbps"]
-	factor = 1000
-	for unit in units:
-		if bytes_per_second < factor:
-			return f"{round(bytes_per_second)} {unit}"
-		bytes_per_second /= factor
-
-	return f"{round(bytes_per_second)} {units[-1]}"
+from tools import utils
 
 
 class DownloaderProgressBar(BaseProgressHandler):
@@ -21,6 +11,7 @@ class DownloaderProgressBar(BaseProgressHandler):
 	def initialize(self, *args, **kwargs):
 		super().initialize(*args)
 		self.current_chunk_size: int
+		self.size_downloaded: int
 		self.total_size: int
 
 		self.start_time = time.time()
@@ -41,7 +32,7 @@ class DownloaderProgressBar(BaseProgressHandler):
 			"End download\t%s in %.2f seconds - %s",
 			self.track_title,
 			total_time,
-			convert_bytes_to_appropriate_unit(average_speed),
+			utils.format_bytes_speed(average_speed),
 		)
 
 	def log_progress(self):
@@ -55,18 +46,18 @@ class DownloaderProgressBar(BaseProgressHandler):
 		if duration == 0:
 			return
 
-		current_speed = self.current_chunk_size / duration
+		current_speed = self.size_downloaded / duration
 		remaining_size = self.total_size - self.size_downloaded
-		time_remaining = remaining_size / current_speed if current_speed > 0 else 0
+		time_remaining = round(remaining_size / current_speed) if current_speed > 0 else 0
 
 		if percentage == 100:
 			return
 
 		logging.info(
-			"Downloading %s %.2f%% - %s - %.2f seconds remaining",
+			"Downloading %s %.2f%% - %s - %s remaining",
 			self.track_title,
 			percentage,
-			convert_bytes_to_appropriate_unit(current_speed),
-			time_remaining,
+			utils.format_bytes_speed(current_speed),
+			utils.time_to_duration(time_remaining),
 		)
 		self.last_print = current_time
