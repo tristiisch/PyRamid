@@ -143,7 +143,8 @@ jobs:
     needs: ["compile", "unit_test"]
     runs-on: ubuntu-latest
     outputs:
-      docker_tag: ${{ steps.docker_tag.outputs.tag }}
+        docker_tag: ${{ steps.docker_tag.outputs.tag }}
+    if: github.event_name == 'push'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
