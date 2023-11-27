@@ -32,6 +32,9 @@ class DownloaderProgressBar(BaseProgressHandler):
 		self.log_progress()
 
 	def close(self, *args, **kwargs):
+		if "size_downloaded" in kwargs:
+			self.size_downloaded = kwargs["size_downloaded"]
+
 		total_time = time.time() - self.start_time
 		average_speed = self.size_downloaded / total_time
 		logging.info(

@@ -1,4 +1,3 @@
-import asyncio
 from os import path
 
 import aiofiles
@@ -12,6 +11,76 @@ from pydeezer.ProgressHandler import BaseProgressHandler, DefaultProgressHandler
 from functools import partial
 from pydeezer.exceptions import LoginError
 
+class DecryptDeezer:
+
+	def __init__(self, blowfish_key: bytes, progress_handler: BaseProgressHandler) -> None:
+		self.chunk_length = 6144
+		self.decrypt_chunk_length = 2048
+		self.cipher = Cipher(
+			algorithms.Blowfish(blowfish_key),
+			modes.CBC(bytes([i for i in range(8)])),
+			default_backend(),
+		)
+		self.f: aiofiles.threadpool.binary.AsyncBufferedIOBase
+		self.progress_handler = progress_handler
+
+	async def output_file(self, filesize: int, file_path: str, res: aiohttp.ClientResponse):
+		async with aiofiles.open(file_path, "wb") as f:
+			self.f = f
+			await f.seek(0)
+			
+			chunk_index = 0
+			downloaded_size = 0
+			previous_chunk = None
+			async for chunk, _ in res.content.iter_chunks():
+
+				chunk_size = len(chunk)
+				self.progress_handler.update(current_chunk_size=chunk_size)
+
+				downloaded_size += chunk_size
+				if previous_chunk:
+					previous_chunk, chunks_used = await self._transform_chunk(previous_chunk + chunk)
+				else:
+					previous_chunk, chunks_used = await self._transform_chunk(chunk)
+				chunk_index += chunks_used
+
+			if previous_chunk:
+				await self._write_file(previous_chunk)
+			if downloaded_size != filesize:
+				missing = filesize - downloaded_size
+				raise Exception("[%s] %d bytes are missing" % (filesize, missing))
+
+	async def _transform_chunk(self, bytes_chunked: bytes) -> tuple[bytes, int] | tuple[None, int]:
+		# Calculate the number of chunks needed
+		length_bytes = len(bytes_chunked)
+		chunks_nb = int(length_bytes / self.chunk_length) + 1
+
+		# Iterate over the chunks and call the callback for each one
+		for i in range(chunks_nb - 1):
+			chunk = bytes_chunked[i * self.chunk_length: (i + 1) * self.chunk_length]
+			await self._write_file(chunk)
+
+		last_chunk_start = (chunks_nb - 1) * self.chunk_length
+		last_chunk = bytes_chunked[last_chunk_start:]
+		last_length = len(last_chunk)
+
+		if last_length == self.chunk_length:
+			await self._write_file(last_chunk)
+			return None, chunks_nb
+		elif last_length < self.chunk_length:
+			return last_chunk, chunks_nb - 1
+		raise Exception("Last chunk has wrong size %d (under %d is excepted)", last_length, self.chunk_length)
+
+	async def _write_file(self, new_chunk: bytes):
+		chunk_size = len(new_chunk)
+		if self.decrypt_chunk_length > chunk_size:
+			await self.f.write(new_chunk)
+		else:
+			chunk_to_decrypt = new_chunk[:self.decrypt_chunk_length]
+			decryptor = self.cipher.decryptor()
+			dec_data = decryptor.update(chunk_to_decrypt) + decryptor.finalize()
+			await self.f.write(dec_data)
+			await self.f.write(new_chunk[self.decrypt_chunk_length:])
 
 class PyDeezer(Deezer):
 	def __init__(self, arl=None):
@@ -38,16 +107,16 @@ class PyDeezer(Deezer):
 		"""Downloads the given track
 
 		Arguments:
-		                                track {dict} -- Track dictionary, similar to the {info} value that is returned {using get_track()}
-		                                download_dir {str} -- Directory (without {filename}) where the file is to be saved.
+										track {dict} -- Track dictionary, similar to the {info} value that is returned {using get_track()}
+										download_dir {str} -- Directory (without {filename}) where the file is to be saved.
 
 		Keyword Arguments:
-		                                quality {str} -- Use values from {constants.track_formats}, will get the default quality if None or an invalid is given. (default: {None})
-		                                filename {str} -- Filename with or without the extension (default: {None})
-		                                renew {bool} -- Will renew the track object (default: {False})
-		                                with_metadata {bool} -- If true, will write id3 tags into the file. (default: {True})
-		                                with_lyrics {bool} -- If true, will find and save lyrics of the given track. (default: {True})
-		                                tag_separator {str} -- Separator to separate multiple artists (default: {", "})
+										quality {str} -- Use values from {constants.track_formats}, will get the default quality if None or an invalid is given. (default: {None})
+										filename {str} -- Filename with or without the extension (default: {None})
+										renew {bool} -- Will renew the track object (default: {False})
+										with_metadata {bool} -- If true, will write id3 tags into the file. (default: {True})
+										with_lyrics {bool} -- If true, will find and save lyrics of the given track. (default: {True})
+										tag_separator {str} -- Separator to separate multiple artists (default: {", "})
 		"""
 
 		if with_lyrics:
@@ -96,7 +165,6 @@ class PyDeezer(Deezer):
 
 		if show_messages:
 			print("Starting download of:", title)
-		## ----
 
 		async with aiohttp.ClientSession() as session:
 			async with session.get(
@@ -107,9 +175,8 @@ class PyDeezer(Deezer):
 				chunked=True,
 				ssl=None,
 			) as res:
-				chunk_size = 2048
+				# chunk_size = 2048
 				total_filesize = int(res.headers["Content-Length"])
-				i = 0
 
 				if not progress_handler:
 					progress_handler = DefaultProgressHandler()
@@ -119,46 +186,11 @@ class PyDeezer(Deezer):
 					title,
 					quality_key,
 					total_filesize,
-					chunk_size,
+					0,
 					track_id=track["SNG_ID"],  # type: ignore
 				)
-
-				async with aiofiles.open(download_path, "wb") as f:
-					await f.seek(0)
-
-					while True:
-						try:
-							chunk = await res.content.readexactly(chunk_size)
-						except asyncio.IncompleteReadError:
-							break
-						current_chunk_size = len(chunk)
-
-						if i % 3 > 0:
-							await f.write(chunk)
-						elif len(chunk) < chunk_size:
-							await f.write(chunk)
-							progress_handler.update(
-								track_id=track["SNG_ID"], current_chunk_size=current_chunk_size
-							)
-							break
-						else:
-							cipher = Cipher(
-								algorithms.Blowfish(blowfish_key),
-								modes.CBC(bytes([i for i in range(8)])),
-								default_backend(),
-							)
-
-							decryptor = cipher.decryptor()
-							dec_data = decryptor.update(chunk) + decryptor.finalize()
-							await f.write(dec_data)
-
-							current_chunk_size = len(dec_data)
-
-						i += 1
-
-						progress_handler.update(
-							track_id=track["SNG_ID"], current_chunk_size=current_chunk_size
-						)
+				decrytor = DecryptDeezer(blowfish_key, progress_handler)
+				await decrytor.output_file(total_filesize, download_path, res)
 
 		if with_metadata:
 			if ext.lower() == ".flac":
@@ -173,13 +205,13 @@ class PyDeezer(Deezer):
 		if show_messages:
 			print("Track downloaded to:", download_path)
 
-		progress_handler.close(track_id=track["SNG_ID"], total_filesize=total_filesize)
+		progress_handler.close(track_id=track["SNG_ID"], size_downloaded=total_filesize)
 
 	async def get_user_data(self):
 		"""Gets the data of the user, this will only work arl is the cookie. Make sure you have run login_via_arl() before using this.
 
 		Raises:
-		        LoginError: Will raise if the arl given is not identified by Deezer
+				LoginError: Will raise if the arl given is not identified by Deezer
 		"""
 
 		data = (await self._api_call(api_methods.GET_USER_DATA))["results"]
@@ -216,10 +248,10 @@ class PyDeezer(Deezer):
 		"""Gets the track info using the Deezer API
 
 		Arguments:
-		        track_id {str} -- Track Id
+				track_id {str} -- Track Id
 
 		Returns:
-		        dict -- Dictionary that contains the {info}, {download} partial function, {tags}, and {get_tag} partial function.
+				dict -- Dictionary that contains the {info}, {download} partial function, {tags}, and {get_tag} partial function.
 		"""
 
 		method = api_methods.SONG_GET_DATA
@@ -263,3 +295,4 @@ class PyDeezer(Deezer):
 					raise APIRequestError("{0} : {1}".format(error_type, error_message))
 
 		return data
+
