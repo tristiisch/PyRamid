@@ -39,11 +39,14 @@ class DeezerSearch(ASearchId, ASearch):
 		if limit is None:
 			limit = self.default_limit
 
-		search_results = self.client.search(query=search, strict=self.strict)
+		tracks = self.client.search(query=search, strict=self.strict)
 
-		if not search_results or len(search_results) == 0:
+		tracks_length = len(tracks)
+		if tracks_length == 0:
 			return None
-		tracks = search_results[:limit]
+		if tracks_length > limit:
+			tracks = tracks[:limit]
+
 		return [TrackMinimalDeezer(element) for element in tracks]
 
 	def get_playlist_tracks(self, playlist_name) -> list[TrackMinimalDeezer] | None:

@@ -60,12 +60,16 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 	def get_top_artist_by_id(
 		self, artist_id: str, limit: int | None = None
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
+		if limit is None:
+			limit = self.default_limit
 		results = self.client.artist_top_tracks(artist_id=artist_id)
 
 		if not results or not results.get("tracks"):
 			return None
 
 		tracks = results["tracks"]
+		if len(tracks) > limit:
+			tracks = tracks[:limit]
 		return [TrackMinimalSpotify(element) for element in tracks], []
 
 
@@ -73,7 +77,9 @@ class SpotifySearch(SpotifySearchId):
 	def __init__(self, default_limit: int, client_id: str, client_secret: str):
 		super().__init__(default_limit, client_id, client_secret)
 
-	def search_tracks(self, search, limit=10) -> list[TrackMinimalSpotify] | None:
+	def search_tracks(self, search, limit: int | None = None) -> list[TrackMinimalSpotify] | None:
+		if limit is None:
+			limit = self.default_limit
 		results = self.client.search(q=search, limit=limit, type="track")
 
 		if not results or not results.get("tracks") or not results["tracks"].get("items"):
@@ -111,7 +117,7 @@ class SpotifySearch(SpotifySearchId):
 		tracks = results["tracks"]["items"]
 		return [TrackMinimalSpotify(element) for element in tracks]
 
-	def get_top_artist(self, artist_name, limit=10) -> list[TrackMinimalSpotify] | None:
+	def get_top_artist(self, artist_name, limit: int | None = None) -> list[TrackMinimalSpotify] | None:
 		results = self.client.search(q=artist_name, limit=1, type="artist")
 
 		if not results or not results.get("tracks") or not results["tracks"].get("items"):
