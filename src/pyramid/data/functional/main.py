@@ -9,6 +9,8 @@ from threading import Thread
 import tools.utils as tools
 from data.functional.application_info import ApplicationInfo
 from connector.discord.bot import DiscordBot
+from client.server import SocketServer
+from data.health import HealthModules
 from tools.configuration.configuration import Configuration
 from tools.logs_handler import LogsHandler
 from tools.queue import Queue
@@ -18,6 +20,7 @@ class Main:
 	def __init__(self):
 		# Program information
 		self._info = ApplicationInfo()
+		self._health = HealthModules()
 
 	# Argument management
 	def args(self):
@@ -43,7 +46,8 @@ class Main:
 		log_dir = "./logs"
 		log_name = f"./{current_datetime.strftime('%Y_%m_%d %H_%M')}.log"
 
-		self._logs_handler = LogsHandler(self._info, log_dir, log_name, "error.log")
+		self._logs_handler = LogsHandler()
+		self._logs_handler.init(self._info, log_dir, log_name, "error.log")
 		self.logger = logging.getLogger()
 
 		# Deletion of log files over 10
@@ -57,10 +61,15 @@ class Main:
 	def config(self):
 		# Config load
 		self._config = Configuration(self.logger)
-		if not self._config.load():
-			sys.exit(201)
+		self._config.load()
+		self._health.configuration = True
 
 		self._logs_handler.set_log_level(self._config.mode)
+
+	def open_socket(self):
+		self.socket_server = SocketServer(self.logger.getChild("socket"), self._health)
+		thread = Thread(name="Discord", target=self.socket_server.start_server, daemon=True)
+		thread.start()
 
 	def clean_data(self):
 		# Songs folder clear
@@ -72,7 +81,7 @@ class Main:
 			self.logger.getChild("Discord"), self._info, self._config
 		)
 		# Create bot
-		discord_bot.create()
+		discord_bot.create(self._health)
 
 		loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
 

@@ -1,4 +1,5 @@
 import logging
+import sys
 import time
 import traceback
 from logging import Logger
@@ -28,6 +29,7 @@ from connector.discord.guild_queue import GuildQueue
 from data.functional.engine_source import EngineSource
 from data.exceptions import DiscordMessageException
 from data.functional.messages.message_sender_queued import MessageSenderQueued
+from data.health import HealthModules
 from tools.configuration.configuration import Configuration
 
 
@@ -57,7 +59,7 @@ class DiscordBot:
 
 		self.guilds_instances: Dict[int, GuildInstances] = {}
 
-	def create(self):
+	def create(self, health: HealthModules):
 		self.__logger.info("Discord bot creating with discord.py v%s ...", discord.__version__)
 		self.listeners = BotListener(self.bot, self.__logger)
 		self.cmd = BotCmd(
@@ -68,6 +70,7 @@ class DiscordBot:
 			self.__environment,
 			self.__started,
 		)
+		self._health = health
 
 		@self.bot.event
 		async def on_command_error(ctx: Context, error: CommandError):
@@ -138,9 +141,12 @@ class DiscordBot:
 			self.__logger.info("Discord bot login")
 			await self.bot.login(self.__token)
 			self.__logger.info("Discord bot connecting")
+			self._health.discord = True
 			await self.bot.connect()
 		except PrivilegedIntentsRequired as ex:
-			raise ex
+			self._health.discord = False
+			self.__logger.critical(ex)
+			sys.exit(1)
 
 	async def stop(self):
 		# self.bot.clear()

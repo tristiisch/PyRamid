@@ -4,28 +4,29 @@ name: 'pyramid-dev'
 services:
 
   pyramid:
-    image: tristiisch/pyramid:latest
+    # image: tristiisch/pyramid:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - type: bind
-        source: ./config.yml
-        target: /app/config.yml
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ./logs
+        source: .\.docker\pyramid\logs
         target: /app/logs
         bind:
           create_host_path: true
       - type: bind
-        source: ./songs
+        source: .\.docker\pyramid\songs
         target: /app/songs
         bind:
           create_host_path: true
     restart: always
+    ports:
+    - 49149:49150
     networks:
     - pyramid_network
     container_name : pyramid
     hostname: pyramid
+    env_file: .env
 
 networks:
    pyramid_network:

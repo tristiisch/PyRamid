@@ -9,7 +9,7 @@ class ApplicationInfo:
 	def __init__(self):
 		self.name = "pyramid"
 		self.os = get_os().lower() 
-		self.version = "0.3.5"
+		self.version = "0.4.0"
 		self.git_info = GitInfo()
 
 	def load_git_info(self):
