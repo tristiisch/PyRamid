@@ -40,6 +40,7 @@ class DiscordBot:
 		intents = discord.Intents.default()
 		intents.members = True
 		intents.message_content = True
+		intents.presences = True
 
 		bot = Bot(command_prefix="$$", intents=intents)
 		self.bot = bot

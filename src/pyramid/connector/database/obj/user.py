@@ -1,4 +1,6 @@
+
 import logging
+from datetime import datetime, timezone
 from typing import Self
 
 import discord
@@ -14,6 +16,7 @@ class User(SQLMethods):
 	id = Column(BigInteger, Sequence(f"{__name__.lower()}_id_seq"), primary_key=True)
 	discord_id = Column(BigInteger, CheckConstraint("discord_id >= 0"), unique=True)
 	identifier = Column(String(37), unique=True, nullable=True)
+	last_seen = Column(DateTime(timezone=True), nullable=True)
 	created_at = Column(DateTime(timezone=True))
 	is_bot = Column(Boolean)
 
@@ -21,12 +24,13 @@ class User(SQLMethods):
 		return tools.utils.print_human_readable(self)
 
 	@classmethod
-	def from_discord_user(cls, user: discord.User) -> Self:
+	def from_discord_user(cls, member: discord.Member, last_seen_now = False) -> Self:
 		return cls(
-			identifier=f"{user.name}#{user.discriminator}",
-			discord_id=user.id,
-			created_at=user.created_at,
-			is_bot=user.bot,
+			identifier=f"{member.name}#{member.discriminator}",
+			discord_id=member.id,
+			created_at=member.created_at,
+			is_bot=member.bot,
+			last_seen=datetime.now(timezone.utc) if last_seen_now or member.status != discord.Status.offline else None
 		)
 
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import discord
 
 from logging import Logger
@@ -50,14 +50,15 @@ class BotListener:
 				Guild.add_or_update(discord_guild, True)
 
 				async for member in guild.fetch_members(limit=None):
-					discord_user = User.from_discord_user(member._user)
+					discord_user = User.from_discord_user(member)
 					uh.add_or_update(discord_user)
 			self.__logger.info("Discord bot ready")
 
 		@bot.event
-		async def on_member_update(before, after):
+		async def on_member_update(before: Member, after: Member):
+			py_user = User.from_discord_user(after, True)
 			uh = UserHandler()
-			uh.add_or_update(User.from_discord_user(after))
+			uh.add_or_update(py_user)
 
 		@bot.event
 		async def on_guild_join(guild: discord.Guild):
@@ -69,7 +70,7 @@ class BotListener:
 
 			uh = UserHandler()
 			async for member in guild.fetch_members(limit=None):
-				discord_user = User.from_discord_user(member._user)
+				discord_user = User.from_discord_user(member)
 				uh.add_or_update(discord_user)
 
 		@bot.event
