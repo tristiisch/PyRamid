@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from os import path
 
 import aiofiles
@@ -111,16 +113,16 @@ class PyDeezer(Deezer):
 		"""Downloads the given track
 
 		Arguments:
-		                                                                track {dict} -- Track dictionary, similar to the {info} value that is returned {using get_track()}
-		                                                                download_dir {str} -- Directory (without {filename}) where the file is to be saved.
+			track {dict} -- Track dictionary, similar to the {info} value that is returned {using get_track()}
+			download_dir {str} -- Directory (without {filename}) where the file is to be saved.
 
 		Keyword Arguments:
-		                                                                quality {str} -- Use values from {constants.track_formats}, will get the default quality if None or an invalid is given. (default: {None})
-		                                                                filename {str} -- Filename with or without the extension (default: {None})
-		                                                                renew {bool} -- Will renew the track object (default: {False})
-		                                                                with_metadata {bool} -- If true, will write id3 tags into the file. (default: {True})
-		                                                                with_lyrics {bool} -- If true, will find and save lyrics of the given track. (default: {True})
-		                                                                tag_separator {str} -- Separator to separate multiple artists (default: {", "})
+			quality {str} -- Use values from {constants.track_formats}, will get the default quality if None or an invalid is given. (default: {None})
+			filename {str} -- Filename with or without the extension (default: {None})
+			renew {bool} -- Will renew the track object (default: {False})
+			with_metadata {bool} -- If true, will write id3 tags into the file. (default: {True})
+			with_lyrics {bool} -- If true, will find and save lyrics of the given track. (default: {True})
+			tag_separator {str} -- Separator to separate multiple artists (default: {", "})
 		"""
 
 		if with_lyrics:
@@ -138,7 +140,7 @@ class PyDeezer(Deezer):
 
 		track = track["DATA"] if "DATA" in track else track
 
-		tags = self.get_track_tags(track, separator=tag_separator)
+		tags = await self.get_track_tags(track, separator=tag_separator)
 
 		res = self.get_track_download_url(track, quality, fallback=fallback, renew=renew, **kwargs)
 		if res is None:
@@ -215,7 +217,7 @@ class PyDeezer(Deezer):
 		"""Gets the data of the user, this will only work arl is the cookie. Make sure you have run login_via_arl() before using this.
 
 		Raises:
-		                LoginError: Will raise if the arl given is not identified by Deezer
+			LoginError: Will raise if the arl given is not identified by Deezer
 		"""
 
 		data = (await self._api_call(api_methods.GET_USER_DATA))["results"]
@@ -248,32 +250,6 @@ class PyDeezer(Deezer):
 				"image": "https://e-cdns-images.dzcdn.net/images/user/250x250-000000-80-0-0.jpg",
 			}
 
-	async def get_track(self, track_id):
-		"""Gets the track info using the Deezer API
-
-		Arguments:
-		                track_id {str} -- Track Id
-
-		Returns:
-		                dict -- Dictionary that contains the {info}, {download} partial function, {tags}, and {get_tag} partial function.
-		"""
-
-		method = api_methods.SONG_GET_DATA
-		params = {"SNG_ID": track_id}
-
-		if not int(track_id) < 0:
-			method = api_methods.PAGE_TRACK
-
-		data = await self._api_call(method, params=params)
-		data = data["results"]
-
-		return {
-			"info": data,
-			"download": partial(self.download_track, data),
-			"tags": self.get_track_tags(data),
-			"get_tag": partial(self.get_track_tags, data),
-		}
-
 	async def _api_call(self, method, params={}):
 		token = "null"
 		if method != api_methods.GET_USER_DATA:
@@ -296,6 +272,160 @@ class PyDeezer(Deezer):
 				if "error" in data and data["error"]:
 					error_type = list(data["error"].keys())[0]
 					error_message = data["error"][error_type]
+					raise APIRequestError("{0} : {1}".format(error_type, error_message))
+
+		return data
+
+	async def get_track_tags(self, track, separator=", "):
+		"""Gets the possible ID3 tags of the track.
+
+		Arguments:
+			track {dict} -- Track dictionary, similar to the {info} value that is returned {using get_track()}
+
+		Keyword Arguments:
+			separator {str} -- Separator to separate multiple artists (default: {", "})
+
+		Returns:
+			dict -- Tags
+		"""
+
+		track = track["DATA"] if "DATA" in track else track
+
+		album_data = await self.get_album(track["ALB_ID"])
+
+		if "main_artist" in track["SNG_CONTRIBUTORS"]:
+			main_artists = track["SNG_CONTRIBUTORS"]["main_artist"]
+			artists = main_artists[0]
+			for i in range(1, len(main_artists)):
+				artists += separator + main_artists[i]
+		else:
+			artists = track["ART_NAME"]
+
+		title = track["SNG_TITLE"]
+
+		if "VERSION" in track and track["VERSION"] != "":
+			title += " " + track["VERSION"]
+
+		def should_include_featuring():
+			# Checks if the track title already have the featuring artists in its title
+			feat_keywords = ["feat.", "featuring", "ft."]
+
+			for keyword in feat_keywords:
+				if keyword in title.lower():
+					return False
+			return True
+
+		if should_include_featuring() and "featuring" in track["SNG_CONTRIBUTORS"]:
+			featuring_artists_data = track["SNG_CONTRIBUTORS"]["featuring"]
+			featuring_artists = featuring_artists_data[0]
+			for i in range(1, len(featuring_artists_data)):
+				featuring_artists += separator + featuring_artists_data[i]
+
+			title += f" (feat. {featuring_artists})"
+
+		total_tracks = album_data["nb_tracks"]
+		track_number = str(track["TRACK_NUMBER"]) + "/" + str(total_tracks)
+
+		cover = self.get_album_poster(album_data, size=1000)
+
+		tags = {
+			"title": title,
+			"artist": artists,
+			"genre": None,
+			"album": track["ALB_TITLE"],
+			"albumartist": track["ART_NAME"],
+			"label": album_data["label"],
+			"date": track["PHYSICAL_RELEASE_DATE"],
+			"discnumber": track["DISK_NUMBER"],
+			"tracknumber": track_number,
+			"isrc": track["ISRC"],
+			"copyright": track["COPYRIGHT"],
+			"_albumart": cover,
+		}
+
+		if len(album_data["genres"]["data"]) > 0:
+			tags["genre"] = album_data["genres"]["data"][0]["name"]
+
+		if "author" in track["SNG_CONTRIBUTORS"]:
+			_authors = track["SNG_CONTRIBUTORS"]["author"]
+
+			authors = _authors[0]
+			for i in range(1, len(_authors)):
+				authors += separator + _authors[i]
+
+			tags["author"] = authors
+
+		return tags
+
+	async def get_track(self, track_id):
+		"""Gets the track info using the Deezer API
+
+		Arguments:
+			track_id {str} -- Track Id
+
+		Returns:
+			dict -- Dictionary that contains the {info}, {download} partial function, {tags}, and {get_tag} partial function.
+		"""
+
+		method = api_methods.SONG_GET_DATA
+		params = {"SNG_ID": track_id}
+
+		if not int(track_id) < 0:
+			method = api_methods.PAGE_TRACK
+
+		data = await self._api_call(method, params=params)
+		data = data["results"]
+
+		return {
+			"info": data,
+			"download": partial(self.download_track, data),
+			"tags": await self.get_track_tags(data),
+			"get_tag": partial(self.get_track_tags, data),
+		}
+
+	async def get_album(self, album_id):
+		"""Gets the album data of the given {album_id}
+
+		Arguments:
+			album_id {str} -- Album Id
+
+		Returns:
+			dict -- Album data
+		"""
+
+		# data = self._api_call(api_methods.ALBUM_GET_DATA, params={
+		#     "ALB_ID": album_id,
+		#     "LANG": "en"
+		# })
+
+		# return data["results"]
+
+		data = await self._legacy_api_call("/album/{0}".format(album_id))
+
+		# TODO: maybe better logic?
+		data["cover_id"] = str(data["cover_small"]).split("cover/")[1].split("/")[0]
+
+		return data
+
+	async def _legacy_api_call(self, method, params={}):
+		url = "{0}/{1}".format(api_urls.LEGACY_API_URL, method)
+		async with aiohttp.ClientSession() as session:
+			async with session.get(
+				url,
+				params=params,
+				cookies=self.get_cookies(),
+			) as res:
+				data = await res.json()
+
+				if "error" in data and data["error"]:
+					error_type = data["error"]["type"]
+					error_message = data["error"]["message"]
+					error_code = data["error"]["code"]
+					if error_code == 4:
+						logging.warning("Download RateLimit '%s'", url)
+						await asyncio.sleep(5)
+						return await self._legacy_api_call(method, params)
+
 					raise APIRequestError("{0} : {1}".format(error_type, error_message))
 
 		return data

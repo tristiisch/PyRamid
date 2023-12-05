@@ -44,7 +44,7 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 	def get_playlist_tracks_by_id(
 		self, playlist_id: str
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
-		tracks = self._get_all_tracks(self.client.playlist_tracks(playlist_id=playlist_id))
+		tracks = self._get_all_tracks(self.client.playlist_items(playlist_id=playlist_id))
 		if not tracks:
 			return None
 		return [TrackMinimalSpotify(element["track"]) for element in tracks], []

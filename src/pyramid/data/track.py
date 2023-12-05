@@ -56,6 +56,7 @@ class TrackMinimalSpotify(TrackMinimal):
 		self.name: str = data["name"]
 		self.album_title: str = data["album"]["name"]
 		self.album_picture: str = album_picture
+		self.available = True
 
 
 class TrackMinimalDeezer(TrackMinimal):

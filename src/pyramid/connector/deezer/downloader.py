@@ -28,7 +28,7 @@ class DeezerDownloader:
 
 	async def dl_track_by_id(self, track_id) -> Track | None:
 		# try:
-		track_to_dl = await self.__deezer_dl_api.get_track(track_id)
+		track_to_dl = await self.__deezer_dl_api.get_track(track_id) # TODO check rate limit
 		# except APIRequestError as err:
 		# 	logging.warn(f"Unable to download deezer song {track_id} : {err}", exc_info=True)
 		# 	return None  # Track unvailable in this country

@@ -1,18 +1,16 @@
 import asyncio
 import logging
 import re
-import time
 from enum import Enum
 from typing import List
-import requests
 
 import deezer
+import requests
+from data.a_engine_tools import AEngineTools
+from data.a_search import ASearch, ASearchId
+from data.track import TrackMinimalDeezer
 from deezer import Client, PaginatedList
 from deezer.client import DeezerErrorResponse
-
-from data.track import TrackMinimalDeezer
-from data.a_search import ASearch, ASearchId
-from data.a_engine_tools import AEngineTools
 
 
 class DeezerSearch(ASearchId, ASearch):
@@ -56,7 +54,7 @@ class DeezerSearch(ASearchId, ASearch):
 		playlist = search_results[0]
 		return [TrackMinimalDeezer(element) for element in playlist.get_tracks()]
 
-	def get_playlist_tracks_by_id(
+	async def get_playlist_tracks_by_id(
 		self, playlist_id: int
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
 		playlist = self.client.get_playlist(playlist_id)  # TODO handle HTTP errors
@@ -71,18 +69,18 @@ class DeezerSearch(ASearchId, ASearch):
 
 		while playlist_tracks._could_grow():
 			chunk_tracks = playlist_tracks._fetch_next_page()
-			rt, ut = self.__iter_playlist(chunk_tracks)
+			rt, ut = await self.__iter_playlist(chunk_tracks)
 			real_tracks.extend(rt)
 			unfindable_track.extend(ut)
 
 		return real_tracks, unfindable_track
 
-	def __iter_playlist(self, playlist_tracks: List[deezer.Track]):
+	async def __iter_playlist(self, playlist_tracks: List[deezer.Track]):
 		real_tracks: list[TrackMinimalDeezer] = []
 		unfindable_track: list[TrackMinimalDeezer] = []
 
 		for t in playlist_tracks:
-			track = self.search_exact_track(t.artist.name, None, t.title)
+			track = await self.search_exact_track(t.artist.name, None, t.title)
 			# logging.info("DEBUG song '%s' - '%s' - '%s'", t.artist.name, t.title, t.album.title)
 			if track is None:
 				if not t.readable:
@@ -152,10 +150,11 @@ class DeezerSearch(ASearchId, ASearch):
 		)
 
 		if type == DeezerType.PLAYLIST:
-			future = asyncio.get_event_loop().run_in_executor(
-				None, self.get_playlist_tracks_by_id, id
-			)
-			tracks = await asyncio.wrap_future(future)
+			# future = asyncio.get_event_loop().run_in_executor(
+			# 	None, self.get_playlist_tracks_by_id, id
+			# )
+			# tracks = await asyncio.wrap_future(future)
+			tracks = await self.get_playlist_tracks_by_id(id)
 		elif type == DeezerType.ARTIST:
 			tracks = self.get_top_artist_by_id(id)
 		elif type == DeezerType.ALBUM:
@@ -167,7 +166,7 @@ class DeezerSearch(ASearchId, ASearch):
 
 		return tracks
 
-	def search_exact_track(
+	async def search_exact_track(
 		self, artist_name, album_title, track_title
 	) -> TrackMinimalDeezer | None:
 		clean_artist = self.__remove_special_chars(artist_name)
@@ -188,9 +187,9 @@ class DeezerSearch(ASearchId, ASearch):
 			err_json = err.json_data["error"]
 			i = err_json["code"]  # type: ignore
 			if int(i) == 4:
-				time.sleep(5)
 				logging.warning("Search RateLimit %s - %s", artist_name, track_title)
-				return self.search_exact_track(artist_name, album_title, track_title)
+				await asyncio.sleep(5)
+				return await self.search_exact_track(artist_name, album_title, track_title)
 			else:
 				raise err
 

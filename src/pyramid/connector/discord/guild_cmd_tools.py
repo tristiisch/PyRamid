@@ -77,7 +77,7 @@ class GuildCmdTools:
 				)
 			if len(tracks_unfindable_names) != 0:
 				out = "\n* ".join(tracks_unfindable_names)
-				ms.add_message(content=f"Can't find the audio for this track:\n* {out}")
+				ms.add_message(content=f"Can't find the audio for these tracks:\n* {out}")
 
 	async def _execute_play_multiple(
 		self,

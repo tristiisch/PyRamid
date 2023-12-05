@@ -8,7 +8,8 @@ from data.track import TrackMinimal
 from connector.discord.guild_cmd_tools import GuildCmdTools
 from connector.discord.guild_queue import GuildQueue
 from data.functional.messages.message_sender_queued import MessageSenderQueued
-from data.functional.engine_source import EngineSource
+from data.functional.engine_source import EngineSource, SourceType
+from data.exceptions import DiscordMessageException
 
 
 class GuildCmd(GuildCmdTools):
@@ -25,7 +26,7 @@ class GuildCmd(GuildCmdTools):
 		self.queue = guild_queue
 
 	async def play(
-		self, ms: MessageSenderQueued, ctx: Interaction, input: str, at_end=True
+		self, ms: MessageSenderQueued, ctx: Interaction, input: str, engine: SourceType | None, at_end=True
 	) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
@@ -33,9 +34,10 @@ class GuildCmd(GuildCmdTools):
 
 		ms.edit_message(f"Searching **{input}**", "search")
 
-		track: TrackMinimal | None = self.data.search_engine.default_engine.search_track(input)
-		if not track:
-			ms.edit_message("**{input}** not found.", "search")
+		try:
+			track: TrackMinimal | None = await self.data.search_engine.search_track(input, engine)
+		except DiscordMessageException as err:
+			ms.edit_message(err.msg, "search")
 			return False
 
 		return await self._execute_play(ms, voice_channel, track, at_end=at_end)
@@ -175,7 +177,7 @@ class GuildCmd(GuildCmdTools):
 		return True
 
 	def search(
-		self, ms: MessageSenderQueued, ctx: Interaction, input: str, engine: str | None
+		self, ms: MessageSenderQueued, input: str, engine: SourceType | None = None
 	) -> bool:
 		if engine is None:
 			search_engine = self.data.search_engine.default_engine
@@ -222,11 +224,12 @@ class GuildCmd(GuildCmdTools):
 
 		ms.edit_message(f"Searching **{url}** ...", "search")
 
-		result: (
-			tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None
-		) = await self.data.search_engine.search_by_url(url)
-		if not result:
-			ms.edit_message(f"**{url}** not found.", "search")
+		try:
+			result: (
+				tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None
+			) = await self.data.search_engine.search_by_url(url)
+		except DiscordMessageException as err:
+			ms.edit_message(err.msg, "search")
 			return False
 
 		if isinstance(result, tuple):
