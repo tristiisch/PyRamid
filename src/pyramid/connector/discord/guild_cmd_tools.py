@@ -1,6 +1,6 @@
 from discord import Member, User, VoiceChannel, VoiceClient, VoiceState
 
-from data.track import Track, TrackMinimal
+from data.track import Track, TrackMinimal, TrackMinimalDeezer
 from data.guild_data import GuildData
 from data.tracklist import TrackList
 from connector.discord.guild_queue import GuildQueue
@@ -83,7 +83,7 @@ class GuildCmdTools:
 		self,
 		ms: MessageSenderQueued,
 		voice_channel: VoiceChannel,
-		tracks: list[TrackMinimal],
+		tracks: list[TrackMinimal] | list[TrackMinimalDeezer],
 		at_end=True,
 	) -> bool:
 		tl: TrackList = self.data.track_list

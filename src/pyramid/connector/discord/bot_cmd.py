@@ -232,10 +232,7 @@ class BotCmd:
 
 			guild_cmd.queue_list(ms, ctx)
 
-		@bot.tree.command(
-			name="search",
-			description="Search tracks"
-		)
+		@bot.tree.command(name="search", description="Search tracks")
 		async def cmd_search(ctx: Interaction, input: str, engine: SourceType | None):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -244,20 +241,7 @@ class BotCmd:
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			guild_cmd.search(ms, input, engine)
-
-		@bot.tree.command(
-			name="play_multiple", description="Plays the first 10 songs of the search"
-		)
-		async def cmd_play_multiple(ctx: Interaction, input: str): # , engine: SourceType | None
-			if (await self.__use_on_guild_only(ctx)) is False:
-				return
-			ms = MessageSenderQueued(ctx)
-			await ms.thinking()
-			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
-
-			await guild_cmd.play_multiple(ms, ctx, input)
+			await guild_cmd.search(ms, input, engine)
 
 		@bot.tree.command(
 			name="play_url", description="Plays track, artist, album or playlist by URL"

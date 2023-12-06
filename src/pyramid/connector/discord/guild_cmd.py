@@ -26,7 +26,12 @@ class GuildCmd(GuildCmdTools):
 		self.queue = guild_queue
 
 	async def play(
-		self, ms: MessageSenderQueued, ctx: Interaction, input: str, engine: SourceType | None, at_end=True
+		self,
+		ms: MessageSenderQueued,
+		ctx: Interaction,
+		input: str,
+		engine: SourceType | None,
+		at_end=True,
 	) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel:
@@ -176,44 +181,21 @@ class GuildCmd(GuildCmdTools):
 		ms.add_code_message(queue, prefix="Here's the music in the queue :")
 		return True
 
-	def search(
+	async def search(
 		self, ms: MessageSenderQueued, input: str, engine: SourceType | None = None
 	) -> bool:
-		if engine is None:
-			search_engine = self.data.search_engine.default_engine
-		else:
-			test_value = self.data.search_engines.get_engine(engine)
-			if not test_value:
-				ms.add_message(f"Search engine **{engine}** not found.")
-				return False
-			else:
-				search_engine = test_value
-
-		result: list[TrackMinimal] | None = search_engine.search_tracks(input)
-
-		if not result:
-			ms.add_message(f"**{input}** not found.")
+		try:
+			tracks, tracks_unfindable = await self.data.search_engine.search_tracks(input, engine)
+		except DiscordMessageException as err:
+			ms.add_message(err.msg)
 			return False
 
-		hsa = utils_list_track.to_str(result)
+		hsa = utils_list_track.to_str(tracks)
 		ms.add_code_message(hsa, prefix="Here are the results of your search :")
+		if tracks_unfindable:
+			hsa = utils_list_track.to_str(tracks_unfindable)
+			ms.add_code_message(hsa, prefix=":warning: Can't find the audio for these tracks :")
 		return True
-
-	async def play_multiple(self, ms: MessageSenderQueued, ctx: Interaction, input: str) -> bool:
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
-		if not voice_channel:
-			return False
-
-		ms.edit_message(f"Searching **{input}** ...", "search")
-
-		tracks: list[TrackMinimal] | None = self.data.search_engine.default_engine.search_tracks(
-			input
-		)
-		if not tracks:
-			ms.edit_message(f"**{input}** not found.", "search")
-			return False
-
-		return await self._execute_play_multiple(ms, voice_channel, tracks)
 
 	async def play_url(
 		self, ms: MessageSenderQueued, ctx: Interaction, url: str, at_end=True
@@ -225,9 +207,7 @@ class GuildCmd(GuildCmdTools):
 		ms.edit_message(f"Searching **{url}** ...", "search")
 
 		try:
-			result: (
-				tuple[list[TrackMinimal], list[TrackMinimal]] | TrackMinimal | None
-			) = await self.data.search_engine.search_by_url(url)
+			result = await self.data.search_engine.search_by_url(url)
 		except DiscordMessageException as err:
 			ms.edit_message(err.msg, "search")
 			return False

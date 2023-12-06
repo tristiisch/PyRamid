@@ -22,9 +22,9 @@ class EngineSource:
 		self.__spotify_search = SpotifySearch(
 			config.general__limit_tracks, config.spotify__client_id, config.spotify__client_secret
 		)
-		self.default_engine: ASearch = self.__deezer_search
-		self.__downloader_search = self.__deezer_search
-		self.__search_engines: Dict[SourceType, ASearch] = dict(
+		self.__default_source: ASearch = self.__deezer_search
+		self.__downloader_source = self.__deezer_search
+		self.__sources: Dict[SourceType, ASearch] = dict(
 			{
 				SourceType.Spotify: self.__spotify_search,
 				SourceType.Deezer: self.__deezer_search,
@@ -52,54 +52,28 @@ class EngineSource:
 		:param url: The URL to search for.
 		"""
 		result = None
-		for engine in self.__search_engines.values():
+		for engine in self.__sources.values():
 			result = await engine.get_by_url(url)
 			if result:
 				break
 
 		if not result:
-			raise TrackNotFoundException(
-				"URL **%s** not found.", url
-			)
+			raise TrackNotFoundException("URL **%s** not found.", url)
+
 		if isinstance(result, tuple):
 			tracks, tracks_unfindable = result
 			if not all(isinstance(t, TrackMinimalDeezer) for t in tracks):
-				tracks_downloadable = [] * len(tracks)
+				tracks = await self._equivalents_for_download(tracks, tracks_unfindable)
+			return tracks, tracks_unfindable
 
-				for t in tracks:
-					track_dl_search = await self.__downloader_search.search_exact_track(
-						t.author_name, None, t.name
-					)
-					if not track_dl_search:
-						tracks_unfindable.append(t)
-						## TODO SAVE THIS
-					else:
-						tracks_downloadable.append(track_dl_search)
-				return tracks_downloadable, tracks_unfindable
 		elif not isinstance(result, TrackMinimalDeezer):
-			track_dl_search = await self.__downloader_search.search_exact_track(
-				result.author_name, None, result.name
-			)
-			if not track_dl_search:
-				dl_engine_name = self.get_engine_name(self.__downloader_search)
-				raise TrackNotFoundException(
-					"Track **%s** has not been found on %s.", result, dl_engine_name
-				)
-				## TODO SAVE THIS
-			result = track_dl_search
+			return await self._equivalent_for_download(result)
 
-		return result
+		raise ValueError("The type of result 'get_by_url' is unknown.")
 
-	async def search_track(self, input: str, engine: SourceType | None):
-		if engine is None:
-			search_engine = self.default_engine
-		else:
-			test_value = self.get_engine(engine)
-			if not test_value:
-				raise EngineSourceNotFoundException("Search engine **%s** not found.", engine)
-			else:
-				search_engine = test_value
-		search_engine_name = self.get_engine_name(search_engine)
+	async def search_track(self, input: str, engine: SourceType | None) -> TrackMinimalDeezer:
+		search_engine = self._resolve_engine(engine)
+		search_engine_name = self._get_engine_name(search_engine)
 
 		track: TrackMinimal | None = search_engine.search_track(input)
 		if not track:
@@ -108,23 +82,67 @@ class EngineSource:
 			)
 
 		if not isinstance(track, TrackMinimalDeezer):
-			track_dl_search = await self.__downloader_search.search_exact_track(
-				track.author_name, None, track.name
-			)
-			if not track_dl_search:
-				dl_engine_name = self.get_engine_name(self.__downloader_search)
-				raise TrackNotFoundException(
-					"Track **%s** has not been found on %s.", track, dl_engine_name
-				)
-				## TODO SAVE THIS
-			track = track_dl_search
+			return await self._equivalent_for_download(track)
 		return track
 
-	def get_engine(self, engine: SourceType):
-		return self.__search_engines.get(engine)
+	async def search_tracks(self, input: str, engine: SourceType | None):
+		search_engine = self._resolve_engine(engine)
+		search_engine_name = self._get_engine_name(search_engine)
 
-	def get_engine_name(self, engine: ASearch):
-		for key, value in self.__search_engines.items():
+		tracks = search_engine.search_tracks(input)
+		if not tracks:
+			raise TrackNotFoundException(
+				"Search **%s** not found on %s.", input, search_engine_name
+			)
+		tracks_unfindable: list[TrackMinimal] = []
+
+		if not all(isinstance(t, TrackMinimalDeezer) for t in tracks):
+			tracks = await self._equivalents_for_download(tracks, tracks_unfindable)
+		return tracks, tracks_unfindable
+
+	def _get_engine(self, engine: SourceType):
+		return self.__sources.get(engine)
+
+	def _get_engine_name(self, engine: ASearch):
+		for key, value in self.__sources.items():
 			if value == engine:
-				return key
+				return key.name
 		return None
+
+	def _resolve_engine(self, engine: SourceType | None):
+		if engine is None:
+			return self.__default_source
+
+		custom_engine = self._get_engine(engine)
+		if not custom_engine:
+			raise EngineSourceNotFoundException("Search engine **%s** not found.", engine.name)
+		return custom_engine
+
+	async def _equivalent_for_download(self, track: TrackMinimal) -> TrackMinimalDeezer:
+		track_dl_search = await self.__downloader_source.search_exact_track(
+			track.author_name, None, track.name
+		)
+		if not track_dl_search:
+			dl_engine_name = self._get_engine_name(self.__downloader_source)
+			raise TrackNotFoundException(
+				"Track **%s** has not been found on %s.", track, dl_engine_name
+			)
+			## TODO SAVE THIS
+		return track_dl_search
+
+	async def _equivalents_for_download(
+		self, tracks: list[TrackMinimal], tracks_unfindable: list[TrackMinimal]
+	) -> list[TrackMinimalDeezer]:
+		tracks_downloadable: list[TrackMinimalDeezer] = [] * len(tracks)
+
+		for t in tracks:
+			try:
+				if isinstance(t, TrackMinimalDeezer):
+					tracks_downloadable.append(t)
+				else:
+					track_dl_search = await self._equivalent_for_download(t)
+					tracks_downloadable.append(track_dl_search)
+
+			except TrackNotFoundException:
+				tracks_unfindable.append(t)
+		return tracks_downloadable

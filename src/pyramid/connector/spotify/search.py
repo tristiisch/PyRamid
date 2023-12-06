@@ -1,3 +1,4 @@
+import logging
 import re
 from enum import Enum
 from typing import Any
@@ -80,6 +81,9 @@ class SpotifySearch(SpotifySearchId):
 	def search_tracks(self, search, limit: int | None = None) -> list[TrackMinimalSpotify] | None:
 		if limit is None:
 			limit = self.default_limit
+		if limit > 50:
+			logging.warning("Limit for spotify was %d but the max is %d.", limit, 50)
+			limit = 50
 		results = self.client.search(q=search, limit=limit, type="track")
 
 		if not results or not results.get("tracks") or not results["tracks"].get("items"):
