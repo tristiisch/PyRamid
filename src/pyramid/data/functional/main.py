@@ -68,7 +68,7 @@ class Main:
 
 	def open_socket(self):
 		self.socket_server = SocketServer(self.logger.getChild("socket"), self._health)
-		thread = Thread(name="Discord", target=self.socket_server.start_server, daemon=True)
+		thread = Thread(name="Socket", target=self.socket_server.start_server, daemon=True)
 		thread.start()
 
 	def clean_data(self):

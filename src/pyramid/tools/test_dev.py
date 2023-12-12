@@ -2,6 +2,7 @@ from logging import Logger
 
 from connector.deezer.search import DeezerSearch
 from data.functional.git_info import GitInfo
+from connector.deezer.downloader import DeezerDownloader
 from tools.configuration.configuration import Configuration
 from connector.spotify.search import SpotifySearch
 
@@ -13,7 +14,7 @@ class TestDev:
 
 	def test_spotify(self, input):
 		spotify_search = SpotifySearch(
-			self._config.general_limit_track,
+			self._config.general__limit_tracks,
 			self._config.spotify__client_id,
 			self._config.spotify__client_secret,
 		)
@@ -24,7 +25,7 @@ class TestDev:
 			self.logger.info(track)
 
 	def test_deezer(self, input):
-		deezer_search = DeezerSearch(self._config.general_limit_track)
+		deezer_search = DeezerSearch(self._config.general__limit_tracks)
 		res = deezer_search.search_tracks(input, limit=10)
 		if res is None:
 			return
@@ -39,3 +40,12 @@ class TestDev:
 		t2 = GitInfo.read()
 		if t2:
 			self.logger.info(vars(t2))
+
+	async def test_dl(self, list):
+	
+		for track_id in list:
+			deezer_search = DeezerSearch(self._config.general__limit_tracks)
+			dz = DeezerDownloader(self._config.deezer__arl, "./songs")
+			print(track_id)
+			await dz.dl_track_by_id(track_id)
+

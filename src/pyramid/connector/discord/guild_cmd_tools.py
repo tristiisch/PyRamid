@@ -70,14 +70,28 @@ class GuildCmdTools:
 				else:
 					tracks_unfindable_names.append(t.get_full_name())
 
-			if len(track_unvailable_names) != 0:
+			len_track_unvailable = len(track_unvailable_names)
+			if len_track_unvailable != 0:
 				out = "\n* ".join(track_unvailable_names)
 				ms.add_message(
-					content=f"These tracks are currently unavailable (restricted in certain regions or removed):\n* {out}"
+					content="%d track%s are currently unavailable (restricted in certain regions or removed):\n* %s"
+					% (
+						len_track_unvailable,
+						"s" if len_track_unvailable != 1 else "",
+						out,
+					)
 				)
-			if len(tracks_unfindable_names) != 0:
+			len_tracks_unfindable = len(tracks_unfindable_names)
+			if len_tracks_unfindable != 0:
 				out = "\n* ".join(tracks_unfindable_names)
-				ms.add_message(content=f"Can't find the audio for these tracks:\n* {out}")
+				ms.add_message(
+					content="Can't find the audio for %d track%s:\n* %s"
+					% (
+						len_tracks_unfindable,
+						"s" if len_tracks_unfindable != 1 else "",
+						out,
+					)
+				)
 
 	async def _execute_play_multiple(
 		self,

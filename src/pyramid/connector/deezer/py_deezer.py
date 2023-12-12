@@ -140,8 +140,6 @@ class PyDeezer(Deezer):
 
 		track = track["DATA"] if "DATA" in track else track
 
-		tags = await self.get_track_tags(track, separator=tag_separator)
-
 		res = self.get_track_download_url(track, quality, fallback=fallback, renew=renew, **kwargs)
 		if res is None:
 			raise Exception()
@@ -153,7 +151,7 @@ class PyDeezer(Deezer):
 
 		quality = track_formats.TRACK_FORMAT_MAP[quality_key]
 
-		title = tags["title"]
+		title = track["SNG_TITLE"]
 		ext = quality["ext"]
 
 		if not filename:
@@ -181,7 +179,6 @@ class PyDeezer(Deezer):
 				chunked=True,
 				ssl=None,
 			) as res:
-				# chunk_size = 2048
 				total_filesize = int(res.headers["Content-Length"])
 
 				if not progress_handler:
@@ -199,6 +196,7 @@ class PyDeezer(Deezer):
 				await decrytor.output_file(total_filesize, download_path, res)
 
 		if with_metadata:
+			tags = await self.get_track_tags(track, separator=tag_separator)
 			if ext.lower() == ".flac":
 				self._write_flac_tags(download_path, track, tags=tags)
 			else:
@@ -357,16 +355,7 @@ class PyDeezer(Deezer):
 
 		return tags
 
-	async def get_track(self, track_id):
-		"""Gets the track info using the Deezer API
-
-		Arguments:
-			track_id {str} -- Track Id
-
-		Returns:
-			dict -- Dictionary that contains the {info}, {download} partial function, {tags}, and {get_tag} partial function.
-		"""
-
+	async def get_track_info(self, track_id):
 		method = api_methods.SONG_GET_DATA
 		params = {"SNG_ID": track_id}
 
@@ -374,14 +363,10 @@ class PyDeezer(Deezer):
 			method = api_methods.PAGE_TRACK
 
 		data = await self._api_call(method, params=params)
-		data = data["results"]
 
-		return {
-			"info": data,
-			"download": partial(self.download_track, data),
-			"tags": await self.get_track_tags(data),
-			"get_tag": partial(self.get_track_tags, data),
-		}
+		if "DATA" in data["results"]:
+			return data["results"]["DATA"]
+		return data["results"]
 
 	async def get_album(self, album_id):
 		"""Gets the album data of the given {album_id}

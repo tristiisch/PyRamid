@@ -2,7 +2,7 @@ import asyncio
 import logging
 import re
 from enum import Enum
-from typing import List
+from typing import Any, List
 
 import deezer
 import requests
@@ -12,11 +12,13 @@ from data.track import TrackMinimalDeezer
 from deezer import Client, PaginatedList
 from deezer.client import DeezerErrorResponse
 
+from connector.deezer.cli_deezer import CliDeezer, CliDeezerRateLimitError, CliPaginatedList
+
 
 class DeezerSearch(ASearchId, ASearch):
 	def __init__(self, default_limit: int):
 		self.default_limit = default_limit
-		self.client = Client()
+		self.client = CliDeezer()
 		self.tools = DeezerTools()
 		self.strict = False
 
@@ -61,39 +63,28 @@ class DeezerSearch(ASearchId, ASearch):
 		if not playlist:
 			return None
 		# Tracks id are the not the good one
-		playlist_tracks: PaginatedList[deezer.Track] = playlist.get_tracks()
+		playlist_tracks: CliPaginatedList[deezer.Track] = playlist.get_tracks() # type: ignore
 
 		# So we search the id for same name and artist
-		real_tracks: list[TrackMinimalDeezer] = [] * len(playlist_tracks)
-		unfindable_track: list[TrackMinimalDeezer] = []
-
-		while playlist_tracks._could_grow():
-			chunk_tracks = playlist_tracks._fetch_next_page()
-			rt, ut = await self.__iter_playlist(chunk_tracks)
-			real_tracks.extend(rt)
-			unfindable_track.extend(ut)
-
-		return real_tracks, unfindable_track
-
-	async def __iter_playlist(self, playlist_tracks: List[deezer.Track]):
 		real_tracks: list[TrackMinimalDeezer] = []
 		unfindable_track: list[TrackMinimalDeezer] = []
 
-		for t in playlist_tracks:
-			track = await self.search_exact_track(t.artist.name, None, t.title)
-			# logging.info("DEBUG song '%s' - '%s' - '%s'", t.artist.name, t.title, t.album.title)
-			if track is None:
-				if not t.readable:
-					logging.warning(
-						"Unavailable track in playlist '%s' - '%s'", t.artist.name, t.title
-					)
-				else:
-					logging.warning(
-						"Unknown track searched in playlist '%s' - '%s'", t.artist.name, t.title
-					)
-				unfindable_track.append(TrackMinimalDeezer(t))
-				continue
-			real_tracks.append(track)
+		async for chunk_tracks in playlist_tracks:
+			for t in chunk_tracks:
+				track = await self.search_exact_track(t.artist.name, t.album.title, t.title)
+				# logging.info("DEBUG song '%s' - '%s' - '%s'", t.artist.name, t.title, t.album.title)
+				if track is None:
+					if not t.readable:
+						logging.warning(
+							"Unavailable track in playlist '%s' - '%s'", t.artist.name, t.title
+						)
+					else:
+						logging.warning(
+							"Unknown track searched in playlist '%s' - '%s'", t.artist.name, t.title
+						)
+					unfindable_track.append(TrackMinimalDeezer(t))
+					continue
+				real_tracks.append(track)
 
 		return real_tracks, unfindable_track
 
@@ -174,24 +165,41 @@ class DeezerSearch(ASearchId, ASearch):
 		clean_track = self.__remove_special_chars(track_title)
 		# logging.info("Song CLEANED '%s' - '%s' - '%s'", clean_artist, clean_track, clean_album)
 
+
+		track = await self._search_exact_track(clean_artist, clean_album, clean_track)
+		if track is None:
+			track = await self._search_exact_track(clean_artist, None, clean_track)
+			if track is None:
+				track = await self._search_exact_track(None, clean_album, clean_track)
+				if track is None:
+					track = await self._search_exact_track(None, None, clean_track)
+					# if track is not None:
+						# logging.warning("Find with title '%s' - '%s' - '%s'", clean_artist, clean_track, clean_album)
+				# else:
+					# logging.warning("Find with album & title '%s' - '%s' - '%s'", clean_artist, clean_track, clean_album)
+			# else:
+				# logging.warning("Find with artist & title '%s' - '%s' - '%s'", clean_artist, clean_track, clean_album)
+		return track
+
+
+	async def _search_exact_track(
+		self, artist_name, album_title, track_title
+	) -> TrackMinimalDeezer | None:
+
 		try:
 			search_results = self.client.search(
-				artist=clean_artist, album=clean_album, track=clean_track
+				artist=artist_name, album=album_title, track=track_title
 			)
-			if not search_results:
+			logging.info("_search_exact_track %s - %s - %s", artist_name, album_title, track_title)
+			track = await search_results.get_first()
+			if track is None:
 				return None
-			track = search_results[0]  # TODO Check if the first one is the most appropriate
 			return TrackMinimalDeezer(track)
 
-		except DeezerErrorResponse as err:
-			err_json = err.json_data["error"]
-			i = err_json["code"]  # type: ignore
-			if int(i) == 4:
-				logging.warning("Search RateLimit %s - %s", artist_name, track_title)
-				await asyncio.sleep(5)
-				return await self.search_exact_track(artist_name, album_title, track_title)
-			else:
-				raise err
+		except CliDeezerRateLimitError:
+			logging.error("Search RateLimit %s - %s", artist_name, track_title)
+			await asyncio.sleep(5)
+			return await self.search_exact_track(artist_name, album_title, track_title)
 
 	def __remove_special_chars(
 		self, input_string: str | None, allowed_brackets: tuple = ("(", ")", "[", "]")

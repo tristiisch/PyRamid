@@ -79,7 +79,7 @@ def split_string_by_length(
 		yield string[last_start:n]
 
 
-def substring_with_end_msg(text, max_length, end_msg) -> tuple[str, bool]:
+def substring_with_end_msg(text: str, max_length: int, end_msg: str) -> tuple[str, bool]:
 	if len(text) <= max_length:
 		return text, False
 	remaining_chars = len(text) - max_length

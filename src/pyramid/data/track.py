@@ -1,23 +1,19 @@
+from abc import ABC
 from datetime import datetime
+import logging
 
 import deezer.resources
 import tools.utils as tools
 
 
-class TrackMinimal:
+class TrackMinimal(ABC):
 	def __init__(self, data):
-		self.id: str = data["id"]
-		self.author_name: str = data["artist"]["name"]
-		self.author_picture: str = data["artist"]["picture_medium"]
-		# self.authors =  [element['ART_NAME'] for element in data["ARTISTS"]]
-		self.name: str = data["title"]
-		self.album_title: str = data["album"]["title"]
-		self.album_picture: str = data["album"]["cover_xl"]
-		# self.duration_seconds = data['DURATION']
-		# self.duration = self.__format_duration(data['DURATION'])
-		# self.file_size = data['FILESIZE']
-		# self.date = data["DATE_START"]
-		# self.file_local = file_path
+		self.id: str
+		self.author_name: str
+		self.author_picture: str
+		self.name: str
+		self.album_title: str
+		self.album_picture: str
 		self.available = True
 
 	def get_full_name(self) -> str:
@@ -41,7 +37,6 @@ class TrackMinimal:
 		return time_format
 
 	def __str__(self):
-		# return f"{self.author_name} - {self.name} - {self.album_title}, Author Picture : {self.author_picture}, Album Picture : {self.album_picture}"
 		return f"{self.author_name} - {self.name} - {self.album_title}"
 
 
@@ -57,6 +52,7 @@ class TrackMinimalSpotify(TrackMinimal):
 		self.album_title: str = data["album"]["name"]
 		self.album_picture: str = album_picture
 		self.available = True
+		logging.debug(data)
 
 
 class TrackMinimalDeezer(TrackMinimal):
@@ -67,6 +63,12 @@ class TrackMinimalDeezer(TrackMinimal):
 		self.name: str = data.title
 		self.album_title: str = data.album.title
 		self.album_picture: str = data.album.cover_xl
+		self.disk_number: int = data.disk_number
+		self.track_position: int = data.track_position
+		self.explicit_lyrics: bool = data.explicit_lyrics
+		self.rank: int = data.rank
+		self.isrc: str = data.isrc
+		self.available_countries: list[str] = data.available_countries
 		if not data.readable:
 			# logging.warning("%s - %s is unreadable", self.author_name, self.name)
 			self.available = False

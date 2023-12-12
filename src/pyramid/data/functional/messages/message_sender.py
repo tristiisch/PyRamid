@@ -168,7 +168,7 @@ class MessageSender:
 		if content == MISSING or content == "":
 			return content
 		new_content, is_used = tools.substring_with_end_msg(
-			content, MAX_MSG_LENGTH, "{} more characters..."
+			content, MAX_MSG_LENGTH, "`{} more characters...`"
 		)
 		if not is_used:
 			return content
