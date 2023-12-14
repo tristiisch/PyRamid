@@ -34,12 +34,10 @@ class DecryptDeezer:
 			modes.CBC(bytes([i for i in range(8)])),
 			default_backend(),
 		)
-		self.f: aiofiles.threadpool.binary.AsyncBufferedIOBase
 		self.progress_handler = progress_handler
 
 	async def output_file(self, filesize: int, file_path: str, res: aiohttp.ClientResponse):
 		async with aiofiles.open(file_path, "wb") as f:
-			self.f = f
 			await f.seek(0)
 
 			chunk_index = 0
@@ -52,19 +50,20 @@ class DecryptDeezer:
 				downloaded_size += chunk_size
 				if previous_chunk:
 					previous_chunk, chunks_used = await self._transform_chunk(
+						f,
 						previous_chunk + chunk
 					)
 				else:
-					previous_chunk, chunks_used = await self._transform_chunk(chunk)
+					previous_chunk, chunks_used = await self._transform_chunk(f, chunk)
 				chunk_index += chunks_used
 
 			if previous_chunk:
-				await self._write_file(previous_chunk)
+				await self._write_file(f, previous_chunk)
 			if downloaded_size != filesize:
 				missing = filesize - downloaded_size
 				raise Exception("[%s] %d bytes are missing" % (filesize, missing))
 
-	async def _transform_chunk(self, bytes_chunked: bytes) -> tuple[bytes, int] | tuple[None, int]:
+	async def _transform_chunk(self, f: aiofiles.threadpool.binary.AsyncBufferedIOBase, bytes_chunked: bytes) -> tuple[bytes, int] | tuple[None, int]:
 		# Calculate the number of chunks needed
 		length_bytes = len(bytes_chunked)
 		chunks_nb = int(length_bytes / self.chunk_length) + 1
@@ -72,14 +71,14 @@ class DecryptDeezer:
 		# Iterate over the chunks and call the callback for each one
 		for i in range(chunks_nb - 1):
 			chunk = bytes_chunked[i * self.chunk_length : (i + 1) * self.chunk_length]
-			await self._write_file(chunk)
+			await self._write_file(f, chunk)
 
 		last_chunk_start = (chunks_nb - 1) * self.chunk_length
 		last_chunk = bytes_chunked[last_chunk_start:]
 		last_length = len(last_chunk)
 
 		if last_length == self.chunk_length:
-			await self._write_file(last_chunk)
+			await self._write_file(f, last_chunk)
 			return None, chunks_nb
 		elif last_length < self.chunk_length:
 			return last_chunk, chunks_nb - 1
@@ -87,16 +86,16 @@ class DecryptDeezer:
 			"Last chunk has wrong size %d (under %d is excepted)", last_length, self.chunk_length
 		)
 
-	async def _write_file(self, new_chunk: bytes):
+	async def _write_file(self, f: aiofiles.threadpool.binary.AsyncBufferedIOBase, new_chunk: bytes):
 		chunk_size = len(new_chunk)
 		if self.decrypt_chunk_length > chunk_size:
-			await self.f.write(new_chunk)
+			await f.write(new_chunk)
 		else:
 			chunk_to_decrypt = new_chunk[: self.decrypt_chunk_length]
 			decryptor = self.cipher.decryptor()
 			dec_data = decryptor.update(chunk_to_decrypt) + decryptor.finalize()
-			await self.f.write(dec_data)
-			await self.f.write(new_chunk[self.decrypt_chunk_length :])
+			await f.write(dec_data)
+			await f.write(new_chunk[self.decrypt_chunk_length :])
 
 
 class PyDeezer(Deezer):
@@ -105,6 +104,9 @@ class PyDeezer(Deezer):
 		self.arl = arl
 		self.token = None
 		self.set_cookie("arl", arl)
+
+	# def get_cookies(self):
+	# 	return {"arl": self.arl}
 
 	async def download_track(
 		self,
@@ -210,8 +212,8 @@ class PyDeezer(Deezer):
 	async def get_track_download_url(
 		self, track, quality=None, fallback=True, renew=False, **kwargs
 	):
-		if renew:
-			track = self.get_track(track["SNG_ID"])["info"]
+		# if renew:
+			# track = self.get_track(track["SNG_ID"])["info"]
 
 		if not quality:
 			quality = track_formats.MP3_128
@@ -260,19 +262,19 @@ class PyDeezer(Deezer):
 			async with session.get(url, cookies=cookies) as res:
 				if not fallback or (res.status == 200 and int(res.headers["Content-length"]) > 0):
 					return (url, quality)
-				url_try.append(url)
-				if "fallback_qualities" in kwargs:
-					fallback_qualities = kwargs["fallback_qualities"]
-				else:
-					fallback_qualities = track_formats.FALLBACK_QUALITIES
+			url_try.append(url)
+			if "fallback_qualities" in kwargs:
+				fallback_qualities = kwargs["fallback_qualities"]
+			else:
+				fallback_qualities = track_formats.FALLBACK_QUALITIES
 
-				for key in fallback_qualities:
-					url = decrypt_url(track_formats.TRACK_FORMAT_MAP[key]["code"])
+			for key in fallback_qualities:
+				url = decrypt_url(track_formats.TRACK_FORMAT_MAP[key]["code"])
 
-					async with session.get(url, cookies=cookies) as res2:
-						if res2.status == 200 and int(res.headers["Content-length"]) > 0:
-							return (url, key)
-						url_try.append(url)
+				async with session.get(url, cookies=cookies) as res2:
+					if res2.status == 200 and int(res2.headers["Content-length"]) > 0:
+						return (url, key)
+					url_try.append(url)
 
 		raise DlDeezerNotUrlFoundException(
 			"Can't find valid URL to download '%s'. URLs try :\n- %s", track, "\n -".join(url_try)
@@ -328,10 +330,10 @@ class PyDeezer(Deezer):
 				for key, morsel in res.cookies.items():
 					self.set_cookie(key, morsel.value)
 
-				if "error" in data and data["error"]:
-					error_type = list(data["error"].keys())[0]
-					error_message = data["error"][error_type]
-					raise APIRequestError("{0} : {1}".format(error_type, error_message))
+		if "error" in data and data["error"]:
+			error_type = list(data["error"].keys())[0]
+			error_message = data["error"][error_type]
+			raise APIRequestError("{0} : {1}".format(error_type, error_message))
 
 		return data
 
@@ -373,7 +375,7 @@ class PyDeezer(Deezer):
 		total_tracks = album_data["nb_tracks"]
 		track_number = str(track["TRACK_NUMBER"]) + "/" + str(total_tracks)
 
-		cover = self.get_album_poster(album_data, size=1000)
+		cover = await self.get_album_poster(album_data, size=1000)
 
 		tags = {
 			"title": title,
@@ -403,6 +405,32 @@ class PyDeezer(Deezer):
 			tags["author"] = authors
 
 		return tags
+
+	async def _get_poster(self, poster_id, size=500, ext="jpg"):
+		ext = ext.lower()
+		if ext != "jpg" and ext != "png":
+			raise ValueError("Image extension should only be jpg or png!")
+
+		url = f'https://e-cdns-images.dzcdn.net/images/cover/{poster_id}/{size}x{size}.{ext}'
+
+
+		async with aiohttp.ClientSession() as session:
+			async with session.get(
+				url,
+				headers=networking_settings.HTTP_HEADERS,
+				cookies=self.get_cookies(),
+			) as res:
+				image = await res.text()
+		return {
+			"image": image,
+			"size": (size, size),
+			"ext": ext,
+			"mime_type": "image/jpeg" if ext == "jpg" else "image/png"
+		}
+
+	async def get_album_poster(self, album, size=500, ext="jpg"):
+		# return self._get_poster(album["ALB_PICTURE"], size=size, ext=ext)
+		return await self._get_poster(album["cover_id"], size=size, ext=ext)
 
 	async def get_track_info(self, track_id):
 		method = api_methods.SONG_GET_DATA
@@ -435,15 +463,15 @@ class PyDeezer(Deezer):
 			) as res:
 				data = await res.json()
 
-				if "error" in data and data["error"]:
-					error_type = data["error"]["type"]
-					error_message = data["error"]["message"]
-					error_code = data["error"]["code"]
-					if error_code == 4:
-						logging.warning("Download RateLimit '%s'", url)
-						await asyncio.sleep(5)
-						return await self._legacy_api_call(method, params)
+		if "error" in data and data["error"]:
+			error_type = data["error"]["type"]
+			error_message = data["error"]["message"]
+			error_code = data["error"]["code"]
+			if error_code == 4:
+				logging.warning("Download RateLimit '%s'", url)
+				await asyncio.sleep(5)
+				return await self._legacy_api_call(method, params)
 
-					raise APIRequestError("{0} : {1}".format(error_type, error_message))
+			raise APIRequestError("{0} : {1}".format(error_type, error_message))
 
 		return data

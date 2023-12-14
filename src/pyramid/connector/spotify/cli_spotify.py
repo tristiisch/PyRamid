@@ -120,7 +120,6 @@ class CliSpotify(Spotify):
 						response.status,
 						msg,
 					)
-
 					raise SpotifyException(
 						response.status,
 						-1,

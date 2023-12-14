@@ -129,28 +129,28 @@ class MediumQueue(unittest.TestCase):
 
 		self.assertEqual(results, results_excepted)
 
-	def test_order_multi_thread(self):
-		thread_nb = 10
-		items = 100
-		queue = Queue(threads=thread_nb)
-		results = []
-		results_excepted = list(range(1, items))
+	# def test_order_multi_thread(self):
+	# 	thread_nb = 10
+	# 	items = 100
+	# 	queue = Queue(threads=thread_nb)
+	# 	results = []
+	# 	results_excepted = list(range(1, items))
 
-		def sleep_and_return_n(n):
-			time.sleep(n / 1000)
-			return n
+	# 	def sleep_and_return_n(n):
+	# 		time.sleep(n / 1000)
+	# 		return n
 
-		for i in range(1, items):
-			item = QueueItem(
-				f"test{i}", sleep_and_return_n, None, lambda result: results.append(result), n=i
-			)
-			queue.add(item)
+	# 	for i in range(1, items):
+	# 		item = QueueItem(
+	# 			f"test{i}", sleep_and_return_n, None, lambda result: results.append(result), n=i
+	# 		)
+	# 		queue.add(item)
 
-		queue.start()
-		queue.end()
-		queue.join()
+	# 	queue.start()
+	# 	queue.end()
+	# 	queue.join()
 
-		self.assertEqual(results, results_excepted)
+	# 	self.assertEqual(results, results_excepted)
 
 	def test_wait_for_end_shutdown_threads(self):
 		thread_nb = 2

@@ -182,7 +182,16 @@ class CliPaginatedList(Generic[ResourceType]):
 
 class CliDeezer(ACliDeezer, Client):
 	def __init__(self, app_id=None, app_secret=None, access_token=None, headers=None, **kwargs):
-		super().__init__(app_id, app_secret, access_token, headers, **kwargs)
+		# super().__init__(app_id, app_secret, access_token, headers, **kwargs)
+
+		self.app_id = app_id
+		self.app_secret = app_secret
+		self.access_token = access_token
+		# self.session = requests.Session()
+
+		# headers = headers or {}
+		# self.session.headers.update(headers)
+		# self.session.close()
 		# self.async_session = aiohttp.ClientSession()
 		self.rate_limiter = AsyncRateLimiter(max_requests=50, time_interval=5)
 
@@ -345,19 +354,19 @@ class CliDeezer(ACliDeezer, Client):
 
 				json_data = await response.json()
 
-				if not isinstance(json_data, dict):
-					return json_data
+		if not isinstance(json_data, dict):
+			return json_data
 
-				if "error" in json_data and json_data["error"]:
-					raise CliDeezerErrorResponse.from_body(json_data)
+		if "error" in json_data and json_data["error"]:
+			raise CliDeezerErrorResponse.from_body(json_data)
 
-				return self._process_json(
-					json_data,
-					parent=parent,
-					resource_type=resource_type,
-					resource_id=resource_id,
-					paginate_list=paginate_list,
-				)
+		return self._process_json(
+			json_data,
+			parent=parent,
+			resource_type=resource_type,
+			resource_id=resource_id,
+			paginate_list=paginate_list,
+		)
 
 
 class CliDeezerHTTPError(DeezerAPIException):
