@@ -2,7 +2,7 @@ import os
 import random
 
 import tools.utils as tools
-from data.track import Track, TrackMinimal
+from data.track import Track, TrackMinimal, TrackMinimalDeezer
 
 
 class TrackList:
@@ -91,7 +91,7 @@ class TrackList:
 		return tools.time_to_duration(sum(t.duration_seconds for t in self.__tracks))
 
 
-def to_str(list_of_track: list[TrackMinimal] | list[Track]) -> str:
+def to_str(list_of_track: list[TrackMinimal] | list[TrackMinimalDeezer] | list[Track]) -> str:
 	data = [
 		[str(i + 1), track.author_name, track.name, track.album_title]
 		for i, track in enumerate(list_of_track)

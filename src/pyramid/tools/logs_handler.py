@@ -28,7 +28,7 @@ class LogsHandler:
 		self.log_to_file_exceptions()
 
 	def log_to_console(self):
-		coloredlogs.install(fmt=self.__console_format, datefmt=self.__date)
+		coloredlogs.install(fmt=self.__console_format, datefmt=self.__date, isatty=True)
 
 	def log_to_file(self):
 		log_filename = os.path.join(self.__logs_dir, self.__log_filename)
@@ -43,7 +43,7 @@ class LogsHandler:
 		formatter = logging.Formatter(self.__file_format, self.__date, style="{")
 		file_handler.setFormatter(formatter)
 
-		logging.getLogger().addHandler(file_handler)
+		self.logger.addHandler(file_handler)
 
 	def log_to_file_exceptions(self):
 		log_filename = os.path.join(self.__logs_dir, self.__error_filename)

@@ -11,6 +11,7 @@ from connector.discord.guild_cmd import GuildCmd
 from data.environment import Environment
 from data.functional.application_info import ApplicationInfo
 from data.functional.messages.message_sender_queued import MessageSenderQueued
+from data.functional.engine_source import SourceType
 import tools.utils
 
 
@@ -122,7 +123,7 @@ class BotCmd:
 					await ctx.followup.send(embeds=embeds_chunk)
 
 		@bot.tree.command(name="play", description="Play a single track at end of queue")
-		async def cmd_play(ctx: Interaction, input: str):
+		async def cmd_play(ctx: Interaction, input: str, engine: SourceType | None):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
@@ -130,10 +131,10 @@ class BotCmd:
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.play(ms, ctx, input)
+			await guild_cmd.play(ms, ctx, input, engine)
 
 		@bot.tree.command(name="play_next", description="Play a single track next to the current")
-		async def cmd_play_next(ctx: Interaction, input: str):
+		async def cmd_play_next(ctx: Interaction, input: str, engine: SourceType | None):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
@@ -141,7 +142,7 @@ class BotCmd:
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.play(ms, ctx, input, at_end=False)
+			await guild_cmd.play(ms, ctx, input, engine, at_end=False)
 
 		@bot.tree.command(name="pause", description="Pause music")
 		async def cmd_pause(ctx: Interaction):
@@ -231,11 +232,8 @@ class BotCmd:
 
 			guild_cmd.queue_list(ms, ctx)
 
-		@bot.tree.command(
-			name="search",
-			description="Search tracks",
-		)
-		async def cmd_search(ctx: Interaction, input: str, engine: str | None):
+		@bot.tree.command(name="search", description="Search tracks")
+		async def cmd_search(ctx: Interaction, input: str, engine: SourceType | None):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
 			ms = MessageSenderQueued(ctx)
@@ -243,20 +241,7 @@ class BotCmd:
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			guild_cmd.search(ms, ctx, input, engine)
-
-		@bot.tree.command(
-			name="play_multiple", description="Plays the first 10 songs of the search"
-		)
-		async def cmd_play_multiple(ctx: Interaction, input: str):
-			if (await self.__use_on_guild_only(ctx)) is False:
-				return
-			ms = MessageSenderQueued(ctx)
-			await ms.thinking()
-			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
-
-			await guild_cmd.play_multiple(ms, ctx, input)
+			await guild_cmd.search(ms, input, engine)
 
 		@bot.tree.command(
 			name="play_url", description="Plays track, artist, album or playlist by URL"

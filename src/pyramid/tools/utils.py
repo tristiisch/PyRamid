@@ -50,7 +50,9 @@ def clear_directory(directory):
 			logging.warning("Failed to delete %s due to %s", file_path, e)
 
 
-def split_string_by_length(string, max_length: int, first_max_length=None, last_max_length=None) -> typing.Generator[str, None, None]:
+def split_string_by_length(
+	string, max_length: int, first_max_length=None, last_max_length=None
+) -> typing.Generator[str, None, None]:
 	n = len(string)
 	start = 0
 	end = min(n, start + (first_max_length or max_length))
@@ -77,7 +79,7 @@ def split_string_by_length(string, max_length: int, first_max_length=None, last_
 		yield string[last_start:n]
 
 
-def substring_with_end_msg(text, max_length, end_msg) -> tuple[str, bool]:
+def substring_with_end_msg(text: str, max_length: int, end_msg: str) -> tuple[str, bool]:
 	if len(text) <= max_length:
 		return text, False
 	remaining_chars = len(text) - max_length
@@ -86,35 +88,61 @@ def substring_with_end_msg(text, max_length, end_msg) -> tuple[str, bool]:
 	return f"{substring}{end_msg.format(remaining_chars)}", True
 
 
-def human_string_array(data: list[list[str]], columns: list[str], max_row_size: int | None = None) -> str:
-    # Calculate the original column sizes
-    col_widths = [max(len(str(x)) if isinstance(x, str) else 0 for x in column) for column in zip(*data, columns)]
+def human_string_array(
+	data: list[list[str]], columns: list[str], max_row_size: int | None = None
+) -> str:
+	# Calculate the original column sizes
+	col_widths = [
+		max(len(str(x)) if isinstance(x, str) else 0 for x in column)
+		for column in zip(*data, columns)
+	]
 
-    # Check if reduction is needed
-    if max_row_size is not None:
-        # Reduce columns one by one in descending order of their original size
-        sorted_columns = sorted(enumerate(col_widths), key=lambda x: x[1], reverse=True)
+	# Check if reduction is needed
+	if max_row_size is not None:
+		# Reduce columns one by one in descending order of their original size
+		sorted_columns = sorted(enumerate(col_widths), key=lambda x: x[1], reverse=True)
 
-        for index, original_width in sorted_columns:
-            # Calculate the proportional reduction factor based on the maximum row size
-            scaling_factor = min(1, max_row_size / original_width)
+		for index, original_width in sorted_columns:
+			# Calculate the proportional reduction factor based on the maximum row size
+			scaling_factor = min(1, max_row_size / original_width)
 
-            # Apply the reduction to the current column
-            col_widths[index] = int(original_width * scaling_factor)
+			# Apply the reduction to the current column
+			col_widths[index] = int(original_width * scaling_factor)
 
-            # Ensure that the reduced size is within the bounds
-            col_widths[index] = max(1, col_widths[index])
+			# Ensure that the reduced size is within the bounds
+			col_widths[index] = max(1, col_widths[index])
 
-    # Build the table string using the calculated column sizes
-    lines = [" | ".join((col if isinstance(col, int) else col[:width].ljust(width) if len(col) > width else col.ljust(width) for col, width in zip(columns, col_widths)))]
-    lines.append("-" * (sum(col_widths) + 3 * len(columns) - 1))
+	# Build the table string using the calculated column sizes
+	lines = [
+		" | ".join(
+			(
+				col
+				if isinstance(col, int)
+				else col[:width].ljust(width)
+				if len(col) > width
+				else col.ljust(width)
+				for col, width in zip(columns, col_widths)
+			)
+		)
+	]
+	lines.append("-" * (sum(col_widths) + 3 * len(columns) - 1))
 
-    # Add rows to the table with truncated column data
-    for row in data:
-        row_str = " | ".join((str(col) if isinstance(col, int) else col[:width].ljust(width) if len(col) > width else col.ljust(width) for col, width in zip(row, col_widths)))
-        lines.append(row_str)
+	# Add rows to the table with truncated column data
+	for row in data:
+		row_str = " | ".join(
+			(
+				str(col)
+				if isinstance(col, int)
+				else col[:width].ljust(width)
+				if len(col) > width
+				else col.ljust(width)
+				for col, width in zip(row, col_widths)
+			)
+		)
+		lines.append(row_str)
 
-    return "\n".join(lines)
+	return "\n".join(lines)
+
 
 def reduce_columns(column_sizes, total_max_size):
 	# Calculate the sum of the original column sizes
@@ -137,6 +165,7 @@ def reduce_columns(column_sizes, total_max_size):
 
 	# If the total current size is already less than or equal to the total max size, no reduction is needed
 	return column_sizes
+
 
 @contextmanager
 def temp_locale(name):
@@ -275,13 +304,14 @@ def get_available_space(path: str = "."):
 
 
 def count_public_variables(obj):
-	attributes = inspect.getmembers(obj, lambda a: not(inspect.isroutine(a)))
-	
+	attributes = inspect.getmembers(obj, lambda a: not (inspect.isroutine(a)))
+
 	# Filter names that don't start with an underscore
-	public_variables = [name for name, _ in attributes if not name.startswith('_')]
-	
+	public_variables = [name for name, _ in attributes if not name.startswith("_")]
+
 	# Return the count of public variables
 	return len(public_variables)
+
 
 def format_bytes_speed(bytes_per_second):
 	units = ["bps", "Kbps", "Mbps", "Gbps", "Tbps"]

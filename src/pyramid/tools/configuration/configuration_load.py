@@ -13,6 +13,7 @@ class ConfigurationFromEnv(ABC):
 		# Load values from environment variables
 		return {str(key).lower(): str(value) for key, value in os.environ.items()}
 
+
 class ConfigurationFromYAML(ABC):
 	def __init__(self, logger: Logger):
 		self.__logger = logger
@@ -56,9 +57,7 @@ class ConfigurationFromYAML(ABC):
 		def mode_str_to_enum(input: str):
 			input = input.replace("-", "_").upper()
 			return (
-				Environment[input]
-				if input in Environment.__members__
-				else Environment.PRODUCTION
+				Environment[input] if input in Environment.__members__ else Environment.PRODUCTION
 			)
 
 		r.append(

@@ -5,7 +5,7 @@ from client.common import ResponseCode
 
 
 # class ReponseHeader(SocketHeader):
-class ResponseHeader():
+class ResponseHeader:
 	def __init__(self, code: ResponseCode, message: str | None) -> None:
 		# super().__init__(self.__class__)
 		self.code = code
@@ -17,7 +17,7 @@ class SocketResponse(ASocket):
 		self,
 		data: Any | None = None,
 		error_data: str | None = None,
-		header: ResponseHeader | None = None
+		header: ResponseHeader | None = None,
 	) -> None:
 		super().__init__()
 		self.header = header
@@ -38,7 +38,9 @@ class SocketResponse(ASocket):
 
 	def to_json(self, serializer):
 		return {
-			"header": {"code": self.header.code.value, "message": self.header.message} if self.header else None,
+			"header": {"code": self.header.code.value, "message": self.header.message}
+			if self.header
+			else None,
 			"data": serializer(self.data) if self.data else None,
 			"error_data": serializer(self.error_data) if self.error_data else None,
 		}
@@ -49,8 +51,10 @@ class SocketResponse(ASocket):
 
 		header_dict = json_dict.get("header")
 		if header_dict:
-			self.header = ResponseHeader(ResponseCode.get_by_value(header_dict.get("code")), header_dict.get("message"))
-	
+			self.header = ResponseHeader(
+				ResponseCode.get_by_value(header_dict.get("code")), header_dict.get("message")
+			)
+
 		self.data = json_dict.get("data")
 		self.error_data = json_dict.get("error_data")
 

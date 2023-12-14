@@ -1,6 +1,4 @@
 import argparse
-import logging
-import sys
 
 from data.functional.application_info import ApplicationInfo
 from client.client import SocketClient
@@ -19,8 +17,12 @@ parser.add_argument("--git", action="store_true", help="Print git informations",
 
 health_subparser = parser.add_subparsers(dest="health")
 health_parser = health_subparser.add_parser("health", help="Print health")
-health_parser.add_argument("--host", type=str, help="Specify the host for health check", required=False)
-health_parser.add_argument("--port", type=int, help="Specify the port for health check", required=False)
+health_parser.add_argument(
+	"--host", type=str, help="Specify the host for health check", required=False
+)
+health_parser.add_argument(
+	"--port", type=int, help="Specify the port for health check", required=False
+)
 
 args = parser.parse_args()
 

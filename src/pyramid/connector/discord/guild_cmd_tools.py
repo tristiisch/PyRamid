@@ -1,6 +1,6 @@
 from discord import Member, User, VoiceChannel, VoiceClient, VoiceState
 
-from data.track import Track, TrackMinimal
+from data.track import Track, TrackMinimal, TrackMinimalDeezer
 from data.guild_data import GuildData
 from data.tracklist import TrackList
 from connector.discord.guild_queue import GuildQueue
@@ -59,33 +59,45 @@ class GuildCmdTools:
 		return True
 
 	def _informs_unfindable_tracks(
-		self,
-		ms: MessageSenderQueued,
-		tracks_unfindable: list[TrackMinimal] | None = None
+		self, ms: MessageSenderQueued, tracks_unfindable: list[TrackMinimal] | None = None
 	):
 		if tracks_unfindable is not None and len(tracks_unfindable) != 0:
 			track_unvailable_names = []
 			tracks_unfindable_names = []
 			for t in tracks_unfindable:
-				if not t.available:
+				if t.available is False:
 					track_unvailable_names.append(t.get_full_name())
 				else:
 					tracks_unfindable_names.append(t.get_full_name())
 
-			if len(track_unvailable_names) != 0:
+			len_track_unvailable = len(track_unvailable_names)
+			if len_track_unvailable != 0:
 				out = "\n* ".join(track_unvailable_names)
 				ms.add_message(
-					content=f"These tracks are currently unavailable (restricted in certain regions or removed):\n* {out}"
+					content="%d track%s are currently unavailable (restricted in certain regions or removed):\n* %s"
+					% (
+						len_track_unvailable,
+						"s" if len_track_unvailable != 1 else "",
+						out,
+					)
 				)
-			if len(tracks_unfindable_names) != 0:
+			len_tracks_unfindable = len(tracks_unfindable_names)
+			if len_tracks_unfindable != 0:
 				out = "\n* ".join(tracks_unfindable_names)
-				ms.add_message(content=f"Can't find the audio for this track:\n* {out}")
+				ms.add_message(
+					content="Can't find the audio for %d track%s:\n* %s"
+					% (
+						len_tracks_unfindable,
+						"s" if len_tracks_unfindable != 1 else "",
+						out,
+					)
+				)
 
 	async def _execute_play_multiple(
 		self,
 		ms: MessageSenderQueued,
 		voice_channel: VoiceChannel,
-		tracks: list[TrackMinimal],
+		tracks: list[TrackMinimal] | list[TrackMinimalDeezer],
 		at_end=True,
 	) -> bool:
 		tl: TrackList = self.data.track_list

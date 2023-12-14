@@ -36,6 +36,7 @@ class DownloaderProgressBar(BaseProgressHandler):
 		)
 
 	def log_progress(self):
+		return
 		current_time = time.time()
 		percentage = self.size_downloaded / self.total_size * 100
 		duration_last_print = current_time - self.last_print

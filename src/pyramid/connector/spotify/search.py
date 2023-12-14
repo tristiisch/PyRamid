@@ -1,12 +1,14 @@
+import logging
 import re
 from enum import Enum
 from typing import Any
 
-import spotipy
 from data.a_engine_tools import AEngineTools
 from data.a_search import ASearch, ASearchId
 from data.track import TrackMinimalSpotify
 from spotipy.oauth2 import SpotifyClientCredentials
+
+from connector.spotify.cli_spotify import CliSpotify
 
 
 class SpotifySearchBase(ASearch):
@@ -17,16 +19,18 @@ class SpotifySearchBase(ASearch):
 		self.client_credentials_manager = SpotifyClientCredentials(
 			client_id=self.client_id, client_secret=self.client_secret
 		)
-		self.client = spotipy.Spotify(client_credentials_manager=self.client_credentials_manager)
+		self.client = CliSpotify(client_credentials_manager=self.client_credentials_manager)
 		self.tools = SpotifyTools()
 
-	def _get_all_tracks(self, results: Any, item_name = "items") -> None | list[dict[str, Any]]:
+	async def _async_get_all_tracks(
+		self, results: Any, item_name="items"
+	) -> None | list[dict[str, Any]]:
 		if not results:
 			return None
 		tracks: list = results[item_name]
 
 		while results["next"]:
-			results = self.client.next(results)
+			results = await self.client.async_next(results)
 			tracks.extend(results[item_name])
 
 		return tracks
@@ -36,33 +40,47 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 	def __init__(self, default_limit: int, client_id: str, client_secret: str):
 		super().__init__(default_limit, client_id, client_secret)
 
-	def get_track_by_id(self, track_id: str) -> TrackMinimalSpotify | None:
-		results = self.client.track(track_id=track_id)
+	async def get_track_by_id(self, track_id: str) -> TrackMinimalSpotify | None:
+		result = await self.client.async_track(track_id=track_id)
+		if not result:
+			return None
+		return TrackMinimalSpotify(result)
 
-		return TrackMinimalSpotify(results)
-
-	def get_playlist_tracks_by_id(
+	async def get_playlist_tracks_by_id(
 		self, playlist_id: str
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
-		tracks = self._get_all_tracks(self.client.playlist_tracks(playlist_id=playlist_id))
-		if not tracks:
+		tracks_playlist = await self._async_get_all_tracks(
+			await self.client.async_playlist_items(playlist_id=playlist_id)
+		)
+		if not tracks_playlist:
 			return None
-		return [TrackMinimalSpotify(element["track"]) for element in tracks], []
+		return [TrackMinimalSpotify(element["track"]) for element in tracks_playlist], []
 
-	def get_album_tracks_by_id(
+	async def get_album_tracks_by_id(
 		self, album_id: str
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
-		tracks = self._get_all_tracks(self.client.album_tracks(album_id=album_id))
+		tracks = await self._async_get_all_tracks(
+			await self.client.async_album_tracks(album_id=album_id)
+		)
 		if not tracks:
 			return None
-		return [TrackMinimalSpotify(element["track"]) for element in tracks], []
 
-	def get_top_artist_by_id(
+		readable_tracks = []
+		unreadable_tracks = []
+		for t in tracks:
+			track = await self.get_track_by_id(t["id"])
+			if track is None:
+				unreadable_tracks.append(t)
+			else:
+				readable_tracks.append(track)
+		return readable_tracks, unreadable_tracks
+
+	async def get_top_artist_by_id(
 		self, artist_id: str, limit: int | None = None
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
 		if limit is None:
 			limit = self.default_limit
-		results = self.client.artist_top_tracks(artist_id=artist_id)
+		results = await self.client.async_artist_top_tracks(artist_id)
 
 		if not results or not results.get("tracks"):
 			return None
@@ -77,10 +95,15 @@ class SpotifySearch(SpotifySearchId):
 	def __init__(self, default_limit: int, client_id: str, client_secret: str):
 		super().__init__(default_limit, client_id, client_secret)
 
-	def search_tracks(self, search, limit: int | None = None) -> list[TrackMinimalSpotify] | None:
+	async def search_tracks(
+		self, search, limit: int | None = None
+	) -> list[TrackMinimalSpotify] | None:
 		if limit is None:
 			limit = self.default_limit
-		results = self.client.search(q=search, limit=limit, type="track")
+		if limit > 50:
+			logging.warning("Limit for spotify was %d but the max is %d.", limit, 50)
+			limit = 50
+		results = await self.client.async_search(q=search, limit=limit, type="track")
 
 		if not results or not results.get("tracks") or not results["tracks"].get("items"):
 			return None
@@ -88,8 +111,8 @@ class SpotifySearch(SpotifySearchId):
 		tracks = results["tracks"]["items"]
 		return [TrackMinimalSpotify(element) for element in tracks]
 
-	def search_track(self, search) -> TrackMinimalSpotify | None:
-		results = self.client.search(q=search, limit=1, type="track")
+	async def search_track(self, search) -> TrackMinimalSpotify | None:
+		results = await self.client.async_search(q=search, limit=1, type="track")
 
 		if not results or not results.get("tracks") or not results["tracks"].get("items"):
 			return None
@@ -99,32 +122,43 @@ class SpotifySearch(SpotifySearchId):
 
 		return TrackMinimalSpotify(track)
 
-	def get_playlist_tracks(self, playlist_name) -> list[TrackMinimalSpotify] | None:
-		results = self.client.search(q=playlist_name, limit=1, type="playlist")
+	async def get_playlist_tracks(self, playlist_name) -> list[TrackMinimalSpotify] | None:
+		results = await self.client.async_search(q=playlist_name, limit=1, type="playlist")
 
-		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+		if not results or not results.get("playlists") or not results["playlists"].get("items"):
 			return None
 
-		tracks = results["tracks"]["items"]
-		return [TrackMinimalSpotify(element) for element in tracks]
+		playlist_id = results["playlists"]["items"][0]["id"]
+		tracks = await self.get_playlist_tracks_by_id(playlist_id)
+		if not tracks:
+			return None
+		return tracks[0]
 
-	def get_album_tracks(self, album_name) -> list[TrackMinimalSpotify] | None:
-		results = self.client.search(q=album_name, limit=1, type="album")
+	async def get_album_tracks(self, album_name) -> list[TrackMinimalSpotify] | None:
+		results = await self.client.async_search(q=album_name, limit=1, type="album")
 
-		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+		if not results or not results.get("albums") or not results["albums"].get("items"):
 			return None
 
-		tracks = results["tracks"]["items"]
-		return [TrackMinimalSpotify(element) for element in tracks]
+		album_id = results["albums"]["items"][0]["id"]
+		tracks = await self.get_album_tracks_by_id(album_id)
+		if not tracks:
+			return None
+		return tracks[0]
 
-	def get_top_artist(self, artist_name, limit: int | None = None) -> list[TrackMinimalSpotify] | None:
-		results = self.client.search(q=artist_name, limit=1, type="artist")
+	async def get_top_artist(
+		self, artist_name, limit: int | None = None
+	) -> list[TrackMinimalSpotify] | None:
+		results = await self.client.async_search(q=artist_name, limit=1, type="artist")
 
-		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+		if not results or not results.get("artists") or not results["artists"].get("items"):
 			return None
 
-		tracks = results["tracks"]["items"]
-		return [TrackMinimalSpotify(element) for element in tracks]
+		artist_id = results["artists"]["items"][0]["id"]
+		tracks = await self.get_top_artist_by_id(artist_id)
+		if not tracks:
+			return None
+		return tracks[0]
 
 	async def get_by_url(
 		self, url
@@ -141,13 +175,13 @@ class SpotifySearch(SpotifySearchId):
 		)
 
 		if type == SpotifyType.PLAYLIST:
-			tracks = self.get_playlist_tracks_by_id(id)
+			tracks = await self.get_playlist_tracks_by_id(id)
 		elif type == SpotifyType.ARTIST:
-			tracks = self.get_top_artist_by_id(id)
+			tracks = await self.get_top_artist_by_id(id)
 		elif type == SpotifyType.ALBUM:
-			tracks = self.get_album_tracks_by_id(id)
+			tracks = await self.get_album_tracks_by_id(id)
 		elif type == SpotifyType.TRACK:
-			tracks = self.get_track_by_id(id)
+			tracks = await self.get_track_by_id(id)
 		else:
 			raise NotImplementedError(f"The type of spotify info '{type}' can't be resolve")
 

@@ -25,10 +25,7 @@ class MessageSender:
 		await self.ctx.response.defer(thinking=True)
 		self.think = True
 
-	async def add_message(
-		self,
-		content: str = MISSING
-	) -> Message | WebhookMessage:
+	async def add_message(self, content: str = MISSING) -> Message | WebhookMessage:
 		"""
 		Add a message as a response or follow-up. If no message has been sent yet, the message is sent as a response.
 		Otherwise, the message will be linked to the response (sent as a follow-up message).
@@ -36,11 +33,7 @@ class MessageSender:
 		"""
 		return await self.__add_message(content)
 
-	async def __add_message(
-		self,
-		content: str = MISSING
-	) -> Message | WebhookMessage:
-
+	async def __add_message(self, content: str = MISSING) -> Message | WebhookMessage:
 		# If a reply has already been sent
 		if self.last_message:
 			last_message = await self._send_after_last_msg(content)
@@ -64,14 +57,17 @@ class MessageSender:
 
 		# If a reply has already been sent
 		if self.last_message:
-
 			# If the message has a nickname, only the last reply with the same nickname is changed.
 			if surname_content:
 				last_message_edited = self.last_message_surname.get(surname_content)
 
 				if last_message_edited:
-					msg = await last_message_edited.edit(content=self._tuncate_msg_if_overflow(content))
-					self.last_message_surname[surname_content] = await last_message_edited.edit(content=self._tuncate_msg_if_overflow(content))
+					msg = await last_message_edited.edit(
+						content=self._tuncate_msg_if_overflow(content)
+					)
+					self.last_message_surname[surname_content] = await last_message_edited.edit(
+						content=self._tuncate_msg_if_overflow(content)
+					)
 				else:
 					msg = await self.__add_message(content)
 					self.last_message_surname[surname_content] = msg
@@ -155,9 +151,7 @@ class MessageSender:
 
 		# If not, send a message linked to the last message
 		else:
-			last_message = await self.last_message.reply(
-				self._tuncate_msg_if_overflow(content)
-			)
+			last_message = await self.last_message.reply(self._tuncate_msg_if_overflow(content))
 		self.last_message = last_message
 		return last_message
 
@@ -174,7 +168,7 @@ class MessageSender:
 		if content == MISSING or content == "":
 			return content
 		new_content, is_used = tools.substring_with_end_msg(
-			content, MAX_MSG_LENGTH, "{} more characters..."
+			content, MAX_MSG_LENGTH, "`{} more characters...`"
 		)
 		if not is_used:
 			return content

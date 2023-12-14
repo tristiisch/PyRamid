@@ -28,14 +28,14 @@ class GitInfo:
 		commit_hash = None
 		with (git_head).open("r") as f:
 			head_file = f.read().strip()
-			
+
 			prefix = "ref: "
 			if head_file.startswith(prefix):
-				head_file = head_file[len(prefix):]
+				head_file = head_file[len(prefix) :]
 				ref = head_file
 				prefix = "refs/heads/"
 				if head_file.startswith(prefix):
-					head_file = head_file[len(prefix):]
+					head_file = head_file[len(prefix) :]
 				self.branch = head_file
 
 				git_ref = git_dir / ref
@@ -53,9 +53,11 @@ class GitInfo:
 				for root, dirs, files in os.walk(heads_path):
 					for branch_name in files:
 						branch_path = os.path.join(root, branch_name)
-						with open(branch_path, 'r') as branch_file:
+						with open(branch_path, "r") as branch_file:
 							if branch_file.read().strip() == commit_hash:
-								self.branch = os.path.relpath(branch_path, heads_path).replace("\\", "/")
+								self.branch = os.path.relpath(branch_path, heads_path).replace(
+									"\\", "/"
+								)
 								break
 					if self.branch is not None:
 						break
