@@ -112,7 +112,8 @@ class DiscordBot:
 			else:
 				attributes_dict = vars(ctx.namespace)
 				formatted_attributes = " ".join(
-					f"{key}: {value}" for key, value in attributes_dict.items() # TODO Handle ENUM name instead of value
+					f"{key}: {value}"
+					for key, value in attributes_dict.items()  # TODO Handle ENUM name instead of value
 				)
 				discord_explanation = (
 					":warning: An error occurred while processing the command `/%s%s`"

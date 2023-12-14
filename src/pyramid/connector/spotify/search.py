@@ -22,7 +22,9 @@ class SpotifySearchBase(ASearch):
 		self.client = CliSpotify(client_credentials_manager=self.client_credentials_manager)
 		self.tools = SpotifyTools()
 
-	async def _async_get_all_tracks(self, results: Any, item_name="items") -> None | list[dict[str, Any]]:
+	async def _async_get_all_tracks(
+		self, results: Any, item_name="items"
+	) -> None | list[dict[str, Any]]:
 		if not results:
 			return None
 		tracks: list = results[item_name]
@@ -47,7 +49,9 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 	async def get_playlist_tracks_by_id(
 		self, playlist_id: str
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
-		tracks_playlist = await self._async_get_all_tracks(await self.client.async_playlist_items(playlist_id=playlist_id))
+		tracks_playlist = await self._async_get_all_tracks(
+			await self.client.async_playlist_items(playlist_id=playlist_id)
+		)
 		if not tracks_playlist:
 			return None
 		return [TrackMinimalSpotify(element["track"]) for element in tracks_playlist], []
@@ -55,10 +59,12 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 	async def get_album_tracks_by_id(
 		self, album_id: str
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
-		tracks = await self._async_get_all_tracks(await self.client.async_album_tracks(album_id=album_id))
+		tracks = await self._async_get_all_tracks(
+			await self.client.async_album_tracks(album_id=album_id)
+		)
 		if not tracks:
 			return None
-		
+
 		readable_tracks = []
 		unreadable_tracks = []
 		for t in tracks:
@@ -89,7 +95,9 @@ class SpotifySearch(SpotifySearchId):
 	def __init__(self, default_limit: int, client_id: str, client_secret: str):
 		super().__init__(default_limit, client_id, client_secret)
 
-	async def search_tracks(self, search, limit: int | None = None) -> list[TrackMinimalSpotify] | None:
+	async def search_tracks(
+		self, search, limit: int | None = None
+	) -> list[TrackMinimalSpotify] | None:
 		if limit is None:
 			limit = self.default_limit
 		if limit > 50:

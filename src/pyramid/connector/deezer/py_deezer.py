@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import logging
-from shlex import join
 import warnings
 from os import path
 
@@ -275,7 +274,9 @@ class PyDeezer(Deezer):
 							return (url, key)
 						url_try.append(url)
 
-		raise DlDeezerNotUrlFoundException("Can't find valid URL to download '%s'. URLs try :\n- %s", track, "\n -".join(url_try))
+		raise DlDeezerNotUrlFoundException(
+			"Can't find valid URL to download '%s'. URLs try :\n- %s", track, "\n -".join(url_try)
+		)
 
 	async def get_user_data(self):
 		data = (await self._api_call(api_methods.GET_USER_DATA))["results"]

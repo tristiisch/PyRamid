@@ -7,8 +7,10 @@ class CustomException(Exception):
 class DiscordMessageException(CustomException):
 	pass
 
+
 class EngineSourceNotFoundException(DiscordMessageException):
 	pass
+
 
 class TrackNotFoundException(DiscordMessageException):
 	pass

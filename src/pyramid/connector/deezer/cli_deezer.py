@@ -1,13 +1,12 @@
 import abc
 import asyncio
-import logging
 import time
 from abc import ABC
 from typing import Any, Generic, Literal, Self
 from urllib.parse import parse_qs, urlparse
 
 import aiohttp
-from deezer import Album, Artist, Client, PaginatedList, Playlist, Resource, Track
+from deezer import Album, Artist, Client, Playlist, Resource, Track
 from deezer.exceptions import DeezerAPIException, DeezerErrorResponse
 from deezer.pagination import ResourceType
 
@@ -198,7 +197,8 @@ class CliDeezer(ACliDeezer, Client):
 				parent=self,
 				**kwargs,
 			)
-		Resource.get_paginated_list = get_paginated_list # type: ignore
+
+		Resource.get_paginated_list = get_paginated_list  # type: ignore
 
 		# def __getattr__(self, item: str) -> Any:
 		# 	try:
@@ -209,8 +209,9 @@ class CliDeezer(ACliDeezer, Client):
 
 		def get(self) -> Any:
 			raise AttributeError("%s has a missing attribute." % self.__class__.__name__)
+
 		Resource.get = get
-	
+
 	def _search(
 		self,
 		path: str,
@@ -219,7 +220,7 @@ class CliDeezer(ACliDeezer, Client):
 		ordering: str | None = None,
 		**advanced_params: str | int | None,
 	) -> CliPaginatedList:
-		return super()._search(path, query, strict, ordering, **advanced_params) # type: ignore
+		return super()._search(path, query, strict, ordering, **advanced_params)  # type: ignore
 
 	def search(
 		self,
@@ -275,7 +276,6 @@ class CliDeezer(ACliDeezer, Client):
 			strict=strict,
 			ordering=ordering,
 		)
-	
 
 	def search_artists(
 		self,
@@ -291,16 +291,16 @@ class CliDeezer(ACliDeezer, Client):
 		)
 
 	async def async_get_playlist(self, playlist_id: int) -> Playlist:
-		return await self.async_request("GET", f"playlist/{playlist_id}") # type: ignore
-	
+		return await self.async_request("GET", f"playlist/{playlist_id}")  # type: ignore
+
 	async def async_get_album(self, album_id: int) -> Album:
-		return await self.async_request("GET", f"album/{album_id}") # type: ignore
+		return await self.async_request("GET", f"album/{album_id}")  # type: ignore
 
 	async def async_get_artist(self, artist_id: int) -> Artist:
-		return await self.async_request("GET", f"artist/{artist_id}") # type: ignore
+		return await self.async_request("GET", f"artist/{artist_id}")  # type: ignore
 
 	async def async_get_track(self, track_id: int) -> Track:
-		return await self.async_request("GET", f"track/{track_id}") # type: ignore
+		return await self.async_request("GET", f"track/{track_id}")  # type: ignore
 
 	def _get_paginated_list(self, path, **params) -> CliPaginatedList:
 		return CliPaginatedList(client=self, base_path=path, **params)
@@ -411,6 +411,7 @@ class CliDeezerErrorResponse(DeezerErrorResponse):
 
 class CliDeezerRateLimitError(CliDeezerErrorResponse):
 	pass
+
 
 class CliDeezerNoDataException(CliDeezerErrorResponse):
 	pass

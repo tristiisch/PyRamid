@@ -1,5 +1,4 @@
 from enum import Enum
-import logging
 from typing import Dict
 
 from connector.deezer.downloader import DeezerDownloader
@@ -145,10 +144,10 @@ class EngineSource:
 		return track_dl_search
 
 	async def _equivalent_for_download_isrc(self, track: TrackMinimal) -> TrackMinimalDeezer | None:
-		if not hasattr(track, 'isrc') or track.isrc is None: # type: ignore
+		if not hasattr(track, "isrc") or track.isrc is None:  # type: ignore
 			return None
 		track_dl_search = await self.__downloader_source.get_track_by_isrc(
-			track.isrc # type: ignore
+			track.isrc  # type: ignore
 		)
 		return track_dl_search
 

@@ -72,7 +72,7 @@ class DeezerDownloader:
 			logging.warning("Downloader MaxRetryError %s", track)
 			await asyncio.sleep(5)
 			return await self.__dl_track(track_info, file_name)
-		
+
 		except CustomException as error:
 			trace = "".join(traceback.format_exception(type(error), error, error.__traceback__))
 			logging.warning("%s :\n%s", error.msg, trace)
