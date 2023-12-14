@@ -2,17 +2,14 @@ import asyncio
 import logging
 import re
 from enum import Enum
-from typing import Any, List
+import aiohttp
 
 import deezer
-import requests
 from data.a_engine_tools import AEngineTools
 from data.a_search import ASearch, ASearchId
 from data.track import TrackMinimalDeezer
-from deezer import Client, PaginatedList
-from deezer.client import DeezerErrorResponse
 
-from connector.deezer.cli_deezer import CliDeezer, CliDeezerRateLimitError, CliPaginatedList
+from connector.deezer.cli_deezer import CliDeezer, CliDeezerNoDataException, CliDeezerRateLimitError, CliPaginatedList
 
 
 class DeezerSearch(ASearchId, ASearch):
@@ -22,44 +19,52 @@ class DeezerSearch(ASearchId, ASearch):
 		self.tools = DeezerTools()
 		self.strict = False
 
-	def search_track(self, search) -> TrackMinimalDeezer | None:
-		search_results = self.client.search(query=search)
-		if not search_results or len(search_results) == 0:
-			return None
-		track = search_results[0]
-		return TrackMinimalDeezer(track)
-
-	def get_track_by_id(self, track_id: int) -> TrackMinimalDeezer | None:
-		track = self.client.get_track(track_id)  # TODO handle HTTP errors
+	async def search_track(self, search) -> TrackMinimalDeezer | None:
+		result = self.client.search(query=search)
+		track = await result.get_first()
 		if not track:
 			return None
 		return TrackMinimalDeezer(track)
 
-	def search_tracks(self, search, limit: int | None = None) -> list[TrackMinimalDeezer] | None:
+	async def get_track_by_id(self, track_id: int) -> TrackMinimalDeezer | None:
+		track = await self.client.async_get_track(track_id)  # TODO handle HTTP errors
+		if not track:
+			return None
+		return TrackMinimalDeezer(track)
+
+	async def get_track_by_isrc(self, isrc: str) -> TrackMinimalDeezer | None:
+		try:
+			track: deezer.Track = await self.client.async_request("GET", f"track/isrc:{isrc}") # type: ignore
+			if not track:
+				return None
+			return TrackMinimalDeezer(track)
+		except CliDeezerNoDataException:
+			return None
+
+	async def search_tracks(self, search, limit: int | None = None) -> list[TrackMinimalDeezer] | None:
 		if limit is None:
 			limit = self.default_limit
 
-		tracks = self.client.search(query=search, strict=self.strict)
-
-		tracks_length = len(tracks)
-		if tracks_length == 0:
+		pagination_results = self.client.search(query=search, strict=self.strict)
+		tracks = await pagination_results.get_maximum(limit)
+		if not tracks:
 			return None
-		if tracks_length > limit:
-			tracks = tracks[:limit]
 
 		return [TrackMinimalDeezer(element) for element in tracks]
 
-	def get_playlist_tracks(self, playlist_name) -> list[TrackMinimalDeezer] | None:
-		search_results = self.client.search_playlists(query=playlist_name, strict=self.strict)
-		if not search_results or len(search_results) == 0:
+	async def get_playlist_tracks(self, playlist_name) -> list[TrackMinimalDeezer] | None:
+		pagination_results = self.client.search_playlists(query=playlist_name, strict=self.strict)
+		playlist = await pagination_results.get_first()
+		if not playlist:
 			return None
-		playlist = search_results[0]
-		return [TrackMinimalDeezer(element) for element in playlist.get_tracks()]
+		pagination_tracks: CliPaginatedList[deezer.Track] = playlist.get_tracks() # type: ignore
+		tracks = await pagination_tracks.get_all()
+		return [TrackMinimalDeezer(element) for element in tracks]
 
 	async def get_playlist_tracks_by_id(
 		self, playlist_id: int
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
-		playlist = self.client.get_playlist(playlist_id)  # TODO handle HTTP errors
+		playlist = await self.client.async_get_playlist(playlist_id)  # TODO handle HTTP errors
 		if not playlist:
 			return None
 		# Tracks id are the not the good one
@@ -88,48 +93,54 @@ class DeezerSearch(ASearchId, ASearch):
 
 		return real_tracks, unfindable_track
 
-	def get_album_tracks(self, album_name) -> list[TrackMinimalDeezer] | None:
-		search_results = self.client.search_albums(query=album_name, strict=self.strict)
-		if not search_results or len(search_results) == 0:
-			return None
-		album = search_results[0]
-		return [TrackMinimalDeezer(element) for element in album.get_tracks()]
-
-	def get_album_tracks_by_id(
-		self, album_id: int
-	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
-		album = self.client.get_album(album_id)  # TODO handle HTTP errors
+	async def get_album_tracks(self, album_name) -> list[TrackMinimalDeezer] | None:
+		pagination_results = self.client.search_albums(query=album_name, strict=self.strict)
+		album = await pagination_results.get_first()
 		if not album:
 			return None
-		return [TrackMinimalDeezer(element) for element in album.get_tracks()], []
+		pagination_tracks: CliPaginatedList[deezer.Track] = album.get_tracks() # type: ignore
+		tracks = await pagination_tracks.get_all()
+		return [TrackMinimalDeezer(element) for element in tracks]
 
-	def get_top_artist(
+	async def get_album_tracks_by_id(
+		self, album_id: int
+	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
+		album = await self.client.async_get_album(album_id)  # TODO handle HTTP errors
+		if not album:
+			return None
+		pagination_tracks: CliPaginatedList[deezer.Track] = album.get_tracks() # type: ignore
+		tracks = await pagination_tracks.get_all()
+		return [TrackMinimalDeezer(element) for element in tracks], []
+
+	async def get_top_artist(
 		self, artist_name, limit: int | None = None
 	) -> list[TrackMinimalDeezer] | None:
 		if limit is None:
 			limit = self.default_limit
-		search_results = self.client.search_artists(query=artist_name, strict=self.strict)
-		if not search_results or len(search_results) == 0:
+		pagination_results = self.client.search_artists(query=artist_name, strict=self.strict)
+		artist = await pagination_results.get_first()
+		if not artist:
 			return None
-		artist = search_results[0]
-		top_tracks = artist.get_top()[:limit]
-		return [TrackMinimalDeezer(element) for element in top_tracks]
+		pagination_tracks: CliPaginatedList[deezer.Track] = artist.get_top() # type: ignore
+		tracks = await pagination_tracks.get_maximum(limit)
+		return [TrackMinimalDeezer(element) for element in tracks]
 
-	def get_top_artist_by_id(
+	async def get_top_artist_by_id(
 		self, artist_id: int, limit: int | None = None
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
 		if limit is None:
 			limit = self.default_limit
-		artist = self.client.get_artist(artist_id)  # TODO handle HTTP errors
+		artist = await self.client.async_get_artist(artist_id)  # TODO handle HTTP errors
 		if not artist:
 			return None
-		top_tracks = artist.get_top()[:limit]
-		return [TrackMinimalDeezer(element) for element in top_tracks], []
+		pagination_tracks: CliPaginatedList[deezer.Track] = artist.get_top() # type: ignore
+		tracks = await pagination_tracks.get_maximum(limit)
+		return [TrackMinimalDeezer(element) for element in tracks], []
 
 	async def get_by_url(
 		self, url
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None:
-		id, type = self.tools.extract_from_url(url)
+		id, type = await self.tools.extract_from_url(url)
 
 		if id is None:
 			return None
@@ -147,11 +158,11 @@ class DeezerSearch(ASearchId, ASearch):
 			# tracks = await asyncio.wrap_future(future)
 			tracks = await self.get_playlist_tracks_by_id(id)
 		elif type == DeezerType.ARTIST:
-			tracks = self.get_top_artist_by_id(id)
+			tracks = await self.get_top_artist_by_id(id)
 		elif type == DeezerType.ALBUM:
-			tracks = self.get_album_tracks_by_id(id)
+			tracks = await self.get_album_tracks_by_id(id)
 		elif type == DeezerType.TRACK:
-			tracks = self.get_track_by_id(id)
+			tracks = await self.get_track_by_id(id)
 		else:
 			raise NotImplementedError(f"The type of deezer info '{type}' can't be resolve")
 
@@ -181,17 +192,16 @@ class DeezerSearch(ASearchId, ASearch):
 				# logging.warning("Find with artist & title '%s' - '%s' - '%s'", clean_artist, clean_track, clean_album)
 		return track
 
-
 	async def _search_exact_track(
 		self, artist_name, album_title, track_title
 	) -> TrackMinimalDeezer | None:
 
 		try:
-			search_results = self.client.search(
+			pagination_results = self.client.search(
 				artist=artist_name, album=album_title, track=track_title
 			)
 			logging.info("_search_exact_track %s - %s - %s", artist_name, album_title, track_title)
-			track = await search_results.get_first()
+			track = await pagination_results.get_first()
 			if track is None:
 				return None
 			return TrackMinimalDeezer(track)
@@ -204,7 +214,7 @@ class DeezerSearch(ASearchId, ASearch):
 	def __remove_special_chars(
 		self, input_string: str | None, allowed_brackets: tuple = ("(", ")", "[", "]")
 	):
-		if input_string is None:
+		if input_string is None or input_string == "":
 			return None
 
 		open_brackets = [b for i, b in enumerate(allowed_brackets) if i % 2 == 0]
@@ -244,11 +254,12 @@ class DeezerType(Enum):
 
 
 class DeezerTools(AEngineTools):
-	def extract_from_url(self, url) -> tuple[int, DeezerType | None] | tuple[None, None]:
+	async def extract_from_url(self, url) -> tuple[int, DeezerType | None] | tuple[None, None]:
 		# Resolve if URL is a deezer.page.link URL
 		if "deezer.page.link" in url:
-			response = requests.get(url, allow_redirects=True)
-			url = response.url
+			async with aiohttp.ClientSession() as session:
+				async with session.get(url, allow_redirects=True) as response:
+					url = str(response.url)
 
 		# Extract ID and type using regex
 		pattern = r"(?<=deezer.com/fr/)(\w+)/(?P<id>\d+)"

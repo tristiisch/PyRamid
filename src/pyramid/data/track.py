@@ -1,8 +1,7 @@
 from abc import ABC
 from datetime import datetime
-import logging
 
-import deezer.resources
+import deezer
 import tools.utils as tools
 
 
@@ -51,24 +50,32 @@ class TrackMinimalSpotify(TrackMinimal):
 		self.name: str = data["name"]
 		self.album_title: str = data["album"]["name"]
 		self.album_picture: str = album_picture
-		self.available = True
-		logging.debug(data)
+		self.disk_number: int = data["disc_number"]
+		self.track_number: int = data["track_number"]
+		self.explicit: bool = data["explicit"]
+		self.duration: int = round(data["duration_ms"] / 1000)
+		self.isrc: str | None = (
+			data["external_ids"]["isrc"] if "isrc" in data["external_ids"] else None
+		)
+		# self.available_countries: list[str] = data["available_markets"]
+		self.available = not data["is_local"]
 
 
 class TrackMinimalDeezer(TrackMinimal):
-	def __init__(self, data: deezer.resources.Track):
+	def __init__(self, data: deezer.Track):
 		self.id: str = str(data.id)
 		self.author_name: str = data.artist.name
-		self.author_picture: str = data.artist.picture_medium
+		# self.author_picture: str = data.artist.picture_medium
 		self.name: str = data.title
 		self.album_title: str = data.album.title
 		self.album_picture: str = data.album.cover_xl
-		self.disk_number: int = data.disk_number
-		self.track_position: int = data.track_position
-		self.explicit_lyrics: bool = data.explicit_lyrics
+		# self.disk_number: int = data.disk_number
+		# self.track_number: int = data.track_position
+		self.explicit: bool = data.explicit_lyrics
+		self.duration: int = data.duration
 		self.rank: int = data.rank
-		self.isrc: str = data.isrc
-		self.available_countries: list[str] = data.available_countries
+		# self.isrc: str = data.isrc
+		# self.available_countries: list[str] = data.available_countries
 		if not data.readable:
 			# logging.warning("%s - %s is unreadable", self.author_name, self.name)
 			self.available = False

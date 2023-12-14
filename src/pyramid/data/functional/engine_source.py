@@ -1,4 +1,5 @@
 from enum import Enum
+import logging
 from typing import Dict
 
 from connector.deezer.downloader import DeezerDownloader
@@ -75,7 +76,7 @@ class EngineSource:
 		search_engine = self._resolve_engine(engine)
 		search_engine_name = self._get_engine_name(search_engine)
 
-		track: TrackMinimal | None = search_engine.search_track(input)
+		track: TrackMinimal | None = await search_engine.search_track(input)
 		if not track:
 			raise TrackNotFoundException(
 				"Search **%s** not found on %s.", input, search_engine_name
@@ -89,7 +90,7 @@ class EngineSource:
 		search_engine = self._resolve_engine(engine)
 		search_engine_name = self._get_engine_name(search_engine)
 
-		tracks = search_engine.search_tracks(input)
+		tracks = await search_engine.search_tracks(input)
 		if not tracks:
 			raise TrackNotFoundException(
 				"Search **%s** not found on %s.", input, search_engine_name
@@ -119,15 +120,36 @@ class EngineSource:
 		return custom_engine
 
 	async def _equivalent_for_download(self, track: TrackMinimal) -> TrackMinimalDeezer:
-		track_dl_search = await self.__downloader_source.search_exact_track(
-			track.author_name, None, track.name
-		)
-		if not track_dl_search:
+		track_exact_equiv = await self._equivalent_for_download_isrc(track)
+		if track_exact_equiv:
+			if track_exact_equiv.available:
+				return track_exact_equiv
+			else:
+				track = track_exact_equiv
+
+		track_search_equiv = await self._equivalent_for_download_str(track)
+		if not track_search_equiv:
+			if track_exact_equiv:
+				return track_exact_equiv
 			dl_engine_name = self._get_engine_name(self.__downloader_source)
 			raise TrackNotFoundException(
 				"Track **%s** has not been found on %s.", track, dl_engine_name
 			)
 			## TODO SAVE THIS
+		return track_search_equiv
+
+	async def _equivalent_for_download_str(self, track: TrackMinimal) -> TrackMinimalDeezer | None:
+		track_dl_search = await self.__downloader_source.search_exact_track(
+			track.author_name, track.album_title, track.name
+		)
+		return track_dl_search
+
+	async def _equivalent_for_download_isrc(self, track: TrackMinimal) -> TrackMinimalDeezer | None:
+		if not hasattr(track, 'isrc') or track.isrc is None: # type: ignore
+			return None
+		track_dl_search = await self.__downloader_source.get_track_by_isrc(
+			track.isrc # type: ignore
+		)
 		return track_dl_search
 
 	async def _equivalents_for_download(
@@ -141,7 +163,10 @@ class EngineSource:
 					tracks_downloadable.append(t)
 				else:
 					track_dl_search = await self._equivalent_for_download(t)
-					tracks_downloadable.append(track_dl_search)
+					if track_dl_search.available is False:
+						tracks_unfindable.append(t)
+					else:
+						tracks_downloadable.append(track_dl_search)
 
 			except TrackNotFoundException:
 				tracks_unfindable.append(t)

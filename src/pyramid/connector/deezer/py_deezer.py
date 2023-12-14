@@ -1,17 +1,29 @@
 import asyncio
+import hashlib
 import logging
+from shlex import join
+import warnings
 from os import path
 
 import aiofiles
 import aiohttp
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+from data.exceptions import CustomException
+
+with warnings.catch_warnings():
+	warnings.simplefilter("ignore")
+	from cryptography.hazmat.primitives.ciphers.algorithms import Blowfish
+
 from pydeezer import Deezer, util
-from pydeezer.constants import track_formats, api_methods, api_urls, networking_settings
-from pydeezer.exceptions import APIRequestError
+from pydeezer.constants import api_methods, api_urls, networking_settings, track_formats
+from pydeezer.exceptions import APIRequestError, DownloadLinkDecryptionError, LoginError
 from pydeezer.ProgressHandler import BaseProgressHandler, DefaultProgressHandler
-from functools import partial
-from pydeezer.exceptions import LoginError
+
+
+class DlDeezerNotUrlFoundException(CustomException):
+	pass
 
 
 class DecryptDeezer:
@@ -19,7 +31,7 @@ class DecryptDeezer:
 		self.chunk_length = 6144
 		self.decrypt_chunk_length = 2048
 		self.cipher = Cipher(
-			algorithms.Blowfish(blowfish_key),
+			Blowfish(blowfish_key),
 			modes.CBC(bytes([i for i in range(8)])),
 			default_backend(),
 		)
@@ -110,21 +122,6 @@ class PyDeezer(Deezer):
 		progress_handler: BaseProgressHandler | None = None,
 		**kwargs,
 	):
-		"""Downloads the given track
-
-		Arguments:
-			track {dict} -- Track dictionary, similar to the {info} value that is returned {using get_track()}
-			download_dir {str} -- Directory (without {filename}) where the file is to be saved.
-
-		Keyword Arguments:
-			quality {str} -- Use values from {constants.track_formats}, will get the default quality if None or an invalid is given. (default: {None})
-			filename {str} -- Filename with or without the extension (default: {None})
-			renew {bool} -- Will renew the track object (default: {False})
-			with_metadata {bool} -- If true, will write id3 tags into the file. (default: {True})
-			with_lyrics {bool} -- If true, will find and save lyrics of the given track. (default: {True})
-			tag_separator {str} -- Separator to separate multiple artists (default: {", "})
-		"""
-
 		if with_lyrics:
 			if "LYRICS" in track:
 				lyric_data = track["LYRICS"]
@@ -140,9 +137,9 @@ class PyDeezer(Deezer):
 
 		track = track["DATA"] if "DATA" in track else track
 
-		res = self.get_track_download_url(track, quality, fallback=fallback, renew=renew, **kwargs)
-		if res is None:
-			raise Exception()
+		res = await self.get_track_download_url(
+			track, quality, fallback=fallback, renew=renew, **kwargs
+		)
 		url, quality_key = res
 
 		blowfish_key = util.get_blowfish_key(track["SNG_ID"])
@@ -211,13 +208,76 @@ class PyDeezer(Deezer):
 
 		progress_handler.close(track_id=track["SNG_ID"], size_downloaded=total_filesize)
 
+	async def get_track_download_url(
+		self, track, quality=None, fallback=True, renew=False, **kwargs
+	):
+		if renew:
+			track = self.get_track(track["SNG_ID"])["info"]
+
+		if not quality:
+			quality = track_formats.MP3_128
+			fallback = True
+
+		try:
+			# Just in case they passed in the whole dictionary from get_track()
+			track = track["DATA"] if "DATA" in track else track
+
+			if "MD5_ORIGIN" not in track:
+				raise DownloadLinkDecryptionError("MD5 is needed to decrypt the download link.")
+
+			md5_origin = track["MD5_ORIGIN"]
+			track_id = track["SNG_ID"]
+			media_version = track["MEDIA_VERSION"]
+		except ValueError:
+			raise ValueError(
+				'You have passed an invalid argument. This method needs the "DATA" value in the dictionary returned by the get_track() method.'
+			)
+
+		def decrypt_url(quality_code):
+			magic_char = "¤"
+			step1 = magic_char.join((md5_origin, str(quality_code), track_id, media_version))
+			m = hashlib.md5()
+			m.update(bytes([ord(x) for x in step1]))
+
+			step2 = m.hexdigest() + magic_char + step1 + magic_char
+			step2 = step2.ljust(80, " ")
+
+			cipher = Cipher(
+				algorithms.AES(bytes("jo6aey6haid2Teih", "ascii")), modes.ECB(), default_backend()
+			)
+
+			encryptor = cipher.encryptor()
+			step3 = encryptor.update(bytes([ord(x) for x in step2])).hex()
+
+			cdn = track["MD5_ORIGIN"][0]
+
+			return f"https://e-cdns-proxy-{cdn}.dzcdn.net/mobile/1/{step3}"
+
+		url_try: list[str] = []
+		url = decrypt_url(track_formats.TRACK_FORMAT_MAP[quality]["code"])
+
+		cookies = self.get_cookies()
+		async with aiohttp.ClientSession() as session:
+			async with session.get(url, cookies=cookies) as res:
+				if not fallback or (res.status == 200 and int(res.headers["Content-length"]) > 0):
+					return (url, quality)
+				url_try.append(url)
+				if "fallback_qualities" in kwargs:
+					fallback_qualities = kwargs["fallback_qualities"]
+				else:
+					fallback_qualities = track_formats.FALLBACK_QUALITIES
+
+				for key in fallback_qualities:
+					url = decrypt_url(track_formats.TRACK_FORMAT_MAP[key]["code"])
+
+					async with session.get(url, cookies=cookies) as res2:
+						if res2.status == 200 and int(res.headers["Content-length"]) > 0:
+							return (url, key)
+						url_try.append(url)
+
+		raise DlDeezerNotUrlFoundException("Can't find valid URL to download '%s'. URLs try :\n- %s", track, "\n -".join(url_try))
+
 	async def get_user_data(self):
-		"""Gets the data of the user, this will only work arl is the cookie. Make sure you have run login_via_arl() before using this.
-
-		Raises:
-			LoginError: Will raise if the arl given is not identified by Deezer
-		"""
-
 		data = (await self._api_call(api_methods.GET_USER_DATA))["results"]
 
 		self.token = data["checkForm"]
@@ -275,18 +335,6 @@ class PyDeezer(Deezer):
 		return data
 
 	async def get_track_tags(self, track, separator=", "):
-		"""Gets the possible ID3 tags of the track.
-
-		Arguments:
-			track {dict} -- Track dictionary, similar to the {info} value that is returned {using get_track()}
-
-		Keyword Arguments:
-			separator {str} -- Separator to separate multiple artists (default: {", "})
-
-		Returns:
-			dict -- Tags
-		"""
-
 		track = track["DATA"] if "DATA" in track else track
 
 		album_data = await self.get_album(track["ALB_ID"])
@@ -369,22 +417,6 @@ class PyDeezer(Deezer):
 		return data["results"]
 
 	async def get_album(self, album_id):
-		"""Gets the album data of the given {album_id}
-
-		Arguments:
-			album_id {str} -- Album Id
-
-		Returns:
-			dict -- Album data
-		"""
-
-		# data = self._api_call(api_methods.ALBUM_GET_DATA, params={
-		#     "ALB_ID": album_id,
-		#     "LANG": "en"
-		# })
-
-		# return data["results"]
-
 		data = await self._legacy_api_call("/album/{0}".format(album_id))
 
 		# TODO: maybe better logic?

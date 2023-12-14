@@ -1,12 +1,13 @@
 import abc
 import asyncio
+import logging
 import time
 from abc import ABC
-from typing import Any, Literal, Self
+from typing import Any, Generic, Literal, Self
 from urllib.parse import parse_qs, urlparse
 
 import aiohttp
-from deezer import Client, PaginatedList, Resource
+from deezer import Album, Artist, Client, PaginatedList, Playlist, Resource, Track
 from deezer.exceptions import DeezerAPIException, DeezerErrorResponse
 from deezer.pagination import ResourceType
 
@@ -18,19 +19,19 @@ class AsyncRateLimiter:
 		self.requests: list[float] = []
 		self.lock = asyncio.Lock()
 
-	async def _clean_old_requests(self):
+	def _clean_old_requests(self):
 		current_time = time.time()
 		self.requests = [t for t in self.requests if self.time_interval > current_time - t]
 
 	async def _wait_if_needed(self):
 		async with self.lock:
-			await self._clean_old_requests()
+			self._clean_old_requests()
 			if len(self.requests) >= self.max_requests:
 				sleep_time = self.requests[0] + self.time_interval - time.time()
 				if sleep_time > 0:
 					# logging.warning("Detect Deezer RateLimit - wait %f secs", sleep_time)
 					await asyncio.sleep(sleep_time)
-					await self._clean_old_requests()
+					self._clean_old_requests()
 
 	async def check(self):
 		await self._wait_if_needed()
@@ -55,7 +56,7 @@ class ACliDeezer(ABC):
 		...
 
 
-class CliPaginatedList(PaginatedList[ResourceType]):
+class CliPaginatedList(Generic[ResourceType]):
 	def __init__(
 		self,
 		client: ACliDeezer,
@@ -91,6 +92,14 @@ class CliPaginatedList(PaginatedList[ResourceType]):
 		if limit > 100:
 			raise ValueError("You need to use async iterator when limit is bigger than %d", limit)
 		elements = await self._req(False, {"limit": limit})
+
+		return elements
+
+	async def get_all(self) -> list[ResourceType]:
+		elements: list[ResourceType] = []
+
+		while self._could_grow():
+			elements.extend(await self._async_fetch_next_page())
 
 		return elements
 
@@ -189,7 +198,28 @@ class CliDeezer(ACliDeezer, Client):
 				parent=self,
 				**kwargs,
 			)
-		Resource.get_paginated_list = get_paginated_list
+		Resource.get_paginated_list = get_paginated_list # type: ignore
+
+		# def __getattr__(self, item: str) -> Any:
+		# 	try:
+		# 		return object.__getattribute__(self, item)
+		# 	except AttributeError:
+		# 		print(f"Attribute '{item}' not found.")
+		# Resource.__getattr__ = __getattr__
+
+		def get(self) -> Any:
+			raise AttributeError("%s has a missing attribute." % self.__class__.__name__)
+		Resource.get = get
+	
+	def _search(
+		self,
+		path: str,
+		query: str = "",
+		strict: bool | None = None,
+		ordering: str | None = None,
+		**advanced_params: str | int | None,
+	) -> CliPaginatedList:
+		return super()._search(path, query, strict, ordering, **advanced_params) # type: ignore
 
 	def search(
 		self,
@@ -205,7 +235,7 @@ class CliDeezer(ACliDeezer, Client):
 		bpm_min: int | None = None,
 		bpm_max: int | None = None,
 	) -> CliPaginatedList:
-		return super()._search(
+		return self._search(
 			"",
 			query=query,
 			strict=strict,
@@ -218,7 +248,59 @@ class CliDeezer(ACliDeezer, Client):
 			dur_max=dur_max,
 			bpm_min=bpm_min,
 			bpm_max=bpm_max,
-		)  # type: ignore
+		)
+
+	def search_playlists(
+		self,
+		query: str = "",
+		strict: bool | None = None,
+		ordering: str | None = None,
+	) -> CliPaginatedList[Playlist]:
+		return self._search(
+			path="playlist",
+			query=query,
+			strict=strict,
+			ordering=ordering,
+		)
+
+	def search_albums(
+		self,
+		query: str = "",
+		strict: bool | None = None,
+		ordering: str | None = None,
+	) -> CliPaginatedList[Album]:
+		return self._search(
+			path="album",
+			query=query,
+			strict=strict,
+			ordering=ordering,
+		)
+	
+
+	def search_artists(
+		self,
+		query: str = "",
+		strict: bool | None = None,
+		ordering: str | None = None,
+	) -> CliPaginatedList[Artist]:
+		return self._search(
+			path="artist",
+			query=query,
+			strict=strict,
+			ordering=ordering,
+		)
+
+	async def async_get_playlist(self, playlist_id: int) -> Playlist:
+		return await self.async_request("GET", f"playlist/{playlist_id}") # type: ignore
+	
+	async def async_get_album(self, album_id: int) -> Album:
+		return await self.async_request("GET", f"album/{album_id}") # type: ignore
+
+	async def async_get_artist(self, artist_id: int) -> Artist:
+		return await self.async_request("GET", f"artist/{artist_id}") # type: ignore
+
+	async def async_get_track(self, track_id: int) -> Track:
+		return await self.async_request("GET", f"track/{track_id}") # type: ignore
 
 	def _get_paginated_list(self, path, **params) -> CliPaginatedList:
 		return CliPaginatedList(client=self, base_path=path, **params)
@@ -319,11 +401,16 @@ class CliDeezerErrorResponse(DeezerErrorResponse):
 	@classmethod
 	def from_body(cls, json_data: dict[str, Any]) -> Self:
 		err_json = json_data["error"]
-		i = err_json["code"]
-		if int(i) == 4:
+		code = int(err_json["code"])
+		if code == 4:
 			return CliDeezerRateLimitError(json_data)
+		elif code == 800:
+			return CliDeezerNoDataException(json_data)
 		return cls(json_data)
 
 
 class CliDeezerRateLimitError(CliDeezerErrorResponse):
+	pass
+
+class CliDeezerNoDataException(CliDeezerErrorResponse):
 	pass

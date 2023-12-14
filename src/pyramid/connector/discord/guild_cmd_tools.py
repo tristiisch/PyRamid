@@ -65,7 +65,7 @@ class GuildCmdTools:
 			track_unvailable_names = []
 			tracks_unfindable_names = []
 			for t in tracks_unfindable:
-				if not t.available:
+				if t.available is False:
 					track_unvailable_names.append(t.get_full_name())
 				else:
 					tracks_unfindable_names.append(t.get_full_name())
