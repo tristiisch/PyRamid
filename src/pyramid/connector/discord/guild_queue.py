@@ -9,14 +9,15 @@ from data.tracklist import TrackList
 from data.guild_data import GuildData
 from connector.discord.music_player_interface import MusicPlayerInterface
 from data.functional.messages.message_sender_queued import MessageSenderQueued
+from data.a_guid_queue import AGuildQueue
 
 
-class GuildQueue:
-	def __init__(self, data: GuildData, ffmpeg_path: str):
+class GuildQueue(AGuildQueue):
+	def __init__(self, data: GuildData, ffmpeg_path: str, mpi: MusicPlayerInterface):
 		self.data: GuildData = data
 		self.ffmpeg = ffmpeg_path
 		self.song_end_action = self.__song_end_continue
-		self.mpi = MusicPlayerInterface(data.guild.preferred_locale, self.data.track_list)
+		self.mpi = mpi
 
 	def is_playing(self) -> bool:
 		return self.data.voice_client.is_playing()

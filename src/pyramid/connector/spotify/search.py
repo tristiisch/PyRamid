@@ -1,4 +1,3 @@
-import logging
 import re
 from enum import Enum
 from typing import Any
@@ -22,16 +21,32 @@ class SpotifySearchBase(ASearch):
 		self.client = CliSpotify(client_credentials_manager=self.client_credentials_manager)
 		self.tools = SpotifyTools()
 
-	async def _async_get_all_tracks(
-		self, results: Any, item_name="items"
-	) -> None | list[dict[str, Any]]:
+	async def items(self, results: dict[str, Any], item_name="items") -> None | list[dict[str, Any]]:
 		if not results:
 			return None
 		tracks: list = results[item_name]
 
 		while results["next"]:
-			results = await self.client.async_next(results)
+			results = await self.client.async_next(results)# type: ignore
 			tracks.extend(results[item_name])
+
+		return tracks
+
+	async def items_max(self, results: dict[str, Any], limit: int | None = None, item_name="items"):
+		if not results or not results.get("tracks") or not results["tracks"].get(item_name):
+			return None
+
+		if limit is None:
+			limit = self.default_limit
+		tracks: list[Any] = results["tracks"][item_name]
+
+		results_tracks: dict[str, Any] = results["tracks"]
+		while results["tracks"]["next"] and limit > len(tracks):
+			results = await self.client.async_next(results_tracks)  # type: ignore
+			tracks.extend(results_tracks[item_name])
+
+		if len(tracks) > limit:
+			return tracks[:limit]
 
 		return tracks
 
@@ -49,7 +64,7 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 	async def get_playlist_tracks_by_id(
 		self, playlist_id: str
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
-		tracks_playlist = await self._async_get_all_tracks(
+		tracks_playlist = await self.items(
 			await self.client.async_playlist_items(playlist_id=playlist_id)
 		)
 		if not tracks_playlist:
@@ -59,9 +74,7 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 	async def get_album_tracks_by_id(
 		self, album_id: str
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | None:
-		tracks = await self._async_get_all_tracks(
-			await self.client.async_album_tracks(album_id=album_id)
-		)
+		tracks = await self.items(await self.client.async_album_tracks(album_id=album_id))
 		if not tracks:
 			return None
 
@@ -91,6 +104,31 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 		return [TrackMinimalSpotify(element) for element in tracks], []
 
 
+class SpotifyResponse:
+	def __init__(self, client: CliSpotify, default_limit: int, item_name="items") -> None:
+		self.client = client
+		self.default_limit = default_limit
+		self.item_name = item_name
+
+	async def items(self, results: dict[str, Any], limit: int | None = None):
+		if not results or not results.get("tracks") or not results["tracks"].get(self.item_name):
+			return None
+
+		if limit is None:
+			limit = self.default_limit
+		tracks: list[Any] = results["tracks"][self.item_name]
+
+		results_tracks: dict[str, Any] = results["tracks"]
+		while results["tracks"]["next"] and limit > len(tracks):
+			results = await self.client.async_next(results_tracks)  # type: ignore
+			tracks.extend(results_tracks[self.item_name])
+
+		if len(tracks) > limit:
+			return tracks[:limit]
+
+		return tracks
+
+
 class SpotifySearch(SpotifySearchId):
 	def __init__(self, default_limit: int, client_id: str, client_secret: str):
 		super().__init__(default_limit, client_id, client_secret)
@@ -101,14 +139,13 @@ class SpotifySearch(SpotifySearchId):
 		if limit is None:
 			limit = self.default_limit
 		if limit > 50:
-			logging.warning("Limit for spotify was %d but the max is %d.", limit, 50)
-			limit = 50
-		results = await self.client.async_search(q=search, limit=limit, type="track")
-
-		if not results or not results.get("tracks") or not results["tracks"].get("items"):
+			req_limit = 50
+		else:
+			req_limit = limit
+		results = await self.client.async_search(q=search, limit=req_limit, type="track")
+		tracks = await self.items_max(results, limit)
+		if not tracks:
 			return None
-
-		tracks = results["tracks"]["items"]
 		return [TrackMinimalSpotify(element) for element in tracks]
 
 	async def search_track(self, search) -> TrackMinimalSpotify | None:

@@ -10,9 +10,10 @@ from connector.discord.guild_queue import GuildQueue
 from data.functional.messages.message_sender_queued import MessageSenderQueued
 from data.functional.engine_source import EngineSource, SourceType
 from data.exceptions import DiscordMessageException
+from data.a_guild_cmd import AGuildCmd
 
 
-class GuildCmd(GuildCmdTools):
+class GuildCmd(AGuildCmd, GuildCmdTools):
 	def __init__(
 		self,
 		logger: Logger,
@@ -84,6 +85,17 @@ class GuildCmd(GuildCmdTools):
 		ms.add_message("Music resume")
 		return True
 
+	async def resume_or_pause(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
+			return False
+
+		if not self.queue.is_playing():
+			await self.resume(ms, ctx)
+		else:
+			await self.pause(ms, ctx)
+		return True
+
 	async def next(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
@@ -105,7 +117,7 @@ class GuildCmd(GuildCmdTools):
 		ms.add_message("Skip musique")
 		return True
 
-	async def suffle(self, ms: MessageSenderQueued, ctx: Interaction):
+	async def shuffle(self, ms: MessageSenderQueued, ctx: Interaction):
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False

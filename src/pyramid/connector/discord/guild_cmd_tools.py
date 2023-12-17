@@ -1,4 +1,6 @@
-from discord import Member, User, VoiceChannel, VoiceClient, VoiceState
+from typing import Union
+from discord import Member, StageChannel, User, VoiceChannel, VoiceClient, VoiceState
+from discord.member import VocalGuildChannel
 
 from data.track import Track, TrackMinimal, TrackMinimalDeezer
 from data.guild_data import GuildData
@@ -40,6 +42,12 @@ class GuildCmdTools:
 
 		# verify bot's permission on member voice channel
 		bot: Member = self.data.guild.me
+
+		if bot.voice and bot.voice.channel:
+			current_channel: Union[VoiceChannel, StageChannel] = bot.voice.channel
+			if current_channel.id == voice_channel.id:
+				return voice_channel
+
 		permissions = voice_channel.permissions_for(bot)
 		if not permissions.connect:
 			ms.edit_message(f"I can't go to {voice_channel.mention}")

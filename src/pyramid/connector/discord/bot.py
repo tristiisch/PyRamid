@@ -30,6 +30,7 @@ from data.functional.engine_source import EngineSource
 from data.exceptions import DiscordMessageException
 from data.functional.messages.message_sender_queued import MessageSenderQueued
 from data.health import HealthModules
+from connector.discord.music_player_interface import MusicPlayerInterface
 from tools.configuration.configuration import Configuration
 
 
@@ -167,5 +168,7 @@ class DiscordBot:
 class GuildInstances:
 	def __init__(self, guild: Guild, logger: Logger, engine_source: EngineSource, ffmpeg_path: str):
 		self.data = GuildData(guild, engine_source)
-		self.songs = GuildQueue(self.data, ffmpeg_path)
+		self.mpi = MusicPlayerInterface(self.data.guild.preferred_locale, self.data.track_list)
+		self.songs = GuildQueue(self.data, ffmpeg_path, self.mpi)
 		self.cmds = GuildCmd(logger, self.data, self.songs, engine_source)
+		self.mpi.set_queue_action(self.cmds)

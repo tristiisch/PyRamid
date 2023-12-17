@@ -4,6 +4,7 @@ import time
 from typing import Callable, List
 
 from discord import AppInfo, ClientUser, Color, Embed, Guild, Interaction
+import discord
 from discord.app_commands import Command
 from discord.ext.commands import Bot
 from discord.user import BaseUser
@@ -197,7 +198,7 @@ class BotCmd:
 			guild: Guild = ctx.guild  # type: ignore
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
-			await guild_cmd.suffle(ms, ctx)
+			await guild_cmd.shuffle(ms, ctx)
 
 		@bot.tree.command(name="remove", description="Remove an element in the queue")
 		async def cmd_remove(ctx: Interaction, number_in_queue: int):
@@ -269,6 +270,16 @@ class BotCmd:
 			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
 
 			await guild_cmd.play_url(ms, ctx, url, at_end=False)
+
+		@bot.tree.command(
+			name="test",
+		)
+		async def cmd_test(ctx: Interaction):
+			view = discord.ui.View() # Establish an instance of the discord.ui.View class
+			style = discord.ButtonStyle.gray  # The button will be gray in color
+			item = discord.ui.Button(style=style, label="Read the docs!", url="https://discordpy.readthedocs.io/en/master")  # Create an item to pass into the view class.
+			view.add_item(item=item)  # Add that item into the view class
+			await ctx.response.send_message("This message has buttons!", view=view)  # Send your message with a button.
 
 		# @bot.tree.command(name="spam", description="Test spam")
 		# async def cmd_spam(ctx: Interaction):

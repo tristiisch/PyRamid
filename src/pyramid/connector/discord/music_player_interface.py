@@ -1,16 +1,25 @@
 import discord
-from discord import Embed, Locale, Message
+from discord import Button, ButtonStyle, Embed, Interaction, Locale, Message
 from discord.abc import Messageable
+from discord.ui import Button
 
 from data.track import Track
 from data.tracklist import TrackList
+from data.a_guid_queue import AGuildQueue
+from data.a_guild_cmd import AGuildCmd
+from data.functional.messages.message_sender_queued import MessageSenderQueued
 
 
-class MusicPlayerInterface:
+class MusicPlayerInterface(discord.ui.View):
+
 	def __init__(self, locale: Locale, track_list: TrackList):
+		super().__init__(timeout=180)
 		self.locale = locale
 		self.last_message: Message | None = None
 		self.track_list = track_list
+
+	def set_queue_action(self, queue_action: AGuildCmd):
+		self.queue_action = queue_action
 
 	async def send_player(self, txt_channel: Messageable, track: Track):
 		embed = self.__embed_track(track)
@@ -26,7 +35,31 @@ class MusicPlayerInterface:
 				return
 			else:
 				await self.last_message.delete()
-		self.last_message = await txt_channel.send(content="", embed=embed)
+		self.last_message = await txt_channel.send(content="", embed=embed, view=self)
+	
+	@discord.ui.button(emoji="⏯️", style=ButtonStyle.primary)
+	async def next_play_or_pause(self, ctx: Interaction, button: Button):
+		ms = MessageSenderQueued(ctx)
+		await ms.thinking()
+		await self.queue_action.resume_or_pause(ms, ctx)
+
+	@discord.ui.button(emoji="⏭️", style=ButtonStyle.primary)
+	async def next_track(self, ctx: Interaction, button: Button):
+		ms = MessageSenderQueued(ctx)
+		await ms.thinking()
+		await self.queue_action.next(ms, ctx)
+
+	@discord.ui.button(emoji="🔀", style=ButtonStyle.primary)
+	async def shuffle_queue(self, ctx: Interaction, button: Button):
+		ms = MessageSenderQueued(ctx)
+		await ms.thinking()
+		await self.queue_action.shuffle(ms, ctx)
+
+	@discord.ui.button(emoji="⏹️", style=ButtonStyle.primary)
+	async def stop_queue(self, ctx: Interaction, button: Button):
+		ms = MessageSenderQueued(ctx)
+		await ms.thinking()
+		await self.queue_action.stop(ms, ctx)
 
 	def __embed_track(self, track: Track) -> Embed:
 		# track.actual_seconds = round(track.duration_seconds * 0.75)

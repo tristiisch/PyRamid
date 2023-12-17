@@ -25,6 +25,13 @@ class SpotifySearchTest(unittest.IsolatedAsyncioTestCase):
 		tracks = await self.cli.search_tracks("Johnny Hallyday")
 		self.assertIsNotNone(tracks)
 
+	async def test_search_multiple_limit(self):
+		limit = 75
+		tracks = await self.cli.search_tracks("Johnny Hallyday", limit)
+
+		size = len(tracks) if tracks is not None else 0
+		self.assertEqual(limit, size)
+
 	async def test_search_playlist(self):
 		tracks = await self.cli.get_playlist_tracks("Best of Johnny Hallyday - live")
 		self.assertIsNotNone(tracks)
