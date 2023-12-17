@@ -1,6 +1,5 @@
 from typing import Union
 from discord import Member, StageChannel, User, VoiceChannel, VoiceClient, VoiceState
-from discord.member import VocalGuildChannel
 
 from data.track import Track, TrackMinimal, TrackMinimalDeezer
 from data.guild_data import GuildData
