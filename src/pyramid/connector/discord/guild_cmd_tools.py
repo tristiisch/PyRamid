@@ -153,9 +153,7 @@ class GuildCmdTools:
 			ms.add_message(f"ERROR > **{track.get_full_name()}** can't be downloaded.")
 			return False
 
-		if (at_end is True and not tl.add_track(track_downloaded)) or not tl.add_track_after(
-			track_downloaded
-		):
+		if (at_end and not tl.add_track(track_downloaded)) or (not at_end and not tl.add_track_after(track_downloaded)):
 			ms.add_message(
 				content=f"ERROR > **{track.get_full_name()}** can't be add to the queue."
 			)
