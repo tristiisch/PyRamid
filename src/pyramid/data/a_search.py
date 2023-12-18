@@ -10,7 +10,7 @@ class ASearch(ABC):
 		pass
 
 	@abc.abstractmethod
-	async def search_tracks(self, search, limit=10) -> list[TrackMinimal] | None:
+	async def search_tracks(self, search, limit: int | None = None) -> list[TrackMinimal] | None:
 		pass
 
 	@abc.abstractmethod

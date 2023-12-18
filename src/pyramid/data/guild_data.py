@@ -9,5 +9,4 @@ class GuildData:
 		self.guild: Guild = guild
 		self.track_list: TrackList = TrackList()
 		self.voice_client: VoiceClient = None  # type: ignore
-		self.search_engines = engine_source
 		self.search_engine = engine_source

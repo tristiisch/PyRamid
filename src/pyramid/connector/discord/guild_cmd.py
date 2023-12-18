@@ -1,6 +1,7 @@
 from logging import Logger
 
-from discord import Interaction, VoiceChannel
+from discord import Interaction, Member, User, VoiceChannel
+import discord
 
 import data.tracklist as utils_list_track
 from data.guild_data import GuildData
@@ -11,6 +12,7 @@ from data.functional.messages.message_sender_queued import MessageSenderQueued
 from data.functional.engine_source import EngineSource, SourceType
 from data.exceptions import DiscordMessageException
 from data.a_guild_cmd import AGuildCmd
+from data.select_view import SelectView
 
 
 class GuildCmd(AGuildCmd, GuildCmdTools):
@@ -193,7 +195,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		ms.add_code_message(queue, prefix="Here's the music in the queue :")
 		return True
 
-	async def search(
+	async def searchV1(
 		self, ms: MessageSenderQueued, input: str, engine: SourceType | None = None
 	) -> bool:
 		try:
@@ -203,10 +205,38 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 			return False
 
 		hsa = utils_list_track.to_str(tracks)
-		ms.add_code_message(hsa, prefix="Here are the results of your search :")
 		if tracks_unfindable:
 			hsa = utils_list_track.to_str(tracks_unfindable)
 			ms.add_code_message(hsa, prefix=":warning: Can't find the audio for these tracks :")
+		ms.add_code_message(hsa, prefix="Here are the results of your search :")
+		return True
+
+	async def search(
+		self, ms: MessageSenderQueued, input: str, engine: SourceType | None = None
+	) -> bool:
+		try:
+			tracks, tracks_unfindable = await self.data.search_engine.search_tracks(
+				input, engine, 25
+			)
+		except DiscordMessageException as err:
+			ms.add_message(err.msg)
+			return False
+
+		view = SelectView({
+			track: discord.SelectOption(label=track.name, description=f"{track.author_name} - {track.album_title}")
+			for track in tracks
+		})
+		async def callback(user: User | Member, ms: MessageSenderQueued, t: TrackMinimal):
+			voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, user)
+			if not voice_channel:
+				return
+			await self._execute_play(ms, voice_channel, t)
+		view.on_select = callback
+
+		if tracks_unfindable:
+			hsa = utils_list_track.to_str(tracks_unfindable)
+			ms.add_code_message(hsa, prefix=":warning: Can't find the audio for these tracks :")
+		await ms.ctx.followup.send(content="Choose a title from the provided list :", view=view)
 		return True
 
 	async def play_url(

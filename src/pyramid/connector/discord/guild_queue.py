@@ -72,7 +72,7 @@ class GuildQueue(AGuildQueue):
 		)
 
 		# Message in channel with player
-		await self.mpi.send_player(msg_sender.txt_channel, track)
+		await self.mpi.send_player(msg_sender.txt_channel, track, msg_sender.ctx.locale)
 		return True
 
 	def stop(self) -> bool:

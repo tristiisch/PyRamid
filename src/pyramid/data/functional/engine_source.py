@@ -85,11 +85,13 @@ class EngineSource:
 			return await self._equivalent_for_download(track)
 		return track
 
-	async def search_tracks(self, input: str, engine: SourceType | None):
+	async def search_tracks(
+		self, input: str, engine: SourceType | None, limit: int | None = None
+	) -> tuple[list[TrackMinimal], list[TrackMinimal]]:
 		search_engine = self._resolve_engine(engine)
 		search_engine_name = self._get_engine_name(search_engine)
 
-		tracks = await search_engine.search_tracks(input)
+		tracks = await search_engine.search_tracks(input, limit)
 		if not tracks:
 			raise TrackNotFoundException(
 				"Search **%s** not found on %s.", input, search_engine_name
@@ -98,7 +100,7 @@ class EngineSource:
 
 		if not all(isinstance(t, TrackMinimalDeezer) for t in tracks):
 			tracks = await self._equivalents_for_download(tracks, tracks_unfindable)
-		return tracks, tracks_unfindable
+		return tracks, tracks_unfindable # type: ignore
 
 	def _get_engine(self, engine: SourceType):
 		return self.__sources.get(engine)
