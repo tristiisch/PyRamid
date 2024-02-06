@@ -1,0 +1,9 @@
+
+*
+!src/
+!requirements.txt
+!config.exemple.yml
+
+!./.git/HEAD
+!./.git/refs
+!./.git/logs/HEAD

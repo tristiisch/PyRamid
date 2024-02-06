@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+
+  pyramid:
+    image: tristiisch/pyramid:pre-prod
+    volumes:
+    - ./config.yml:/app/config.yml
+    - ./logs:/app/logs
+    - ./songs:/app/songs
+    restart: always
+    networks:
+    - pyramid_pre_prod_network
+    container_name : pyramid-pre-prod
+    hostname: pyramid
+
+networks:
+   pyramid_pre_prod_network:
+    driver: bridge

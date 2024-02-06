@@ -159,9 +159,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-songs/
+songs/*
 config.yml
-logs/
+logs/*
 git_info.json
 /test/
 .docker/
+
+!.gitkeep
