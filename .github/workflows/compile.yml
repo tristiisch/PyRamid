@@ -100,6 +100,8 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Units tests
+        env:
+          DEEZER__ARL: ${{ secrets.DEEZER_ARL }}
         run: |
           python -m unittest discover -v -s ${{ env.TEST }} -p ${{ env.TEST_FILES }}
 

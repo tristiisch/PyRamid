@@ -76,7 +76,7 @@ class DeezerDownloadTest(unittest.IsolatedAsyncioTestCase):
 
 		arl = os.getenv("DEEZER__ARL")
 		if arl is None:
-			self.fail("Environnement variable DEEZER__ARL is not set.")
+			self.skipTest("Environnement variable DEEZER__ARL is not set.")
 
 		self.path = "./test-songs"
 		self.cli = DeezerDownloader(arl, self.path)
