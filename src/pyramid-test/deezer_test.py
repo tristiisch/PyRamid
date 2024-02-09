@@ -74,10 +74,10 @@ class DeezerDownloadTest(unittest.IsolatedAsyncioTestCase):
 	def __init__(self, methodName: str = "runTest") -> None:
 		super().__init__(methodName)
 
-		arl = os.getenv(
-			"DEEZER__ARL",
-			"22adbc64579d94ce13d345ae038e62a873b54ef09828b1d104fb1ec26ee4d8f6ba1d7ac32070cb8d9a84069f6f69d9a2cc649fb4f3aa34343eb42c4b6451642c789f86aeeca9c6d6792108dad5db7f62b0597a7e1abaa3c958d6f5db4535a05a",
-		)
+		arl = os.getenv("DEEZER__ARL")
+		if arl is None:
+			self.fail("Environnement variable DEEZER__ARL is not set.")
+
 		self.path = "./test-songs"
 		self.cli = DeezerDownloader(arl, self.path)
 
