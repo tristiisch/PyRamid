@@ -13,7 +13,7 @@ class PlayerButton(discord.ui.View):
 	def __init__(self, queue_action: AGuildCmd, timeout: float | None = 180):
 		super().__init__(timeout=timeout)
 		self.queue_action = queue_action
-	
+
 	@discord.ui.button(emoji="⏯️", style=ButtonStyle.primary)
 	async def next_play_or_pause(self, ctx: Interaction, button: Button):
 		ms = MessageSenderQueued(ctx)
@@ -38,8 +38,8 @@ class PlayerButton(discord.ui.View):
 		await ms.thinking()
 		await self.queue_action.stop(ms, ctx)
 
-class MusicPlayerInterface():
 
+class MusicPlayerInterface:
 	def __init__(self, locale: Locale, track_list: TrackList):
 		self.locale = locale
 		self.last_message: Message | None = None
@@ -62,7 +62,9 @@ class MusicPlayerInterface():
 				return
 			else:
 				await self.last_message.delete()
-		self.last_message = await txt_channel.send(content="", embed=embed, view=PlayerButton(self.queue_action))
+		self.last_message = await txt_channel.send(
+			content="", embed=embed, view=PlayerButton(self.queue_action)
+		)
 
 	def __embed_track(self, track: Track, locale: Locale) -> Embed:
 		# track.actual_seconds = round(track.duration_seconds * 0.75)
