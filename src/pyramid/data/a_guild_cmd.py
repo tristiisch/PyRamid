@@ -4,6 +4,7 @@ from discord import Interaction
 
 from data.functional.messages.message_sender_queued import MessageSenderQueued
 
+
 class AGuildCmd(ABC):
 	@abstractmethod
 	async def stop(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
@@ -16,7 +17,7 @@ class AGuildCmd(ABC):
 	@abstractmethod
 	async def resume(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
 		pass
-	
+
 	@abstractmethod
 	async def resume_or_pause(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
 		pass
@@ -36,4 +37,3 @@ class AGuildCmd(ABC):
 	@abstractmethod
 	async def goto(self, ms: MessageSenderQueued, ctx: Interaction, number_in_queue: int):
 		pass
-
