@@ -2,8 +2,8 @@ version: '3.7'
 
 services:
   pyramid:
-    image: tristiisch/pyramid:latest
-    container_name: pyramid
+    image: tristiisch/pyramid:pre-prod
+    container_name: pyramid-pre-prod
     hostname: pyramid
     restart: always
     volumes:
@@ -11,8 +11,8 @@ services:
       - ./logs:/app/logs
       - ./songs:/app/songs
     networks:
-      - pyramid_prod_network
+      - pyramid_pre_prod_network
 
 networks:
-  pyramid_prod_network:
+  pyramid_pre_prod_network:
     driver: bridge

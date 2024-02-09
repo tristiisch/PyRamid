@@ -2,9 +2,7 @@ version: '3.7'
 
 services:
   pyramid:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: tristiisch/pyramid:latest
     container_name: pyramid
     hostname: pyramid
     restart: always
@@ -14,9 +12,9 @@ services:
       - ./docker/pyramid/logs:/app/logs
       - ./docker/pyramid/songs:/app/songs
     networks:
-      - pyramid_network
+      - pyramid_dev_network
     env_file: .env
 
 networks:
-   pyramid_network:
+  pyramid_dev_network:
     driver: bridge
