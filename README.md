@@ -1,6 +1,6 @@
 # PyRamid
 
-[![GitHub Actions Status](https://github.com/tristiisch/PyRamid/workflows/Python%20CI/badge.svg?branch=main)](https://github.com/tristiisch/PyRamid/actions)
+[![GitHub Actions Status](https://github.com/tristiisch/PyRamid/actions/workflows/compile.yml/badge.svg?branch=main)](https://github.com/tristiisch/PyRamid/actions)
 [![Docker Image](https://img.shields.io/docker/v/tristiisch/pyramid/latest?label=Docker%20Hub)](https://hub.docker.com/r/tristiisch/pyramid)
 
 This Python-built Discord bot empowers users to download music via the Deezer API. It enables seamless song, artist, or album searches and direct downloads from Deezer. By incorporating the Spotify API, it enhances search capabilities.

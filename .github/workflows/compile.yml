@@ -2,21 +2,24 @@ name: Python CI
 
 on:
   push:
-    branches:
-      - "*"
+    branches-ignore:
+      - pre-prod
     paths:
       - "src/**/*.py"
       - "requirements.txt"
       - "Dockerfile"
+      - "docker-compose*.yml"
       - ".github/workflows/compile.yml"
   pull_request:
-    branches:
-      - "*"
+    branches-ignore:
+      - pre-prod
     paths:
       - "src/**/*.py"
       - "requirements.txt"
       - "Dockerfile"
+      - "docker-compose*.yml"
       - ".github/workflows/compile.yml"
+  workflow_dispatch:
 
 env:
     SRC: "./src/pyramid"
@@ -255,11 +258,12 @@ jobs:
     #       prerelease: true
 
 
-  docker_push:
+  docker_push_production:
     name: "Docker Push"
     needs: ["compile", "publish_release"]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    environment: "production"
+    if: github.event_name == 'push' && needs.publish_release.outputs.docker_tag == 'latest'
 
     steps:
       - name: Checkout repository
@@ -278,8 +282,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push PROD
-        if: needs.publish_release.outputs.docker_tag == 'latest'
+      - name: Build and push
+        if: 
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -292,8 +296,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  docker_push_pre_prod:
+    name: "Push Docker image (Pre-Production)"
+    needs: ["compile", "publish_release"]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && needs.publish_release.outputs.docker_tag != 'latest'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set git info
+        run: |
+          echo '${{ needs.compile.outputs.json }}' | jq -r '.git_info' > git_info.json
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build and push DEV
-        if: needs.publish_release.outputs.docker_tag != 'latest'
+        if: 
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -304,3 +331,31 @@ jobs:
 
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy_pre_prod:
+    name: "Deploy Docker Swarm (Pre-Production)"
+    needs: ["compile", "publish_release", "docker_push_pre_prod"]
+    runs-on: ubuntu-latest
+    environment: "pre-production"
+    if: github.event_name == 'push' && needs.publish_release.outputs.docker_tag != 'latest'
+
+    steps:
+      - name: Upload configuration
+        uses: Dylan700/sftp-upload-action@latest
+        with:
+            server: ${{ secrets.DOCKER_HOST }}
+            username: ${{ secrets.DOCKER_USER }}
+            key: ${{ secrets.DOCKER_SSH_PRIVATE_KEY }}
+            port: 22
+            delete: true
+            uploads: |
+              . => ${{ vars.DOCKER_COMPOSE_PATH }}
+            ignore: |
+              !docker-compose.preprod.yml
+      - name: Swarm Update
+        uses: sagebind/docker-swarm-deploy-action@v2
+        with:
+          remote_host: ssh://${{ secrets.DOCKER_USER }}@${{ secrets.DOCKER_HOST }}
+          ssh_private_key: ${{ secrets.DOCKER_SSH_PRIVATE_KEY }}
+          ssh_public_key: ${{ secrets.DOCKER_SSH_PUBLIC_KEY }}
+          args: stack deploy --compose-file ${{ vars.DOCKER_COMPOSE_PATH }} ${{ vars.DOCKER_STACK_NAME }}

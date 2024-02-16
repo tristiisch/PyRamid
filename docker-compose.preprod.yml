@@ -1,18 +1,28 @@
-version: '3.7'
+version: '3.8'
 
 services:
   pyramid:
     image: tristiisch/pyramid:pre-prod
-    container_name: pyramid-pre-prod
-    hostname: pyramid
-    restart: always
     volumes:
       - ./config.yml:/app/config.yml
       - ./logs:/app/logs
       - ./songs:/app/songs
-    networks:
-      - pyramid_pre_prod_network
-
-networks:
-  pyramid_pre_prod_network:
-    driver: bridge
+    deploy:
+      mode: replicated
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 30s
+      rollback_config:
+        parallelism: 1
+        delay: 0s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
