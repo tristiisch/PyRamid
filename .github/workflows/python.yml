@@ -1,30 +1,29 @@
-name: Python CI Pre-Production
+name: Python CI
 
 on:
   push:
     branches:
-      - "pre-prod"
+      - "*"
     paths:
       - "src/**/*.py"
       - "requirements.txt"
       - "Dockerfile"
       - "docker-compose*.yml"
-      - ".github/workflows/compile.yml"
+      - ".github/workflows/python.yml"
   pull_request:
+    types: [opened, synchronize]
     branches:
-      - "pre-prod"
+      - "*"
     paths:
       - "src/**/*.py"
       - "requirements.txt"
       - "Dockerfile"
       - "docker-compose*.yml"
-      - ".github/workflows/compile.yml"
+      - ".github/workflows/python.yml"
   workflow_dispatch:
 
 env:
     SRC: "./src/pyramid"
-    TEST: "./src/pyramid-test"
-    TEST_FILES: "*_test.py"
 
 jobs:
 
@@ -72,12 +71,17 @@ jobs:
           echo "version=$(echo $FULL_JSON | jq -r '.version')" >> $GITHUB_OUTPUT
           echo "commit_id=$(echo $FULL_JSON | jq -r '.git_info.commit_id')" >> $GITHUB_OUTPUT
           echo "last_author=$(echo $FULL_JSON | jq -r '.git_info.last_author')" >> $GITHUB_OUTPUT
+          echo "Output $GITHUB_OUTPUT"
+          cat $GITHUB_OUTPUT
         id: version
 
   unit_test:
     name: "Unit tests Python"
     needs: compile
     runs-on: ubuntu-latest
+    env:
+      TEST: "./src/pyramid-test"
+      TEST_FILES: "*_test.py"
 
     steps:
       - name: Checkout repository
@@ -147,12 +151,16 @@ jobs:
         run: |
           python -m compileall ${{ env.SRC }}
 
-  docker_tag:
-    name: "Docker image tag"
-    needs: ["compile", "unit_test"]
+  info:
+    name: "Retrive build information"
+    needs: ["compile"]
     runs-on: ubuntu-latest
     outputs:
-        docker_tag: ${{ steps.docker_tag.outputs.tag }}
+        environment: ${{ steps.environment.outputs.environment }}
+        version_tag: ${{ steps.environment.outputs.tag }}
+        docker_tags: ${{ steps.docker_tags.outputs.tags }}
+        last_release_ref: ${{ steps.last_release.outputs.last_release_ref }}
+        commit_messages: ${{ steps.commit_messages.outputs.commit_messages }}
     if: github.event_name == 'push'
 
     steps:
@@ -164,23 +172,65 @@ jobs:
       - name: Get tags
         run: git fetch --tags origin
 
-      - name: Set Docker Image Tag
-        id: docker_tag
+      - name: Get environnement names
+        id: environment
         run: |
           if [ ${{ github.ref }} = 'refs/heads/main' ]; then
             echo "tag=latest" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
           elif [ ${{ github.ref }} = 'refs/heads/pre-prod' ]; then
             echo "tag=pre-prod" >> $GITHUB_OUTPUT
+            echo "environment=pre-production" >> $GITHUB_OUTPUT
             echo "tag_github=unstable" >> $GITHUB_OUTPUT
           else
             echo "tag=dev" >> $GITHUB_OUTPUT
+            echo "environment=developement" >> $GITHUB_OUTPUT
           fi
+          echo "Output $GITHUB_OUTPUT"
+          cat $GITHUB_OUTPUT
+      - name: Set Docker Image tags
+        id: docker_tags
+        run: |
+          TAGS=""
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          TAGS="${{ vars.DOCKERHUB_USERNAME }}/pyramid:${{ steps.environment.outputs.tag }}"
+          TAGS="$TAGS,${{ vars.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}"
+          if [ "${{ steps.environment.outputs.tag }}" = "latest" ]; then
+            TAGS="$TAGS,${{ vars.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version}}"
+          fi
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "Output $GITHUB_OUTPUT"
+          cat $GITHUB_OUTPUT
+
+      - name: Get Github last release tag
+        id: last_release
+        run: |
+          RESPONSE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest")
+          if [[ $(echo "$RESPONSE" | jq -r .message) == "Not Found" ]]; then
+            LAST_RELEASE_REF=$(git rev-list --max-parents=0 HEAD)
+          else
+            LAST_RELEASE_REF=$(echo "$RESPONSE" | jq -r .tag_name)
+          fi
+          echo "last_release_ref=${LAST_RELEASE_REF}" >> $GITHUB_OUTPUT
+          echo "Output $GITHUB_OUTPUT"
+          cat $GITHUB_OUTPUT
+
+      - name: Get Github commit messages
+        id: commit_messages
+        run: |
+          COMMIT_MESSAGES=$(git log ${{ steps.last_release.outputs.last_release_ref }}..${{ github.sha }} --oneline --no-merges | sed 's/^/* /' | sed "s/\n/\\\\n/g")
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "commit_messages<<$EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MESSAGES" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+          echo "Output $GITHUB_OUTPUT"
+          cat $GITHUB_OUTPUT
 
   docker_build_push:
-    name: "Docker image Build & Push"
-    needs: ["compile", "docker_tag"]
+    name: "Build & Push Docker image"
+    needs: ["compile", "info"]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && needs.docker_tag.outputs.docker_tag != 'latest'
+    if: github.event_name == 'push'
 
     steps:
       - name: Checkout repository
@@ -196,50 +246,82 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Docker image Build
-        if: 
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.docker_tag.outputs.docker_tag }},
-            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
-
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Docker image Push
-        if: 
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.docker_tag.outputs.docker_tag }},
-            ${{ secrets.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
-
+          tags: ${{ needs.info.outputs.docker_tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   docker_swarm_deploy:
     name: "Deploy to Docker Swarm"
-    needs: ["docker_build_push"]
+    needs: ["info", "docker_build_push"]
     runs-on: ubuntu-latest
-    environment: "pre-production"
+    environment: ${{ needs.info.outputs.environment }}
+    if: github.event_name == 'push'
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Docker Swarm Update
-        uses: wshihadeh/docker-deployment-action@v1
+        uses: tristiisch/docker-deployment-action@master
         with:
+          deployment_mode: docker-swarm
           remote_docker_host: ${{ secrets.DOCKER_USER }}@${{ secrets.DOCKER_HOST }}
           ssh_private_key: ${{ secrets.DOCKER_SSH_PRIVATE_KEY }}
           ssh_public_key: ${{ secrets.DOCKER_SSH_PUBLIC_KEY }}
-          deployment_mode: docker-swarm
           copy_stack_file: true
           deploy_path: ${{ vars.PROJECT_DIR }}
           stack_file_name: ${{ vars.DOCKER_COMPOSE_FILENAME }}
           args: ${{ vars.DOCKER_STACK_NAME }}
+
+  release_publish:
+    name: "Publish release"
+    needs: ["compile", "info", "docker_build_push"]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && needs.info.outputs.version_tag == 'latest'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create stable Release
+        if: 
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_RELEASE }}
+        with:
+          tag_name: ${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
+          release_name: Stable Auto-Release v${{ needs.compile.outputs.version }}
+          body: |
+            This has been deployed on the Discord bot `PyRamid#6882`.
+            To use the latest version the bot, please refer to the instructions outlined at https://github.com/tristiisch/PyRamid/#usage.
+
+            ## Changes
+            ${{ needs.info.outputs.commit_messages }}
+          
+            ## Docker
+            This version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.
+          
+            ### Images creation
+            * ${{ vars.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
+
+            ### Images update
+            * ${{ vars.DOCKERHUB_USERNAME }}/pyramid:${{ needs.info.outputs.version_tag }}
+            * ${{ vars.DOCKERHUB_USERNAME }}/pyramid:${{ needs.compile.outputs.version }}
+          draft: false
+          prerelease: false

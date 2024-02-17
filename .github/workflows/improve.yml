@@ -2,16 +2,14 @@ name: Improve code
 
 on:
   push:
-    branches:
-      - "*"
-    # paths:
-    #   - "src/**/*.py"
-    #   - "requirements.txt"
+    branches-ignore:
+      - "main"
+    paths:
+      - "src/**/*.py"
   pull_request:
     types: [opened, synchronize]
-    # paths:
-    #   - "src/**/*.py"
-    #   - "requirements.txt"
+    paths:
+      - "src/**/*.py"
   workflow_dispatch:
 
 jobs:
