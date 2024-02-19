@@ -33,16 +33,18 @@ WORKDIR /app
 COPY ./requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
+COPY ./entrypoint.sh .
+
 # Copy the default config
 COPY ./config.exemple.yml config.exemple.yml
 
 RUN mkdir -p ./songs
 
 # Copy git info of this build
-# COPY ./git_info.json /app/git_info.json
 COPY --from=builder /app/git_info.json git_info.json
 
 # Copy the current directory contents into the container at /app
 COPY ./src/pyramid src
 
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["python", "src"]

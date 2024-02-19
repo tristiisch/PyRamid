@@ -6,8 +6,6 @@ services:
     container_name: pyramid
     hostname: pyramid
     restart: always
-    ports:
-      - "49149:49150"
     volumes:
       - ./docker/pyramid/logs:/app/logs
       - ./docker/pyramid/songs:/app/songs

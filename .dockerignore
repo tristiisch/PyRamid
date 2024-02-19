@@ -1,8 +1,8 @@
-
 *
 !src/
 !requirements.txt
 !config.exemple.yml
+!./entrypoint.sh
 
 !./.git/HEAD
 !./.git/refs

@@ -7,6 +7,8 @@ on:
     paths:
       - "src/**/*.py"
       - "requirements.txt"
+      - ".dockerignore"
+      - "entrypoint.sh"
       - "Dockerfile"
       - "docker-compose*.yml"
       - ".github/workflows/python.yml"
@@ -17,6 +19,8 @@ on:
     paths:
       - "src/**/*.py"
       - "requirements.txt"
+      - ".dockerignore"
+      - "entrypoint.sh"
       - "Dockerfile"
       - "docker-compose*.yml"
       - ".github/workflows/python.yml"
@@ -152,7 +156,7 @@ jobs:
           python -m compileall ${{ env.SRC }}
 
   info:
-    name: "Retrive build information"
+    name: "Retrieve build information"
     needs: ["compile"]
     runs-on: ubuntu-latest
     outputs:

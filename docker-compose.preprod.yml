@@ -4,9 +4,15 @@ services:
   pyramid:
     image: tristiisch/pyramid:pre-prod
     volumes:
-      - ./config.yml:/app/config.yml
-      - ./logs:/app/logs
-      - ./songs:/app/songs
+      - pyramid_logs_preprod:/app/logs
+      - pyramid_songs_preprod:/app/songs
+    environment:
+      MODE: pre-production
+      GENERAL__LIMIT_TRACKS: 100
+      DISCORD__FFMPEG: /usr/bin/ffmpeg
+      DEEZER__FOLDER: ./songs
+    secrets:
+      - PYRAMID_PREPROD
     deploy:
       mode: replicated
       restart_policy:
@@ -26,3 +32,11 @@ services:
         failure_action: pause
         monitor: 5s
         order: start-first
+
+volumes:
+  pyramid_logs_preprod:
+  pyramid_songs_preprod:
+
+secrets:
+  PYRAMID_PREPROD:
+    external: true

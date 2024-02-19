@@ -1,18 +1,42 @@
-version: '3.7'
+version: '3.8'
 
 services:
   pyramid:
     image: tristiisch/pyramid:latest
-    container_name: pyramid
-    hostname: pyramid
-    restart: always
     volumes:
-      - ./config.yml:/app/config.yml
-      - ./logs:/app/logs
-      - ./songs:/app/songs
-    networks:
-      - pyramid_prod_network
+      - pyramid_logs_prod:/app/logs
+      - pyramid_songs_prod:/app/songs
+    environment:
+      MODE: production
+      GENERAL__LIMIT_TRACKS: 100
+      DISCORD__FFMPEG: /usr/bin/ffmpeg
+      DEEZER__FOLDER: ./songs
+    secrets:
+      - PYRAMID_PROD
+    deploy:
+      mode: replicated
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 30s
+      rollback_config:
+        parallelism: 1
+        delay: 0s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
 
-networks:
-  pyramid_prod_network:
-    driver: bridge
+volumes:
+  pyramid_logs_prod:
+  pyramid_songs_prod:
+
+secrets:
+  PYRAMID_PROD:
+    external: true
