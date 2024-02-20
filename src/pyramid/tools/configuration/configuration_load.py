@@ -9,9 +9,45 @@ from data.environment import Environment
 
 
 class ConfigurationFromEnv(ABC):
+
 	def _get_env_vars(self) -> dict[str, str]:
 		# Load values from environment variables
+		env_sys_var = self.__get_sys_env_vars()
+
+		env_secret_var = self.__read_files_in_directory("/run/secrets")
+		env_sys_var.update(env_secret_var)
+
+		return env_sys_var
+
+	def __get_sys_env_vars(self) -> dict[str, str]:
+		# Load values from environment variables
 		return {str(key).lower(): str(value) for key, value in os.environ.items()}
+
+	def __read_files_in_directory(self, directory) -> dict[str, str]:
+		env_vars = {}
+		if os.path.isdir(directory):
+			files = os.listdir(directory)
+			for file_name in files:
+				file_path = os.path.join(directory, file_name)
+				if os.path.isfile(file_path):
+					file_vars = self.__load_env_vars_from_file(file_path)
+					env_vars.update(file_vars)
+		return env_vars
+
+	def __load_env_vars_from_file(self, file) -> dict[str, str]:
+		env_vars = {}
+		with open(file, "r") as f:
+			for line in f:
+				# Ignore lines starting with '#' and whitespace characters
+				line = line.strip()
+				if not line or line.startswith("#"):
+					continue
+
+				# Split key-value pairs
+				key, value = line.split("=", 1)
+				env_vars[key.strip().lower()] = value.strip()
+
+		return env_vars
 
 
 class ConfigurationFromYAML(ABC):
@@ -33,7 +69,7 @@ class ConfigurationFromYAML(ABC):
 			for child_key, child_value in config_values.items():
 				self.__find_file_values(raw_values, child_value, f"{key}__{child_key}")
 			return
-		raw_values[key] = config_values
+		raw_values[key.lower()] = config_values
 
 	def _transform_all(self, v: dict[str, str], keys_length=0):
 		r: List[tuple[str, None | Any, str | bool]] = [] * keys_length
