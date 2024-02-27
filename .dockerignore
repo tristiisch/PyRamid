@@ -7,3 +7,4 @@
 !./.git/HEAD
 !./.git/refs
 !./.git/logs/HEAD
+!.env*
