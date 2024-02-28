@@ -285,12 +285,13 @@ jobs:
         uses: tristiisch/docker-stack-deployment@master
         with:
           deployment_mode: docker-swarm
-          remote_docker_host: ${{ secrets.MANAGER_TO_USER }}@${{ secrets.MANAGER_HOST }}
+          remote_docker_host: ${{ secrets.MANAGER_HOST }}
+          remote_docker_username: ${{ secrets.MANAGER_TO_USER }}
           ssh_private_key: ${{ secrets.MANAGER_TO_SSH_PRIVATE_KEY }}
           ssh_public_key: ${{ vars.MANAGER_SSH_PUBLIC_KEY }}
           copy_stack_file: true
           deploy_path: ${{ vars.PROJECT_DIR }}
-          stack_file_name: ${{ vars.DOCKER_COMPOSE_FILENAME }}
+          stack_file_path: ${{ vars.DOCKER_COMPOSE_FILENAME }}
           args: ${{ vars.DOCKER_STACK_NAME }}
 
   release_publish:
