@@ -115,7 +115,7 @@ jobs:
 
       - name: Units tests
         env:
-          DEEZER__ARL: ${{ secrets.DEEZER_ARL }}
+          DEEZER__ARL: ${{ secrets.CONFIG_DEEZER_ARL }}
         run: |
           python -m unittest discover -v -s ${{ env.TEST }} -p ${{ env.TEST_FILES }}
 
