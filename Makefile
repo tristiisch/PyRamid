@@ -2,6 +2,7 @@ COMPOSE_SERVICE					:=	pyramid
 VENV_NAME						:=	.venv
 DOCKER_COMPOSE_FILE_PREPROD		:=	docker-compose.preprod.yml
 DOCKER_SERVICE_PREPROD			:=	pyramid_preprod_pyramid
+DOCKER_CONTEXT_PREPROD			:=	cookie-pulsheberg
 
 # ifeq ($(OS),Windows_NT)
 # else
@@ -38,7 +39,7 @@ exec:
 	@docker compose exec $(COMPOSE_SERVICE) sh
 
 exec-pp:
-	@scripts/docker_service_exec.sh $(DOCKER_SERVICE_PREPROD)
+	@scripts/docker_service_exec.sh $(DOCKER_SERVICE_PREPROD) $(DOCKER_CONTEXT_PREPROD)
 
 env-setup:
 	@python3 -m venv $(VENV_NAME)

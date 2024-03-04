@@ -293,7 +293,7 @@ jobs:
           deploy_path: ${{ vars.PROJECT_DIR }}
           stack_file_path: ${{ vars.DOCKER_COMPOSE_FILENAME }}
           args: ${{ vars.DOCKER_STACK_NAME }}
-          secrets: ${{ vars.DOCKER_STACK_NAME }} ${{ vars.DOCKER_COMPOSE_SERVICE}} ${{ vars.DOCKER_STACK_NAME }} DISCORD__TOKEN ${{ secrets.DISCORD_TOKEN }}
+          secrets: ${{ vars.DOCKER_STACK_NAME }} ${{ vars.DOCKER_COMPOSE_SERVICE}} ${{ vars.DOCKER_STACK_NAME }} DISCORD__TOKEN ${{ secrets.CONFIG_DISCORD_TOKEN }} DEEZER__ARL ${{ secrets.CONFIG_DEEZER_ARL }} SPOTIFY__CLIENT_ID ${{ secrets.CONFIG_SPOTIFY_CLIENT_ID }} SPOTIFY__CLIENT_SECRET ${{ secrets.CONFIG_SPOTIFY_CLIENT_SECRET }} 
 
   release_publish:
     name: "Publish release"
