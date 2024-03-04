@@ -282,17 +282,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Docker Swarm Update
-        uses: tristiisch/docker-stack-deployment@master
+        uses: tristiisch/docker-stack-deployment@feature/secrets
         with:
           deployment_mode: docker-swarm
           remote_docker_host: ${{ secrets.MANAGER_HOST }}
           remote_docker_username: ${{ secrets.MANAGER_TO_USER }}
           ssh_private_key: ${{ secrets.MANAGER_TO_SSH_PRIVATE_KEY }}
-          ssh_public_key: ${{ vars.MANAGER_SSH_PUBLIC_KEY }}
+          ssh_public_key: ${{ secrets.MANAGER_SSH_PUBLIC_KEY }}
           copy_stack_file: true
           deploy_path: ${{ vars.PROJECT_DIR }}
           stack_file_path: ${{ vars.DOCKER_COMPOSE_FILENAME }}
           args: ${{ vars.DOCKER_STACK_NAME }}
+          secrets: ${{ vars.DOCKER_STACK_NAME }} ${{ vars.DOCKER_COMPOSE_SERVICE}} ${{ vars.DOCKER_STACK_NAME }} DISCORD__TOKEN ${{ secrets.DISCORD_TOKEN }}
 
   release_publish:
     name: "Publish release"

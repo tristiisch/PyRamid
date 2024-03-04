@@ -1,5 +1,7 @@
-SERVICE := pyramid
-VENV_NAME := .venv
+COMPOSE_SERVICE					:=	pyramid
+VENV_NAME						:=	.venv
+DOCKER_COMPOSE_FILE_PREPROD		:=	docker-compose.preprod.yml
+DOCKER_SERVICE_PREPROD			:=	pyramid_preprod_pyramid
 
 # ifeq ($(OS),Windows_NT)
 # else
@@ -26,11 +28,17 @@ down-v:
 config:
 	@docker compose config
 
+config-pp:
+	@docker compose -f $(DOCKER_COMPOSE_FILE_PREPROD) config
+
 logs:
 	@docker compose logs -f -n 100
 
 exec:
-	@docker compose exec $(SERVICE) sh
+	@docker compose exec $(COMPOSE_SERVICE) sh
+
+exec-pp:
+	@scripts/docker_service_exec.sh $(DOCKER_SERVICE_PREPROD)
 
 env-setup:
 	@python3 -m venv $(VENV_NAME)

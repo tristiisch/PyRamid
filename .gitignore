@@ -164,7 +164,6 @@ songs/*
 config.yml
 logs/*
 git_info.json
-/test/
 .docker/
 
 !.gitkeep
