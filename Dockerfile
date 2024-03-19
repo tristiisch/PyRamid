@@ -66,8 +66,9 @@ LABEL version="$VERSION-$GIT_COMMIT_ID"
 
 # Install necessary dependencies
 RUN apk update && \
-	apk add --no-cache ffmpeg opus-dev binutils && \
-	rm -rf /var/cache/apk/* /etc/apk/cache/* /root/.cache/*
+    apk upgrade && \
+    apk add --no-cache ffmpeg opus-dev binutils && \
+    rm -rf /var/cache/apk/* /etc/apk/cache/* /root/.cache/*
 
 # Set the working directory in the container
 WORKDIR /app

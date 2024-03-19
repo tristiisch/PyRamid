@@ -173,7 +173,6 @@ jobs:
     outputs:
         environment: ${{ steps.environment.outputs.environment }}
         version_tag: ${{ steps.environment.outputs.tag }}
-        docker_tags: ${{ steps.docker_tags.outputs.tags }}
         last_release_ref: ${{ steps.last_release.outputs.last_release_ref }}
         commit_messages: ${{ steps.commit_messages.outputs.commit_messages }}
     if: github.event_name == 'push'
@@ -200,19 +199,6 @@ jobs:
             echo "tag=dev" >> $GITHUB_OUTPUT
             echo "environment=developement" >> $GITHUB_OUTPUT
           fi
-          echo "Output $GITHUB_OUTPUT"
-          cat $GITHUB_OUTPUT
-      - name: Set Docker Image tags
-        id: docker_tags
-        run: |
-          TAGS=""
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          TAGS="${{ env.REGISTRY_IMAGE }}:${{ steps.environment.outputs.tag }}"
-          TAGS="$TAGS,${{ env.REGISTRY_IMAGE_PRIVATE }}:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}"
-          if [ "${{ steps.environment.outputs.tag }}" = "latest" ]; then
-            TAGS="$TAGS,${{ env.REGISTRY_IMAGE }}:${{ needs.compile.outputs.version}}"
-          fi
-          echo "tags=$(echo "$TAGS" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
           echo "Output $GITHUB_OUTPUT"
           cat $GITHUB_OUTPUT
 

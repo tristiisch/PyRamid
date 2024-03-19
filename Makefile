@@ -1,5 +1,6 @@
 COMPOSE_SERVICE					:=	pyramid
 VENV_NAME						:=	.venv
+DOCKER_COMPOSE_FILE_DEV			:=	docker-compose.dev.yml
 DOCKER_COMPOSE_FILE_PREPROD		:=	docker-compose.preprod.yml
 DOCKER_SERVICE_PREPROD			:=	pyramid_preprod_pyramid
 DOCKER_CONTEXT_PREPROD			:=	cookie-pulsheberg
@@ -9,6 +10,8 @@ DOCKER_CONTEXT_PREPROD			:=	cookie-pulsheberg
 # ifeq ($(OS),Windows_NT)
 # else
 # endif
+
+all: start-f logs
 
 start:
 	@docker compose up -d --remove-orphans
@@ -48,8 +51,8 @@ env-setup:
 	@make env
 	@pip install -r requirements.txt
 
-dev: start-f
-	${MAKE} logs
+dev:
+	@docker compose -f $(DOCKER_COMPOSE_FILE_DEV) up -d --remove-orphans --build
 
 img-b:
 	python scripts/environnement.py --build

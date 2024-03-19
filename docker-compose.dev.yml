@@ -9,10 +9,4 @@ services:
     volumes:
       - ./docker/pyramid/logs:/app/logs
       - ./docker/pyramid/songs:/app/songs
-    networks:
-      - pyramid_dev_network
     env_file: .env
-
-networks:
-  pyramid_dev_network:
-    driver: bridge
