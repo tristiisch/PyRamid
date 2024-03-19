@@ -1,51 +1,109 @@
-# Builder image
-# Used to retrieve information from this version
-FROM python:3.12-alpine AS builder
+# Define the Python version to be used
+ARG PYTHON_VERSION=3.12
+ARG VERSION=0.0.0
+ARG GIT_COMMIT_ID=0000000
+ARG GIT_BRANCH=unknown
+ARG GIT_LAST_AUTHOR=unknown
+ARG APP_USER=app-usr
+ARG APP_GROUP=app-grp
+
+# <===================================> Image info <===================================>
+FROM python:$PYTHON_VERSION-alpine AS info
+
+ARG GIT_COMMIT_ID
+ARG GIT_BRANCH
+ARG GIT_LAST_AUTHOR
 
 WORKDIR /app
 
-RUN mkdir -p src/data/functional
+# Generate the git_info.json file
+RUN EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64 -w 0) && \
+    cat <<$EOF > git_info.json
+{
+    "commit_id": "$GIT_COMMIT_ID",
+    "branch": "$GIT_BRANCH",
+    "last_author": "$GIT_LAST_AUTHOR"
+}
+$EOF
 
-COPY ./src/pyramid/git.py src
-COPY ./src/pyramid/data/functional/git_info.py src/data/functional
+# <===================================> Builder image <===================================>
+FROM python:$PYTHON_VERSION-alpine AS builder
 
-COPY ./.git/HEAD .git/HEAD
-COPY ./.git/refs .git/refs
-COPY ./.git/logs/HEAD ./.git/logs/HEAD
-RUN python src/git.py > git_info.json
+WORKDIR /app
 
-# Executable image
-FROM python:3.12-alpine
+# Install dependencies necessary for building Python packages
+# Use only for arch linux/arm64/v8
+RUN if [ "$(uname -m)" = "aarch64" ]; then \
+        apk update && \
+		apk add --no-cache gcc musl-dev libffi-dev; \
+    fi
 
+# Install virtual environment
+RUN python -m venv /opt/venv
+
+# Add the virtual environment to the PATH
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Upgrade pip to the latest version
+RUN pip install --no-cache-dir --upgrade pip
+
+# Install Python dependencies for the application
+COPY ./requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# <===================================> Executable image <===================================>
+FROM python:$PYTHON_VERSION-alpine as executable
+
+ARG VERSION
+ARG GIT_COMMIT_ID
+ARG APP_USER
+ARG APP_GROUP
+
+# Label for the image source
 LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid"
+LABEL org.opencontainers.image.authors="tristiisch"
+LABEL version="$VERSION-$GIT_COMMIT_ID"
 
-# Install multimedia framework that can decode, encode, transcode, mux, demux, stream, filter, and play a wide variety of multimedia files
-RUN apk update
-RUN apk add build-base libffi-dev openssl-dev libgcc python3-dev ffmpeg libsodium opus-dev
-
-# Update python dependencies tool
-RUN pip install --upgrade pip
+# Install necessary dependencies
+RUN apk update && \
+	apk add --no-cache ffmpeg opus-dev binutils && \
+	rm -rf /var/cache/apk/* /etc/apk/cache/* /root/.cache/*
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Install any necessary python dependencies
-COPY ./requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+# Create a user and group for running the application
+RUN addgroup -S $APP_GROUP && adduser -S $APP_USER -G $APP_GROUP
 
-COPY entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Copy entrypoint script and set permissions
+COPY --chown=root:$APP_GROUP --chmod=550 entrypoint.sh /usr/local/bin/
 
 # Copy the default config
-COPY ./config.exemple.yml config.exemple.yml
+COPY --chown=root:$APP_GROUP --chmod=550 ./config.exemple.yml config.exemple.yml
 
-RUN mkdir -p ./songs
+# Create directory for downloaded songs
+RUN mkdir -p ./songs && chmod 660 ./songs && chown root:$APP_GROUP ./songs
+RUN mkdir -p ./logs && chmod -R 777 ./logs && chown -R $APP_USER:$APP_GROUP ./logs
+
+# Copy the virtual environment from the builder stage
+COPY --chown=root:$APP_GROUP --chmod=550 --from=builder /opt/venv /opt/venv
 
 # Copy git info of this build
-COPY --from=builder /app/git_info.json git_info.json
+COPY --chown=root:$APP_GROUP --chmod=550 --from=info /app/git_info.json git_info.json
 
 # Copy the current directory contents into the container at /app
-COPY ./src/pyramid src
+COPY --chown=root:$APP_GROUP --chmod=550 ./src/pyramid src
 
+# Switch to the non-root user
+USER $APP_USER
+
+# Add the virtual environment to the PATH
+ENV PATH="/opt/venv/bin:$PATH"
+
+HEALTHCHECK --interval=5s --retries=3 --timeout=5s CMD python ./src/cli.py health
+# Socket port for external health
+EXPOSE 49150
+
+# Define the entrypoint and default command
 ENTRYPOINT ["entrypoint.sh"]
 CMD ["python", "src"]

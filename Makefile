@@ -4,6 +4,8 @@ DOCKER_COMPOSE_FILE_PREPROD		:=	docker-compose.preprod.yml
 DOCKER_SERVICE_PREPROD			:=	pyramid_preprod_pyramid
 DOCKER_CONTEXT_PREPROD			:=	cookie-pulsheberg
 
+.PHONY: logs
+
 # ifeq ($(OS),Windows_NT)
 # else
 # endif
@@ -46,4 +48,14 @@ env-setup:
 	@make env
 	@pip install -r requirements.txt
 
-dev: start-f logs
+dev: start-f
+	${MAKE} logs
+
+img-b:
+	python scripts/environnement.py --build
+
+img-ba:
+	python scripts/environnement.py --build-archs
+
+img-c:
+	python scripts/environnement.py --images-purge
