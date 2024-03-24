@@ -235,7 +235,7 @@ class SpotifyType(Enum):
 class SpotifyTools(AEngineTools):
 	def extract_from_url(self, url) -> tuple[str, SpotifyType | None] | tuple[None, None]:
 		# Extract ID and type using regex
-		pattern = r"(?<=open.spotify.com/)(intl-(?P<intl>\w+)/)?(?P<type>\w+)/(?P<id>\w+)"
+		pattern = r"(?<=open\.spotify\.com/)(intl-(?P<intl>\w+)/)?(?P<type>\w+)/(?P<id>\w+)"
 		match = re.search(pattern, url)
 		if not match:
 			return None, None
