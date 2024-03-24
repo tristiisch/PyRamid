@@ -24,7 +24,7 @@ def keep_latest_files(
 	files = [
 		os.path.join(directory, f)
 		for f in os.listdir(directory)
-		if os.path.isfile(os.path.join(directory, f)) and not f in ['.gitignore', '.gitkeep', '.dockerignore']
+		if os.path.isfile(os.path.join(directory, f)) and f not in ['.gitignore', '.gitkeep', '.dockerignore']
 	]
 	files.sort(key=os.path.getctime, reverse=True)
 
