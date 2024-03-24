@@ -9,7 +9,6 @@ from data.environment import Environment
 
 
 class ConfigurationFromEnv(ABC):
-
 	def _get_env_vars(self) -> dict[str, str]:
 		# Load values from environment variables
 		env_sys_var = self.__get_sys_env_vars()
