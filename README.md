@@ -48,6 +48,15 @@ Feel free to fork the project while adhering to the license and acknowledging th
 
 For seamless integration of your modifications, submitting pull requests to the original bot version is recommended.
 
+## Setup local project
+
+Install virtual python environnement on Unix
+```
+python -m venv .venv
+source ./.venv/bin/activate
+pip install -r requirements.txt
+```
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)

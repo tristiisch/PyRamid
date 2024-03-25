@@ -7,10 +7,6 @@ DOCKER_CONTEXT_PREPROD			:=	cookie-pulsheberg
 
 .PHONY: logs
 
-# ifeq ($(OS),Windows_NT)
-# else
-# endif
-
 all: start-f logs
 
 start:
@@ -45,11 +41,6 @@ exec:
 
 exec-pp:
 	@scripts/docker_service_exec.sh $(DOCKER_SERVICE_PREPROD) $(DOCKER_CONTEXT_PREPROD)
-
-env-setup:
-	@python3 -m venv $(VENV_NAME)
-	@make env
-	@pip install -r requirements.txt
 
 dev:
 	@docker compose -f $(DOCKER_COMPOSE_FILE_DEV) up -d --remove-orphans --build
