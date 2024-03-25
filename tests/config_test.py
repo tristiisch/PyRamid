@@ -1,13 +1,8 @@
 import logging
-import os
-import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../pyramid")))
 from pyramid.tools.configuration.configuration import Configuration
-
 
 class ConfigurationTest(unittest.TestCase):
 	def setUp(self):
@@ -22,10 +17,10 @@ class ConfigurationTest(unittest.TestCase):
 		self.config = Configuration(logger=custom_logger)
 		self.assertEqual(getattr(self.config, "_Configuration__logger"), custom_logger)
 
-	@patch("tools.configuration.configuration_load.ConfigurationFromEnv._get_env_vars")
-	@patch("tools.configuration.configuration_load.ConfigurationFromYAML._get_file_vars")
-	@patch("tools.configuration.configuration_load.ConfigurationFromYAML._validate_all")
-	@patch("tools.configuration.configuration_load.ConfigurationFromYAML._transform_all")
+	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromEnv._get_env_vars")
+	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromYAML._get_file_vars")
+	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromYAML._validate_all")
+	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromYAML._transform_all")
 	def test_load_success(
 		self, mock_transform_all, mock_validate_all, mock_get_file_vars, mock_get_env_vars
 	):
@@ -42,10 +37,10 @@ class ConfigurationTest(unittest.TestCase):
 		mock_transform_all.assert_called()
 		mock_validate_all.assert_called()
 
-	@patch("tools.configuration.configuration_load.ConfigurationFromEnv._get_env_vars")
-	@patch("tools.configuration.configuration_load.ConfigurationFromYAML._get_file_vars")
-	@patch("tools.configuration.configuration_load.ConfigurationFromYAML._validate_all")
-	@patch("tools.configuration.configuration_load.ConfigurationFromYAML._transform_all")
+	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromEnv._get_env_vars")
+	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromYAML._get_file_vars")
+	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromYAML._validate_all")
+	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromYAML._transform_all")
 	def test_load_failure(
 		self, mock_transform_all, mock_validate_all, mock_get_file_vars, mock_get_env_vars
 	):
@@ -62,7 +57,7 @@ class ConfigurationTest(unittest.TestCase):
 		mock_transform_all.assert_called()
 		mock_validate_all.assert_called()
 
-	@patch("tools.configuration.configuration_save.ConfigurationToYAML._save_to_yaml")
+	@patch("pyramid.tools.configuration.configuration_save.ConfigurationToYAML._save_to_yaml")
 	def test_save(self, mock_save_to_yaml):
 		file_name = "test_config.yml"
 		self.config.save(file_name)

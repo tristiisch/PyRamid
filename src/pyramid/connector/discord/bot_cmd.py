@@ -7,12 +7,12 @@ from discord import AppInfo, ClientUser, Color, Embed, Guild, Interaction
 from discord.app_commands import Command
 from discord.ext.commands import Bot
 from discord.user import BaseUser
-from connector.discord.guild_cmd import GuildCmd
-from data.environment import Environment
-from data.functional.application_info import ApplicationInfo
-from data.functional.messages.message_sender_queued import MessageSenderQueued
-from data.functional.engine_source import SourceType
-import tools.utils
+from pyramid.connector.discord.guild_cmd import GuildCmd
+from pyramid.data.environment import Environment
+from pyramid.data.functional.application_info import ApplicationInfo
+from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
+from pyramid.data.functional.engine_source import SourceType
+import pyramid.tools.utils
 
 
 class BotCmd:

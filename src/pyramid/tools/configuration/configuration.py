@@ -1,10 +1,10 @@
 import logging
 from logging import Logger
 
-import tools.utils
-from data.environment import Environment
-from tools.configuration.configuration_load import ConfigurationFromEnv, ConfigurationFromYAML
-from tools.configuration.configuration_save import ConfigurationToYAML
+from pyramid.tools import utils
+from pyramid.data.environment import Environment
+from pyramid.tools.configuration.configuration_load import ConfigurationFromEnv, ConfigurationFromYAML
+from pyramid.tools.configuration.configuration_save import ConfigurationToYAML
 
 
 class Configuration(ConfigurationFromYAML, ConfigurationToYAML, ConfigurationFromEnv):
@@ -41,7 +41,7 @@ class Configuration(ConfigurationFromYAML, ConfigurationToYAML, ConfigurationFro
 		Returns:
 		- bool: True if the loading process is successful, False otherwise.
 		"""
-		keys_length = tools.utils.count_public_variables(self)
+		keys_length = utils.count_public_variables(self)
 
 		# Load from environment variables if enabled
 		result_1 = True

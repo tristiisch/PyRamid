@@ -3,16 +3,16 @@ from logging import Logger
 from discord import Interaction, Member, User, VoiceChannel
 import discord
 
-import data.tracklist as utils_list_track
-from data.guild_data import GuildData
-from data.track import TrackMinimal
-from connector.discord.guild_cmd_tools import GuildCmdTools
-from connector.discord.guild_queue import GuildQueue
-from data.functional.messages.message_sender_queued import MessageSenderQueued
-from data.functional.engine_source import EngineSource, SourceType
-from data.exceptions import DiscordMessageException
-from data.a_guild_cmd import AGuildCmd
-from data.select_view import SelectView
+from pyramid.data import tracklist as utils_list_track
+from pyramid.data.guild_data import GuildData
+from pyramid.data.track import TrackMinimal
+from pyramid.connector.discord.guild_cmd_tools import GuildCmdTools
+from pyramid.connector.discord.guild_queue import GuildQueue
+from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
+from pyramid.data.functional.engine_source import EngineSource, SourceType
+from pyramid.data.exceptions import DiscordMessageException
+from pyramid.data.a_guild_cmd import AGuildCmd
+from pyramid.data.select_view import SelectView
 
 
 class GuildCmd(AGuildCmd, GuildCmdTools):

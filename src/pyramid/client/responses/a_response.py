@@ -1,7 +1,7 @@
 from typing import Any, Self
-from client.a_socket import ASocket
-from client.common import ResponseCode
-# from client.common import ResponseCode, SocketHeader
+from pyramid.client.a_socket import ASocket
+from pyramid.client.common import ResponseCode
+# from pyramid.client.common import ResponseCode, SocketHeader
 
 
 # class ReponseHeader(SocketHeader):

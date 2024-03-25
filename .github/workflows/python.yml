@@ -18,6 +18,7 @@ on:
       - "*"
     paths:
       - "src/**/*.py"
+      - "tests/**/*.py"
       - "requirements.txt"
       - ".dockerignore"
       - "entrypoint.sh"
@@ -27,7 +28,7 @@ on:
   workflow_dispatch:
 
 env:
-    SRC: "./src/pyramid"
+    SRC: "./src"
     REGISTRY_IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_REPO_NAME }}
     REGISTRY_IMAGE_PRIVATE: ${{ vars.DOCKER_REGISTRY_PRIVATE_URL }}/${{ github.actor }}/${{ github.event.repository.name }}
 
@@ -87,8 +88,8 @@ jobs:
     needs: compile
     runs-on: ubuntu-latest
     env:
-      TEST: "./src/pyramid-test"
-      TEST_FILES: "*_test.py"
+      MODULE_NAME: "pyramid"
+      TEST_DIR: "./tests"
 
     steps:
       - name: Checkout repository
@@ -105,22 +106,35 @@ jobs:
         uses: actions/cache@v4
         with:
             path: ~/.cache/pip
-            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+            key: ${{ runner.os }}-pip-test-${{ hashFiles('**/requirements.txt') }}
             restore-keys: |
+              - ${{ runner.os }}-pip-test-${{ hashFiles('**/requirements.txt') }}
               - ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
               - ${{ runner.os }}-pip
-            lookup-only: true
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest-cov
+          pip install -e .
+
+      - name: Install project for tests
+        run: |
+          pip install pytest-cov
+          pip install -e .
 
       - name: Units tests
         env:
           DEEZER__ARL: ${{ secrets.CONFIG_DEEZER_ARL }}
         run: |
-          python -m unittest discover -v -s ${{ env.TEST }} -p ${{ env.TEST_FILES }}
+            pytest --cov=${{ env.MODULE_NAME }} ${{ env.TEST_DIR }}
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: tristiisch/PyRamid
 
   version_compatibility:
     name: "Envs compatibility"

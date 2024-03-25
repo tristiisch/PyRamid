@@ -1,8 +1,8 @@
 import os
 import random
 
-import tools.utils as tools
-from data.track import Track, TrackMinimal, TrackMinimalDeezer
+import pyramid.tools.utils as tools
+from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
 
 
 class TrackList:

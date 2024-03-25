@@ -1,13 +1,13 @@
 from enum import Enum
 from typing import Dict
 
-from connector.deezer.downloader import DeezerDownloader
-from connector.deezer.search import DeezerSearch
-from connector.spotify.search import SpotifySearch
-from data.a_search import ASearch
-from data.exceptions import EngineSourceNotFoundException, TrackNotFoundException
-from data.track import Track, TrackMinimal, TrackMinimalDeezer
-from tools.configuration.configuration import Configuration
+from pyramid.connector.deezer.downloader import DeezerDownloader
+from pyramid.connector.deezer.search import DeezerSearch
+from pyramid.connector.spotify.search import SpotifySearch
+from pyramid.data.a_search import ASearch
+from pyramid.data.exceptions import EngineSourceNotFoundException, TrackNotFoundException
+from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
+from pyramid.tools.configuration.configuration import Configuration
 
 
 class SourceType(Enum):

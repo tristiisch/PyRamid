@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from discord import Interaction
 
-from data.functional.messages.message_sender_queued import MessageSenderQueued
+from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
 
 class AGuildCmd(ABC):
 	@abstractmethod

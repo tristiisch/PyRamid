@@ -1,4 +1,4 @@
-from data.functional.git_info import GitInfo
+from pyramid.data.functional.git_info import GitInfo
 
 
 git_info = GitInfo.read()

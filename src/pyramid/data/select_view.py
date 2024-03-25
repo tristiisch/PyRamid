@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Generic, TypeVar
 
 import discord
-from data.functional.messages.message_sender_queued import MessageSenderQueued
+from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
 from discord import Interaction, Member, User
 
 T = TypeVar("T")

@@ -45,6 +45,9 @@ exec-pp:
 dev:
 	@docker compose -f $(DOCKER_COMPOSE_FILE_DEV) up -d --remove-orphans --build
 
+test:
+	pytest --cov=pyramid tests/
+
 img-b:
 	python scripts/environnement.py --build
 
@@ -53,3 +56,6 @@ img-ba:
 
 img-c:
 	python scripts/environnement.py --images-purge
+
+clean:
+	python scripts/environnement.py --clean

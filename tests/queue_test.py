@@ -1,11 +1,7 @@
-import os
-import sys
 import time
 import unittest
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from pyramid.tools.queue import Queue, QueueItem  # noqa: E402
+from pyramid.tools.custom_queue import Queue, QueueItem  # noqa: E402
 
 
 class SimpleQueue(unittest.TestCase):

@@ -1,9 +1,9 @@
 import argparse
 
-from data.functional.application_info import ApplicationInfo
-from client.client import SocketClient
-from client.requests.health import HealthRequest
-from tools.logs_handler import LogsHandler
+from pyramid.data.functional.application_info import ApplicationInfo
+from pyramid.client.client import SocketClient
+from pyramid.client.requests.health import HealthRequest
+from pyramid.tools.logs_handler import LogsHandler
 
 info = ApplicationInfo()
 

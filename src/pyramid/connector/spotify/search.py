@@ -2,12 +2,12 @@ import re
 from enum import Enum
 from typing import Any
 
-from data.a_engine_tools import AEngineTools
-from data.a_search import ASearch, ASearchId
-from data.track import TrackMinimalSpotify
+from pyramid.data.a_engine_tools import AEngineTools
+from pyramid.data.a_search import ASearch, ASearchId
+from pyramid.data.track import TrackMinimalSpotify
 from spotipy.oauth2 import SpotifyClientCredentials
 
-from connector.spotify.cli_spotify import CliSpotify
+from pyramid.connector.spotify.cli_spotify import CliSpotify
 
 
 class SpotifySearchBase(ASearch):

@@ -4,9 +4,9 @@ import os
 import sys
 
 import coloredlogs
-import tools.utils as tools
-from data.functional.application_info import ApplicationInfo
-from data.environment import Environment
+import pyramid.tools.utils as tools
+from pyramid.data.functional.application_info import ApplicationInfo
+from pyramid.data.environment import Environment
 
 
 class LogsHandler:

@@ -19,19 +19,19 @@ from discord.ext.commands.errors import (
 	CommandError,
 )
 from discord.app_commands.errors import AppCommandError, CommandInvokeError
-from data.functional.application_info import ApplicationInfo
-from data.environment import Environment
-from data.guild_data import GuildData
-from connector.discord.bot_cmd import BotCmd
-from connector.discord.bot_listener import BotListener
-from connector.discord.guild_cmd import GuildCmd
-from connector.discord.guild_queue import GuildQueue
-from data.functional.engine_source import EngineSource
-from data.exceptions import DiscordMessageException
-from data.functional.messages.message_sender_queued import MessageSenderQueued
-from data.health import HealthModules
-from connector.discord.music_player_interface import MusicPlayerInterface
-from tools.configuration.configuration import Configuration
+from pyramid.data.functional.application_info import ApplicationInfo
+from pyramid.data.environment import Environment
+from pyramid.data.guild_data import GuildData
+from pyramid.connector.discord.bot_cmd import BotCmd
+from pyramid.connector.discord.bot_listener import BotListener
+from pyramid.connector.discord.guild_cmd import GuildCmd
+from pyramid.connector.discord.guild_queue import GuildQueue
+from pyramid.data.functional.engine_source import EngineSource
+from pyramid.data.exceptions import DiscordMessageException
+from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
+from pyramid.data.health import HealthModules
+from pyramid.connector.discord.music_player_interface import MusicPlayerInterface
+from pyramid.tools.configuration.configuration import Configuration
 
 
 class DiscordBot:

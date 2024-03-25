@@ -3,10 +3,10 @@ from discord import ButtonStyle, Embed, Interaction, Locale, Message
 from discord.abc import Messageable
 from discord.ui import Button
 
-from data.track import Track
-from data.tracklist import TrackList
-from data.a_guild_cmd import AGuildCmd
-from data.functional.messages.message_sender_queued import MessageSenderQueued
+from pyramid.data.track import Track
+from pyramid.data.tracklist import TrackList
+from pyramid.data.a_guild_cmd import AGuildCmd
+from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
 
 
 class PlayerButton(discord.ui.View):

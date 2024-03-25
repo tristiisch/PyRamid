@@ -1,12 +1,12 @@
 from typing import Union
 from discord import Member, StageChannel, User, VoiceChannel, VoiceClient, VoiceState
 
-from data.track import Track, TrackMinimal, TrackMinimalDeezer
-from data.guild_data import GuildData
-from data.tracklist import TrackList
-from connector.discord.guild_queue import GuildQueue
-from data.functional.messages.message_sender_queued import MessageSenderQueued
-from data.functional.engine_source import EngineSource
+from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
+from pyramid.data.guild_data import GuildData
+from pyramid.data.tracklist import TrackList
+from pyramid.connector.discord.guild_queue import GuildQueue
+from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
+from pyramid.data.functional.engine_source import EngineSource
 
 
 class GuildCmdTools:

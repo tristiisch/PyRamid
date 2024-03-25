@@ -2,7 +2,7 @@ from abc import ABC
 from datetime import datetime
 
 import deezer
-import tools.utils as tools
+import pyramid.tools.utils as tools
 
 
 class TrackMinimal(ABC):

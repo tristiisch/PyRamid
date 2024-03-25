@@ -1,7 +1,7 @@
 import logging
 import time
 from pydeezer.ProgressHandler import BaseProgressHandler
-from tools import utils
+from pyramid.tools import utils
 
 
 class DownloaderProgressBar(BaseProgressHandler):

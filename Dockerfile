@@ -93,10 +93,17 @@ COPY --chown=root:$APP_GROUP --chmod=550 --from=builder /opt/venv /opt/venv
 COPY --chown=root:$APP_GROUP --chmod=550 --from=info /app/git_info.json git_info.json
 
 # Copy the current directory contents into the container at /app
-COPY --chown=root:$APP_GROUP --chmod=550 ./src/pyramid src
+COPY --chown=root:$APP_GROUP --chmod=550 ./src ./src
+COPY --chown=root:$APP_GROUP --chmod=550 ./setup.py ./setup.py
+
+RUN mkdir -p src/pyramid.egg-info \
+	&& chmod 770 -R ./src/pyramid.egg-info \
+	&& chown $APP_USER:$APP_GROUP -R ./src/pyramid.egg-info
 
 # Switch to the non-root user
 USER $APP_USER
+
+RUN pip install -e .
 
 # Add the virtual environment to the PATH
 ENV PATH="/opt/venv/bin:$PATH"

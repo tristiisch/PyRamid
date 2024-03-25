@@ -6,14 +6,14 @@ import signal
 from datetime import datetime
 from threading import Thread
 
-import tools.utils as tools
-from data.functional.application_info import ApplicationInfo
-from connector.discord.bot import DiscordBot
-from client.server import SocketServer
-from data.health import HealthModules
-from tools.configuration.configuration import Configuration
-from tools.logs_handler import LogsHandler
-from tools.queue import Queue
+import pyramid.tools.utils as tools
+from pyramid.data.functional.application_info import ApplicationInfo
+from pyramid.connector.discord.bot import DiscordBot
+from pyramid.client.server import SocketServer
+from pyramid.data.health import HealthModules
+from pyramid.tools.configuration.configuration import Configuration
+from pyramid.tools.logs_handler import LogsHandler
+from pyramid.tools.custom_queue import Queue
 
 
 class Main:

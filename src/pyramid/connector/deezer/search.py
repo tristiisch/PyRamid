@@ -5,11 +5,11 @@ from enum import Enum
 import aiohttp
 
 import deezer
-from data.a_engine_tools import AEngineTools
-from data.a_search import ASearch, ASearchId
-from data.track import TrackMinimalDeezer
+from pyramid.data.a_engine_tools import AEngineTools
+from pyramid.data.a_search import ASearch, ASearchId
+from pyramid.data.track import TrackMinimalDeezer
 
-from connector.deezer.cli_deezer import (
+from pyramid.connector.deezer.cli_deezer import (
 	CliDeezer,
 	CliDeezerNoDataException,
 	CliDeezerRateLimitError,

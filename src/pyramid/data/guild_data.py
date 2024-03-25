@@ -1,7 +1,7 @@
 from discord import Guild, VoiceClient
 
-from data.tracklist import TrackList
-from data.functional.engine_source import EngineSource
+from pyramid.data.tracklist import TrackList
+from pyramid.data.functional.engine_source import EngineSource
 
 
 class GuildData:

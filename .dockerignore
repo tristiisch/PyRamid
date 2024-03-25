@@ -1,5 +1,6 @@
 *
 !src/
+!setup.py
 !requirements.txt
 !config.exemple.yml
 !./entrypoint.sh

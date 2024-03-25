@@ -1,9 +1,9 @@
 import logging
 import socket
-from client.responses.a_response import SocketResponse
-from client.requests.a_request import ARequest
+from pyramid.client.responses.a_response import SocketResponse
+from pyramid.client.requests.a_request import ARequest
 
-from client.common import SocketCommon
+from pyramid.client.common import SocketCommon
 
 
 class SocketClient:

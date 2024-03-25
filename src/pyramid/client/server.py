@@ -4,10 +4,10 @@ from logging import Logger
 from socket import socket as sock
 from typing import Any
 
-from client.common import ResponseCode, SocketCommon
-from client.requests.ask_request import AskRequest
-from client.responses.a_response import SocketResponse
-from data.health import HealthModules
+from pyramid.client.common import ResponseCode, SocketCommon
+from pyramid.client.requests.ask_request import AskRequest
+from pyramid.client.responses.a_response import SocketResponse
+from pyramid.data.health import HealthModules
 
 # from _socket import _RetAddress
 

@@ -1,10 +1,10 @@
 import json
 import logging
 import sys
-from client.requests.a_request import ARequest
-from client.requests.ask_request import AskRequest
-from client.responses.a_response import ResponseHeader
-from data.health import HealthModules
+from pyramid.client.requests.a_request import ARequest
+from pyramid.client.requests.ask_request import AskRequest
+from pyramid.client.responses.a_response import ResponseHeader
+from pyramid.data.health import HealthModules
 
 
 class HealthRequest(ARequest):

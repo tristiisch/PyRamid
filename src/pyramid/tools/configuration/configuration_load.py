@@ -5,7 +5,7 @@ from logging import Logger
 from typing import Any, Callable, List, Optional
 
 import yaml
-from data.environment import Environment
+from pyramid.data.environment import Environment
 
 
 class ConfigurationFromEnv(ABC):

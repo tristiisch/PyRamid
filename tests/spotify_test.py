@@ -1,10 +1,5 @@
 import os
-import sys
 import unittest
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../pyramid")))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from pyramid.connector.spotify.search import SpotifySearch
 
 

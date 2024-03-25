@@ -2,7 +2,7 @@ import json
 import platform
 import subprocess
 
-from data.functional.git_info import GitInfo
+from pyramid.data.functional.git_info import GitInfo
 
 
 class ApplicationInfo:

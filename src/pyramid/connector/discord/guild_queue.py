@@ -4,12 +4,12 @@ import sys
 import discord
 from discord import VoiceChannel, VoiceClient
 
-from data.track import Track
-from data.tracklist import TrackList
-from data.guild_data import GuildData
-from connector.discord.music_player_interface import MusicPlayerInterface
-from data.functional.messages.message_sender_queued import MessageSenderQueued
-from data.a_guid_queue import AGuildQueue
+from pyramid.data.track import Track
+from pyramid.data.tracklist import TrackList
+from pyramid.data.guild_data import GuildData
+from pyramid.connector.discord.music_player_interface import MusicPlayerInterface
+from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
+from pyramid.data.a_guid_queue import AGuildQueue
 
 
 class GuildQueue(AGuildQueue):

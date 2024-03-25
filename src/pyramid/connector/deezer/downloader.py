@@ -4,14 +4,14 @@ import os
 import traceback
 
 import pydeezer.util
-from connector.deezer.downloader_progress_bar import DownloaderProgressBar
-from connector.deezer.py_deezer import PyDeezer
-from data.track import Track
+from pyramid.connector.deezer.downloader_progress_bar import DownloaderProgressBar
+from pyramid.connector.deezer.py_deezer import PyDeezer
+from pyramid.data.track import Track
 from pydeezer.constants import track_formats
 from pydeezer.exceptions import LoginError
 from urllib3.exceptions import MaxRetryError
 
-from data.exceptions import CustomException
+from pyramid.data.exceptions import CustomException
 
 
 class DeezerDownloader:

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from data.track import Track
+from pyramid.data.track import Track
 
 class AGuildQueue(ABC):
 	@abstractmethod

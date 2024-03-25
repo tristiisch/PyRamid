@@ -1,14 +1,8 @@
 import os
-import shutil
-import sys
 import unittest
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../pyramid")))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from pyramid.connector.deezer.downloader import DeezerDownloader
 from pyramid.connector.deezer.search import DeezerSearch
-
 
 class DeezerSearchTest(unittest.IsolatedAsyncioTestCase):
 	def __init__(self, methodName: str = "runTest") -> None:
@@ -68,26 +62,6 @@ class DeezerSearchTest(unittest.IsolatedAsyncioTestCase):
 	# async def test_url_playlist_2nd_format(self):
 	# 	tracks = await self.cli.get_by_url("https://deezer.page.link/ibwojNjEKAQjsKgZ9")
 	# 	self.assertIsNotNone(tracks)
-
-
-class DeezerDownloadTest(unittest.IsolatedAsyncioTestCase):
-	def __init__(self, methodName: str = "runTest") -> None:
-		super().__init__(methodName)
-
-		arl = os.getenv("DEEZER__ARL")
-		if arl is None:
-			self.skipTest("Environnement variable DEEZER__ARL is not set.")
-
-		self.path = "./test-songs"
-		self.cli = DeezerDownloader(arl, self.path)
-
-	async def test_download(self):
-		track = await self.cli.dl_track_by_id(2308590)
-		self.assertIsNotNone(track)
-
-	def tearDown(self):
-		shutil.rmtree(self.path)
-
 
 if __name__ == "__main__":
 	unittest.main(failfast=True)

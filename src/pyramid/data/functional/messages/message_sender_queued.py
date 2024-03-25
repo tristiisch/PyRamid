@@ -1,9 +1,9 @@
 from typing import Any, Callable
 
-from data.functional.messages.message_sender import MessageSender
+from pyramid.data.functional.messages.message_sender import MessageSender
 from discord import Interaction, Message, WebhookMessage
 from discord.utils import MISSING
-from tools.queue import Queue, QueueItem
+from pyramid.tools.custom_queue import Queue, QueueItem
 
 MAX_MSG_LENGTH = 2000
 
