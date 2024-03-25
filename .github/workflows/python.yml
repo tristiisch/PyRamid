@@ -28,7 +28,9 @@ on:
   workflow_dispatch:
 
 env:
+    MODULE_NAME: "pyramid"
     SRC: "./src"
+    TEST_DIR: "./tests"
     REGISTRY_IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_REPO_NAME }}
     REGISTRY_IMAGE_PRIVATE: ${{ vars.DOCKER_REGISTRY_PRIVATE_URL }}/${{ github.actor }}/${{ github.event.repository.name }}
 
@@ -87,9 +89,6 @@ jobs:
     name: "Unit tests"
     needs: compile
     runs-on: ubuntu-latest
-    env:
-      MODULE_NAME: "pyramid"
-      TEST_DIR: "./tests"
 
     steps:
       - name: Checkout repository
@@ -106,18 +105,16 @@ jobs:
         uses: actions/cache@v4
         with:
             path: ~/.cache/pip
-            key: ${{ runner.os }}-pip-test-${{ hashFiles('**/requirements.txt') }}
+            key: ${{ runner.os }}-python_test-${{ hashFiles('**/requirements.txt') }}
             restore-keys: |
-              - ${{ runner.os }}-pip-test-${{ hashFiles('**/requirements.txt') }}
-              - ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-              - ${{ runner.os }}-pip
+              - ${{ runner.os }}-python_test-${{ hashFiles('**/requirements.txt') }}
+              - ${{ runner.os }}-python_test-${{ hashFiles('**/requirements.txt') }}
+              - ${{ runner.os }}-python
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest-cov
-          pip install -e .
 
       - name: Install project for tests
         run: |
@@ -135,6 +132,57 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: tristiisch/PyRamid
+
+  unit_test_compatibility:
+    name: "Envs unit tests"
+    needs: unit_test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.12"
+        platform:
+          - linux/amd64
+          - linux/arm64/v8
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+            path: ~/.cache/pip
+            key: ${{ runner.os }}-python_test_${{ matrix.python-version }}_${{ matrix.platform }}-${{ hashFiles('**/requirements.txt') }}
+            restore-keys: |
+              - ${{ runner.os }}-python_test_${{ matrix.python-version }}_${{ matrix.platform }}
+              - ${{ runner.os }}-python_test_${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Install project for tests
+        run: |
+          pip install pytest-cov
+          pip install -e .
+
+      - name: Units tests
+        env:
+          DEEZER__ARL: ${{ secrets.CONFIG_DEEZER_ARL }}
+        run: |
+            pytest --cov=${{ env.MODULE_NAME }} ${{ env.TEST_DIR }}
 
   version_compatibility:
     name: "Envs compatibility"
@@ -317,7 +365,7 @@ jobs:
   docker_image_push:
     name: "Push Docker Images"
     runs-on: ubuntu-latest
-    needs: ["compile", "info", "docker_image_build"]
+    needs: ["compile", "unit_test", "info", "docker_image_build"]
 
     steps:
       - name: Download digests
@@ -351,7 +399,7 @@ jobs:
   docker_image_push_private:
     name: "Push Privates Docker Images"
     runs-on: ubuntu-latest
-    needs: ["compile", "info", "docker_image_build"]
+    needs: ["compile", "unit_test", "info", "docker_image_build"]
 
     steps:
       - name: Download digests
