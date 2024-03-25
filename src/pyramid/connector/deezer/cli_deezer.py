@@ -51,8 +51,7 @@ class ACliDeezer(ABC):
 		resource_id: int | None = None,
 		paginate_list=False,
 		**params,
-	) -> Any | list[Any] | dict[str, Any] | Resource | Literal[True]:
-		...
+	) -> Any | list[Any] | dict[str, Any] | Resource | Literal[True]: ...
 
 
 class CliPaginatedList(Generic[ResourceType]):

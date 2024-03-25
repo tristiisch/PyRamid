@@ -21,13 +21,15 @@ class SpotifySearchBase(ASearch):
 		self.client = CliSpotify(client_credentials_manager=self.client_credentials_manager)
 		self.tools = SpotifyTools()
 
-	async def items(self, results: dict[str, Any], item_name="items") -> None | list[dict[str, Any]]:
+	async def items(
+		self, results: dict[str, Any], item_name="items"
+	) -> None | list[dict[str, Any]]:
 		if not results:
 			return None
 		tracks: list = results[item_name]
 
 		while results["next"]:
-			results = await self.client.async_next(results)# type: ignore
+			results = await self.client.async_next(results)  # type: ignore
 			tracks.extend(results[item_name])
 
 		return tracks
