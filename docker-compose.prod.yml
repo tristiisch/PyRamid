@@ -11,8 +11,6 @@ services:
       GENERAL__LIMIT_TRACKS: 100
       DISCORD__FFMPEG: /usr/bin/ffmpeg
       DEEZER__FOLDER: ./songs
-    secrets:
-      - PYRAMID_PROD
     deploy:
       mode: replicated
       restart_policy:
@@ -37,6 +35,3 @@ volumes:
   pyramid_logs_prod:
   pyramid_songs_prod:
 
-secrets:
-  PYRAMID_PROD:
-    external: true
