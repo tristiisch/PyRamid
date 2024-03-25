@@ -43,7 +43,7 @@ exec-pp:
 	@scripts/docker_service_exec.sh $(DOCKER_SERVICE_PREPROD) $(DOCKER_CONTEXT_PREPROD)
 
 dev:
-	@docker compose -f $(DOCKER_COMPOSE_FILE_DEV) up -d --remove-orphans --build
+	@docker compose -f $(DOCKER_COMPOSE_FILE_DEV) up -d --remove-orphans --pull always --force-recreate
 
 test:
 	pytest --cov=pyramid tests/

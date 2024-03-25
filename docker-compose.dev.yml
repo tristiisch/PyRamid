@@ -5,10 +5,6 @@ services:
     image: tristiisch/pyramid:latest
     restart: always
     volumes:
-      - pyramid_logs_dev:/app/logs
-      - pyramid_songs_dev:/app/songs
+      - ./docker/pyramid/logs:/app/logs
+      - ./docker/pyramid/songs:/app/songs
     env_file: .env
-
-volumes:
-  pyramid_logs_dev:
-  pyramid_songs_dev:
