@@ -1,4 +1,4 @@
-COMPOSE_SERVICE					:=	pyramid
+COMPOSE_SERVICE					:=	discord
 VENV_NAME						:=	.venv
 DOCKER_COMPOSE_FILE_DEV			:=	docker-compose.dev.yml
 DOCKER_COMPOSE_FILE_PREPROD		:=	docker-compose.preprod.yml

@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  pyramid:
+  discord:
     image: tristiisch/pyramid:pre-prod
     volumes:
       - pyramid_logs_preprod:/app/logs

@@ -402,8 +402,6 @@ jobs:
           remote_docker_username: ${{ secrets.MANAGER_TO_USER }}
           ssh_private_key: ${{ secrets.MANAGER_TO_SSH_PRIVATE_KEY }}
           ssh_public_key: ${{ secrets.MANAGER_SSH_PUBLIC_KEY }}
-          copy_stack_file: false
-          deploy_path: ${{ vars.PROJECT_DIR }}
           stack_file_path: ${{ vars.DOCKER_COMPOSE_FILENAME }}
           stack_name: ${{ vars.DOCKER_STACK_NAME }}
           secrets: ${{ vars.DOCKER_COMPOSE_SERVICE}} ${{ vars.DOCKER_STACK_NAME }} DISCORD__TOKEN ${{ secrets.CONFIG_DISCORD_TOKEN }} DEEZER__ARL ${{ secrets.CONFIG_DEEZER_ARL }} SPOTIFY__CLIENT_ID ${{ secrets.CONFIG_SPOTIFY_CLIENT_ID }} SPOTIFY__CLIENT_SECRET ${{ secrets.CONFIG_SPOTIFY_CLIENT_SECRET }} 

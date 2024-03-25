@@ -1,12 +1,10 @@
 version: '3.7'
 
 services:
-  pyramid:
+  discord:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pyramid
-    hostname: pyramid
     restart: always
     volumes:
       - ./logs:/app/logs

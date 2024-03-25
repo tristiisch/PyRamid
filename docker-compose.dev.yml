@@ -1,10 +1,8 @@
 version: '3.7'
 
 services:
-  pyramid:
+  discord:
     image: tristiisch/pyramid:latest
-    container_name: pyramid
-    hostname: pyramid
     restart: always
     volumes:
       - ./docker/pyramid/logs:/app/logs
