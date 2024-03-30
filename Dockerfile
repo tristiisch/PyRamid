@@ -83,8 +83,8 @@ COPY --chown=root:$APP_GROUP --chmod=550 entrypoint.sh /usr/local/bin/
 COPY --chown=root:$APP_GROUP --chmod=550 ./config.exemple.yml config.exemple.yml
 
 # Create directory for downloaded songs
-RUN mkdir -p ./songs && chmod 660 ./songs && chown root:$APP_GROUP ./songs
-RUN mkdir -p ./logs && chmod -R 777 ./logs && chown -R $APP_USER:$APP_GROUP ./logs
+RUN mkdir -p ./songs && chmod -R 770 ./songs && chown -R root:$APP_GROUP ./songs
+RUN mkdir -p ./logs && chmod -R 770 ./logs && chown -R root:$APP_GROUP ./logs
 
 # Copy the virtual environment from the builder stage
 COPY --chown=root:$APP_GROUP --chmod=550 --from=builder /opt/venv /opt/venv
@@ -93,7 +93,7 @@ COPY --chown=root:$APP_GROUP --chmod=550 --from=builder /opt/venv /opt/venv
 COPY --chown=root:$APP_GROUP --chmod=550 --from=info /app/git_info.json git_info.json
 
 # Copy the current directory contents into the container at /app
-COPY --chown=root:$APP_GROUP --chmod=550 ./src ./src
+COPY --chown=root:$APP_GROUP --chmod=750 ./src ./src
 COPY --chown=root:$APP_GROUP --chmod=550 ./setup.py ./setup.py
 
 RUN mkdir -p src/pyramid.egg-info \
