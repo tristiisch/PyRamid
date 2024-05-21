@@ -36,7 +36,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		engine: SourceType | None,
 		at_end=True,
 	) -> bool:
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel:
 			return False
 
@@ -51,7 +51,8 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return await self._execute_play(ms, voice_channel, track, at_end=at_end)
 
 	async def stop(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		ctx.channel
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
@@ -64,7 +65,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return True
 
 	async def pause(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
@@ -76,7 +77,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return True
 
 	async def resume(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
@@ -88,7 +89,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return True
 
 	async def resume_or_pause(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
@@ -99,7 +100,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return True
 
 	async def next(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
@@ -120,7 +121,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return True
 
 	async def shuffle(self, ms: MessageSenderQueued, ctx: Interaction):
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
@@ -132,7 +133,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return True
 
 	async def remove(self, ms: MessageSenderQueued, ctx: Interaction, number_in_queue: int):
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
@@ -159,7 +160,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return True
 
 	async def goto(self, ms: MessageSenderQueued, ctx: Interaction, number_in_queue: int):
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
 
@@ -227,7 +228,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 			for track in tracks
 		})
 		async def callback(user: User | Member, ms: MessageSenderQueued, t: TrackMinimal):
-			voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, user)
+			voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, user, ms.txt_channel)
 			if not voice_channel:
 				return
 			await self._execute_play(ms, voice_channel, t)
@@ -242,7 +243,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 	async def play_url(
 		self, ms: MessageSenderQueued, ctx: Interaction, url: str, at_end=True
 	) -> bool:
-		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user)
+		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel:
 			return False
 

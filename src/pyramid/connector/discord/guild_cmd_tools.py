@@ -1,5 +1,6 @@
 from typing import Union
-from discord import Member, StageChannel, User, VoiceChannel, VoiceClient, VoiceState
+from discord.abc import Messageable
+from discord import Member, StageChannel, TextChannel, User, VoiceChannel, VoiceClient, VoiceState
 
 from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
 from pyramid.data.guild_data import GuildData
@@ -21,12 +22,23 @@ class GuildCmdTools:
 		self.queue = guild_queue
 
 	async def _verify_voice_channel(
-		self, ms: MessageSenderQueued, user: User | Member
+		self, ms: MessageSenderQueued, user: User | Member, msg_channel: Messageable
 	) -> VoiceChannel | None:
 		if not isinstance(user, Member):
-			raise Exception("Can be only used by member (user in guild)")
+			raise Exception("Can only be used by a member (user in guild).")
 
 		member: Member = user
+		bot: Member = self.data.guild.me
+
+		if not isinstance(msg_channel, TextChannel):
+			ms.edit_message("This is not a standard text channel. Please retry in another channel.")
+			return None
+		txt_channel: TextChannel = msg_channel
+
+		txt_permission = txt_channel.permissions_for(bot)
+		if not txt_permission.text:
+			ms.edit_message(f"I'm unable to send messages to {txt_channel.mention}. Please ask the administrator to grant me the necessary permissions or disable this command in this channel.")
+			return None
 
 		# only play music if user is in a voice channel
 		if member.voice is None:
@@ -40,20 +52,18 @@ class GuildCmdTools:
 		voice_channel: VoiceChannel = voice_state.channel  # type: ignore
 
 		# verify bot's permission on member voice channel
-		bot: Member = self.data.guild.me
-
 		if bot.voice and bot.voice.channel:
 			current_channel: Union[VoiceChannel, StageChannel] = bot.voice.channel
 			if current_channel.id == voice_channel.id:
 				return voice_channel
 
-		permissions = voice_channel.permissions_for(bot)
-		if not permissions.connect:
-			ms.edit_message(f"I can't go to {voice_channel.mention}")
+		voice_permissions = voice_channel.permissions_for(bot)
+		if not voice_permissions.connect:
+			ms.edit_message(f"I can't join {voice_channel.mention}. Please ask the administrator to grant me the necessary permissions or join another channel, redo the command, and then move me to the first channel.")
 			return None
 
-		if not permissions.speak:
-			ms.add_message(content=f"Warning ! I can't speak in {voice_channel.mention}")
+		if not voice_permissions.speak:
+			ms.add_message(content=f"Warning! I can't speak in {voice_channel.mention}. Please ask the administrator to grant me the necessary permissions.")
 
 		return voice_channel
 
