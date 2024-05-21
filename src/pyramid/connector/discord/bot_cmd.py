@@ -12,7 +12,7 @@ from pyramid.data.environment import Environment
 from pyramid.data.functional.application_info import ApplicationInfo
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
 from pyramid.data.functional.engine_source import SourceType
-import pyramid.tools.utils
+import pyramid.tools.utils as tools
 
 
 class BotCmd:
@@ -89,7 +89,7 @@ class BotCmd:
 			)
 			embed.add_field(
 				name="Uptime",
-				value=tools.utils.time_to_duration(int(round(time.time() - self.__started))),
+				value=tools.time_to_duration(int(round(time.time() - self.__started))),
 				inline=True,
 			)
 
