@@ -15,7 +15,7 @@ class LogsHandler:
 		self.__console_format = "%(asctime)s %(levelname)s %(message)s"
 		self.__file_format = "[{asctime}] [{levelname:<8}] {name}: {message}"
 
-	def init(self, info: ApplicationInfo, logs_dir, log_filename, error_filename):
+	def init(self, info: ApplicationInfo, logs_dir: str, log_filename: str, error_filename: str):
 		self.__info = info
 		self.__logs_dir = logs_dir
 		self.__log_filename = log_filename
@@ -46,7 +46,8 @@ class LogsHandler:
 		self.logger.addHandler(file_handler)
 
 	def log_to_file_exceptions(self):
-		log_filename = os.path.join(self.__logs_dir, self.__error_filename)
+		log_filename = os.path.join(self.__logs_dir, "errors", self.__error_filename)
+		tools.create_parent_directories(log_filename)
 
 		file_handler = logging.handlers.RotatingFileHandler(
 			filename=log_filename,

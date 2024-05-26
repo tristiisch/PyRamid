@@ -224,7 +224,7 @@ class PyDeezer(Deezer):
 			track = track["DATA"] if "DATA" in track else track
 
 			if "MD5_ORIGIN" not in track:
-				raise DownloadLinkDecryptionError("MD5 is needed to decrypt the download link.")
+				raise DownloadLinkDecryptionError("MD5 of track is needed to decrypt the download link.")
 
 			md5_origin = track["MD5_ORIGIN"]
 			track_id = track["SNG_ID"]

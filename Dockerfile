@@ -108,7 +108,7 @@ RUN pip install -e .
 # Add the virtual environment to the PATH
 ENV PATH="/opt/venv/bin:$PATH"
 
-HEALTHCHECK --interval=5s --retries=3 --timeout=5s CMD python ./src/cli.py health
+HEALTHCHECK --interval=30s --retries=3 --timeout=30s CMD python ./src/cli.py health
 # Socket port for external health
 EXPOSE 49150
 
