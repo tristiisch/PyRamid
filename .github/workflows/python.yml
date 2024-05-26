@@ -137,8 +137,7 @@ jobs:
     name: "Envs unit tests"
     needs: unit_test
     runs-on: ubuntu-latest
-    max_attempts: 3
-  strategy:
+    strategy:
       fail-fast: false
       matrix:
         python-version:
