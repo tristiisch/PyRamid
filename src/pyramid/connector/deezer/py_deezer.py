@@ -50,8 +50,7 @@ class DecryptDeezer:
 				downloaded_size += chunk_size
 				if previous_chunk:
 					previous_chunk, chunks_used = await self._transform_chunk(
-						f,
-						previous_chunk + chunk
+						f, previous_chunk + chunk
 					)
 				else:
 					previous_chunk, chunks_used = await self._transform_chunk(f, chunk)
@@ -63,7 +62,9 @@ class DecryptDeezer:
 				missing = filesize - downloaded_size
 				raise Exception("[%s] %d bytes are missing" % (filesize, missing))
 
-	async def _transform_chunk(self, f: aiofiles.threadpool.binary.AsyncBufferedIOBase, bytes_chunked: bytes) -> tuple[bytes, int] | tuple[None, int]:
+	async def _transform_chunk(
+		self, f: aiofiles.threadpool.binary.AsyncBufferedIOBase, bytes_chunked: bytes
+	) -> tuple[bytes, int] | tuple[None, int]:
 		# Calculate the number of chunks needed
 		length_bytes = len(bytes_chunked)
 		chunks_nb = int(length_bytes / self.chunk_length) + 1
@@ -86,7 +87,9 @@ class DecryptDeezer:
 			"Last chunk has wrong size %d (under %d is excepted)", last_length, self.chunk_length
 		)
 
-	async def _write_file(self, f: aiofiles.threadpool.binary.AsyncBufferedIOBase, new_chunk: bytes):
+	async def _write_file(
+		self, f: aiofiles.threadpool.binary.AsyncBufferedIOBase, new_chunk: bytes
+	):
 		chunk_size = len(new_chunk)
 		if self.decrypt_chunk_length > chunk_size:
 			await f.write(new_chunk)
@@ -213,7 +216,7 @@ class PyDeezer(Deezer):
 		self, track, quality=None, fallback=True, renew=False, **kwargs
 	):
 		# if renew:
-			# track = self.get_track(track["SNG_ID"])["info"]
+		# track = self.get_track(track["SNG_ID"])["info"]
 
 		if not quality:
 			quality = track_formats.MP3_128
@@ -411,8 +414,7 @@ class PyDeezer(Deezer):
 		if ext != "jpg" and ext != "png":
 			raise ValueError("Image extension should only be jpg or png!")
 
-		url = f'https://e-cdns-images.dzcdn.net/images/cover/{poster_id}/{size}x{size}.{ext}'
-
+		url = f"https://e-cdns-images.dzcdn.net/images/cover/{poster_id}/{size}x{size}.{ext}"
 
 		async with aiohttp.ClientSession() as session:
 			async with session.get(
@@ -425,7 +427,7 @@ class PyDeezer(Deezer):
 			"image": image,
 			"size": (size, size),
 			"ext": ext,
-			"mime_type": "image/jpeg" if ext == "jpg" else "image/png"
+			"mime_type": "image/jpeg" if ext == "jpg" else "image/png",
 		}
 
 	async def get_album_poster(self, album, size=500, ext="jpg"):

@@ -3,6 +3,7 @@ from typing import Optional
 
 from pyramid.data.track import Track
 
+
 class AGuildQueue(ABC):
 	@abstractmethod
 	def is_playing(self) -> bool:

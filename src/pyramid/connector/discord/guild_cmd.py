@@ -223,15 +223,21 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 			ms.add_message(err.msg)
 			return False
 
-		view = SelectView({
-			track: discord.SelectOption(label=track.name, description=f"{track.author_name} - {track.album_title}")
-			for track in tracks
-		})
+		view = SelectView(
+			{
+				track: discord.SelectOption(
+					label=track.name, description=f"{track.author_name} - {track.album_title}"
+				)
+				for track in tracks
+			}
+		)
+
 		async def callback(user: User | Member, ms: MessageSenderQueued, t: TrackMinimal):
 			voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, user, ms.txt_channel)
 			if not voice_channel:
 				return
 			await self._execute_play(ms, voice_channel, t)
+
 		view.on_select = callback
 
 		if tracks_unfindable:
