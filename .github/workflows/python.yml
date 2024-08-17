@@ -12,6 +12,8 @@ on:
       - "Dockerfile"
       - "docker-compose*.yml"
       - ".github/workflows/python.yml"
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     types: [opened, synchronize]
     branches:
@@ -104,12 +106,12 @@ jobs:
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
-            path: ~/.cache/pip
-            key: ${{ runner.os }}-python_test-${{ hashFiles('**/requirements.txt') }}
-            restore-keys: |
-              - ${{ runner.os }}-python_test-${{ hashFiles('**/requirements.txt') }}
-              - ${{ runner.os }}-python_test-${{ hashFiles('**/requirements.txt') }}
-              - ${{ runner.os }}-python
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-python_test-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            - ${{ runner.os }}-python_test-${{ hashFiles('**/requirements.txt') }}
+            - ${{ runner.os }}-python_test-${{ hashFiles('**/requirements.txt') }}
+            - ${{ runner.os }}-python
 
       - name: Install dependencies
         run: |
@@ -125,7 +127,7 @@ jobs:
         env:
           DEEZER__ARL: ${{ secrets.CONFIG_DEEZER_ARL }}
         run: |
-            pytest --cov=${{ env.MODULE_NAME }} ${{ env.TEST_DIR }}
+          pytest --cov=${{ env.MODULE_NAME }} ${{ env.TEST_DIR }}
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.5.0
@@ -235,6 +237,7 @@ jobs:
     outputs:
         environment: ${{ steps.environment.outputs.environment }}
         version_tag: ${{ steps.environment.outputs.tag }}
+        version_number: ${{ steps.environment.outputs.version }}
         last_release_ref: ${{ steps.last_release.outputs.last_release_ref }}
         commit_messages: ${{ steps.commit_messages.outputs.commit_messages }}
     if: github.event_name == 'push'
@@ -251,15 +254,18 @@ jobs:
       - name: Get environnement names
         id: environment
         run: |
-          if [ ${{ github.ref }} = 'refs/heads/main' ]; then
+          if [ ${{ github.event_name }} == 'create' && ${{ github.ref_type }} == 'tag' ]; then
             echo "tag=latest" >> $GITHUB_OUTPUT
             echo "environment=production" >> $GITHUB_OUTPUT
-          elif [ ${{ github.ref }} = 'refs/heads/pre-prod' ]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          elif [ ${{ github.ref }} = 'refs/heads/main' ]; then
             echo "tag=pre-prod" >> $GITHUB_OUTPUT
             echo "environment=pre-production" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           else
             echo "tag=dev" >> $GITHUB_OUTPUT
             echo "environment=developement" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           fi
           echo "Output $GITHUB_OUTPUT"
           cat $GITHUB_OUTPUT
@@ -342,7 +348,7 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: mode=max
           build-args: |
-            VERSION=${{ needs.compile.outputs.version }}
+            VERSION=${{ needs.info.outputs.version_number }}
             GIT_COMMIT_ID=${{ needs.compile.outputs.commit_id }}
             GIT_BRANCH=${{ needs.compile.outputs.branch }}
             GIT_LAST_AUTHOR=${{ needs.compile.outputs.last_author }}
@@ -389,7 +395,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
-            type=raw,value=${{ needs.compile.outputs.version }},enable=${{ endsWith(github.ref, 'master') }}
+            type=raw,value=${{ needs.info.outputs.version_number }},enable=${{ needs.info.outputs.version_tag == 'latest' }}
             type=raw,value=${{ needs.info.outputs.version_tag }}
 
       - name: Create manifest list and push
@@ -436,7 +442,7 @@ jobs:
     needs: ["info", "docker_image_push"]
     runs-on: ubuntu-latest
     environment: ${{ needs.info.outputs.environment }}
-    if: github.event_name == 'push'
+    if: (github.event_name == 'tag' && needs.info.outputs.version_tag == 'latest') || (github.event_name == 'push' && needs.info.outputs.version_tag != 'latest')
 
     steps:
       - name: Checkout repository
@@ -458,35 +464,18 @@ jobs:
     name: "Publish release"
     needs: ["compile", "info", "docker_image_push"]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && needs.info.outputs.version_tag == 'latest'
+    if: github.event_name == 'tag' && needs.info.outputs.version_tag == 'latest'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create stable Release
-        if: 
-        uses: actions/create-release@latest
+      - name: Update Release
+        run: |
+          gh release edit "${GITHUB_REF#refs/tags/}" \
+            --title "Release v${{ needs.compile.outputs.version }}" \
+            --notes "This has been deployed on the Discord bot `PyRamid#6882`.\nTo use the latest version the bot, please refer to the instructions outlined at https://github.com/tristiisch/PyRamid/#usage.\n\n## Changes\n${{ needs.info.outputs.commit_messages }}\n\n## Docker\nThis version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.\n\n### Images creation\n* ${{ env.REGISTRY_IMAGE_PRIVATE }}:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}\n\n### Images update\n* ${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.version_tag }}\n* ${{ env.REGISTRY_IMAGE }}:${{ needs.compile.outputs.version }}"
+        # --draft false \
+        # --prerelease false
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_RELEASE }}
-        with:
-          tag_name: ${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
-          release_name: Stable Auto-Release v${{ needs.compile.outputs.version }}
-          body: |
-            This has been deployed on the Discord bot `PyRamid#6882`.
-            To use the latest version the bot, please refer to the instructions outlined at https://github.com/tristiisch/PyRamid/#usage.
-
-            ## Changes
-            ${{ needs.info.outputs.commit_messages }}
-          
-            ## Docker
-            This version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.
-          
-            ### Images creation
-            * ${{ env.REGISTRY_IMAGE_PRIVATE }}:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
-
-            ### Images update
-            * ${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.version_tag }}
-            * ${{ env.REGISTRY_IMAGE }}:${{ needs.compile.outputs.version }}
-          draft: false
-          prerelease: false
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
