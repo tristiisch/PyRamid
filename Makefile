@@ -46,16 +46,17 @@ dev:
 	@docker compose -f $(DOCKER_COMPOSE_FILE_DEV) up -d --remove-orphans --pull always --force-recreate
 
 test:
-	pytest --cov=pyramid tests/
+	@pip install -e .
+	@pytest --cov=pyramid tests/
 
 img-b:
-	python scripts/environnement.py --build
+	@python scripts/environnement.py --build
 
 img-ba:
-	python scripts/environnement.py --build-archs
+	@python scripts/environnement.py --build-archs
 
 img-c:
-	python scripts/environnement.py --images-purge
+	@python scripts/environnement.py --images-purge
 
 clean:
-	python scripts/environnement.py --clean
+	@python scripts/environnement.py --clean

@@ -17,7 +17,8 @@ class SourceType(Enum):
 
 class EngineSource:
 	def __init__(self, config: Configuration):
-		self.__downloader = DeezerDownloader(config.deezer__arl, config.deezer__folder)
+		# self.__downloader = DeezerDownloader(config.deezer__folder, config.deezer__arl)
+		self.__downloader = DeezerDownloader(config.deezer__folder)
 		self.__deezer_search = DeezerSearch(config.general__limit_tracks)
 		self.__spotify_search = SpotifySearch(
 			config.general__limit_tracks, config.spotify__client_id, config.spotify__client_secret
