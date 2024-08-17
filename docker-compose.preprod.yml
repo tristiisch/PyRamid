@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   discord:
     image: tristiisch/pyramid:pre-prod

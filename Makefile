@@ -7,15 +7,15 @@ DOCKER_CONTEXT_PREPROD			:=	cookie-pulsheberg
 
 .PHONY: logs
 
-all: start-f logs
+all: up-f logs
 
 start:
 	@docker compose up -d --remove-orphans
 
-start-f:
+up-f:
 	@docker compose up -d --remove-orphans --force-recreate
 
-start-b:
+up-b:
 	@docker compose up -d --remove-orphans --build
 
 stop:
