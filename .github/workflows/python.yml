@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "*"
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
     paths:
       - "src/**/*.py"
       - "requirements.txt"
@@ -12,8 +14,6 @@ on:
       - "Dockerfile"
       - "docker-compose*.yml"
       - ".github/workflows/python.yml"
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     types: [opened, synchronize]
     branches:
@@ -44,7 +44,6 @@ jobs:
     outputs:
       json: ${{ steps.version.outputs.json }}
       version: ${{ steps.version.outputs.version }}
-      commit_id: ${{ steps.version.outputs.commit_id }}
       branch: ${{ steps.version.outputs.branch }}
       last_author: ${{ steps.version.outputs.last_author }}
 
@@ -77,13 +76,13 @@ jobs:
 
       - name: Save version
         run: |
+          set -eu
           FULL_JSON=$(python ${{ env.SRC }} --version)
           echo "json=$(echo $FULL_JSON | jq -c)" >> $GITHUB_OUTPUT
           echo "version=$(echo $FULL_JSON | jq -r '.version')" >> $GITHUB_OUTPUT
           echo "commit_id=$(echo $FULL_JSON | jq -r '.git_info.commit_id')" >> $GITHUB_OUTPUT
           echo "branch=$(echo $FULL_JSON | jq -r '.git_info.branch')" >> $GITHUB_OUTPUT
           echo "last_author=$(echo $FULL_JSON | jq -r '.git_info.last_author')" >> $GITHUB_OUTPUT
-          echo "Output $GITHUB_OUTPUT"
           cat $GITHUB_OUTPUT
         id: version
 
@@ -115,11 +114,13 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -eu
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Install project for tests
         run: |
+          set -eu
           pip install pytest-cov
           pip install -e .
 
@@ -127,6 +128,7 @@ jobs:
         env:
           DEEZER__ARL: ${{ secrets.CONFIG_DEEZER_ARL }}
         run: |
+          set -eu
           pytest --cov=${{ env.MODULE_NAME }} ${{ env.TEST_DIR }}
 
       - name: Upload coverage reports to Codecov
@@ -172,11 +174,13 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -eu
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Install project for tests
         run: |
+          set -eu
           pip install pytest-cov
           pip install -e .
 
@@ -223,6 +227,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -eu
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
@@ -235,11 +240,11 @@ jobs:
     needs: ["compile"]
     runs-on: ubuntu-latest
     outputs:
-        environment: ${{ steps.environment.outputs.environment }}
-        version_tag: ${{ steps.environment.outputs.tag }}
-        version_number: ${{ steps.environment.outputs.version }}
+        environment: ${{ steps.environment.outputs.git_environment }}
+        docker_tag: ${{ steps.environment.outputs.docker_tag }}
+        commit_id: ${{ steps.environment.outputs.commit_id }}
         last_release_ref: ${{ steps.last_release.outputs.last_release_ref }}
-        commit_messages: ${{ steps.commit_messages.outputs.commit_messages }}
+        changelog: ${{ steps.changelog.outputs.changelog }}
     if: github.event_name == 'push'
 
     steps:
@@ -251,47 +256,94 @@ jobs:
       - name: Get tags
         run: git fetch --tags origin
 
-      - name: Get environnement names
+      - name: Define build variables
         id: environment
-        run: |
-          if [ ${{ github.event_name }} == 'create' && ${{ github.ref_type }} == 'tag' ]; then
-            echo "tag=latest" >> $GITHUB_OUTPUT
-            echo "environment=production" >> $GITHUB_OUTPUT
-            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          elif [ ${{ github.ref }} = 'refs/heads/main' ]; then
-            echo "tag=pre-prod" >> $GITHUB_OUTPUT
-            echo "environment=pre-production" >> $GITHUB_OUTPUT
-            echo "version=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=dev" >> $GITHUB_OUTPUT
-            echo "environment=developement" >> $GITHUB_OUTPUT
-            echo "version=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-          fi
-          echo "Output $GITHUB_OUTPUT"
-          cat $GITHUB_OUTPUT
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const refType = context.ref_type;
+            const ref = context.ref;
+            const sha = context.sha;
 
-      - name: Get Github last release tag
+            let dockerTag;
+            let gitEnvironment;
+
+            if (refType === 'tag') {
+              dockerTag = 'latest';
+              gitEnvironment = 'production';
+            } else if (ref === 'refs/heads/main') {
+              dockerTag = 'pre-prod';
+              gitEnvironment = 'pre-production';
+            } else {
+              dockerTag = 'dev';
+              gitEnvironment = 'development';
+            }
+            const shortSha = sha.slice(0, 7);
+
+            return { docker_tag: dockerTag, git_environment: gitEnvironment, commit_id: shortSha };
+
+      - name: Get Github last release name
         id: last_release
-        run: |
-          RESPONSE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest")
-          if [[ $(echo "$RESPONSE" | jq -r .message) == "Not Found" ]]; then
-            LAST_RELEASE_REF=$(git rev-list --max-parents=0 HEAD)
-          else
-            LAST_RELEASE_REF=$(echo "$RESPONSE" | jq -r .tag_name)
-          fi
-          echo "last_release_ref=${LAST_RELEASE_REF}" >> $GITHUB_OUTPUT
-          echo "Output $GITHUB_OUTPUT"
-          cat $GITHUB_OUTPUT
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const latestRelease = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            return { last_release_ref: latestRelease.data.tag_name };
+  
+      - name: Generate Changelog
+        id: changelog
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const lastRelease = '${{ steps.last_release.outputs.last_release_ref }}';
+            const currentSha = context.sha;
+
+            const pulls = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              per_page: 100,
+            });
+
+            const mergedPulls = pulls.data.filter(pr => 
+              pr.merged_at && 
+              pr.merge_commit_sha >= lastRelease && 
+              pr.merge_commit_sha <= currentSha
+            );
+
+            let changes = "## What's Changed";
+            let contributorsNames = new Set();
+
+            mergedPulls.forEach(pr => {
+              changes += `* ${pr.title} ${pr.html_url}\n`;
+              contributorsNames.add(pr.user.login);
+            });
+
+            let contributors = `### Contributors
+            Thanks to @${Array.from(contributorsNames).join(', ')}.\n`;
+
+            const fullChangelog = `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${lastRelease}...${currentSha}`;
+            const changelog = changes + '\n\n' + (contributorsNames.size ? contributors + '\n\n' : '') + fullChangelog;
+
+            return { changelog: changelog };
+    
+      - name: Output Changelog
+        run: echo "${{ steps.changelog.outputs.changelog }}"
 
       - name: Get Github commit messages
         id: commit_messages
         run: |
+          set -eu
           COMMIT_MESSAGES=$(git log ${{ steps.last_release.outputs.last_release_ref }}..${{ github.sha }} --oneline --no-merges | sed 's/^/* /' | sed "s/\n/\\\\n/g")
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "commit_messages<<$EOF" >> $GITHUB_OUTPUT
           echo "$COMMIT_MESSAGES" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "**Full Changelog**: https://github.com/tristiisch/PyRamid/compare/0.6.3-c6d1449...0.6.4" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
-          echo "Output $GITHUB_OUTPUT"
           cat $GITHUB_OUTPUT
 
   docker_image_build:
@@ -348,8 +400,8 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: mode=max
           build-args: |
-            VERSION=${{ needs.info.outputs.version_number }}
-            GIT_COMMIT_ID=${{ needs.compile.outputs.commit_id }}
+            VERSION=${{ needs.compile.outputs.version }}
+            GIT_COMMIT_ID=${{ needs.info.outputs.commit_id }}
             GIT_BRANCH=${{ needs.compile.outputs.branch }}
             GIT_LAST_AUTHOR=${{ needs.compile.outputs.last_author }}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
@@ -395,8 +447,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
-            type=raw,value=${{ needs.info.outputs.version_number }},enable=${{ needs.info.outputs.version_tag == 'latest' }}
-            type=raw,value=${{ needs.info.outputs.version_tag }}
+            type=raw,value=${{ needs.info.outputs.commit_id }},enable=${{ needs.info.outputs.docker_tag == 'latest' }}
+            type=raw,value=${{ needs.info.outputs.docker_tag }}
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
@@ -431,18 +483,18 @@ jobs:
           images: ${{ env.REGISTRY_IMAGE_PRIVATE }}
           tags: |
             type=ref,event=branch
-            type=raw,value=${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}
+            type=raw,value=${{ needs.compile.outputs.version }}-${{ needs.info.outputs.commit_id }}
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
 
   docker_swarm_deploy:
-    name: "Deploy Docker Swarm"
-    needs: ["info", "docker_image_push"]
+    name: "Deploy v${{ needs.compile.outputs.version }} to ${{ needs.info.outputs.environment }}"
+    needs: ["compile", "info", "docker_image_push"]
     runs-on: ubuntu-latest
     environment: ${{ needs.info.outputs.environment }}
-    if: (github.event_name == 'tag' && needs.info.outputs.version_tag == 'latest') || (github.event_name == 'push' && needs.info.outputs.version_tag != 'latest')
+    if: github.event_name == 'push' && (github.ref_type == 'tag' && needs.info.outputs.docker_tag == 'latest') || (github.ref_type == 'branch' && needs.info.outputs.docker_tag != 'latest')
 
     steps:
       - name: Checkout repository
@@ -464,18 +516,34 @@ jobs:
     name: "Publish release"
     needs: ["compile", "info", "docker_image_push"]
     runs-on: ubuntu-latest
-    if: github.event_name == 'tag' && needs.info.outputs.version_tag == 'latest'
+    if: github.ref_type == 'tag' && github.event_name == 'push' && needs.info.outputs.docker_tag == 'latest'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Update Release
+      - name: Update Release v${{ needs.compile.outputs.version }}
         run: |
-          gh release edit "${GITHUB_REF#refs/tags/}" \
+          set -eu
+          cat << $EOF | gh release edit "${{ github.ref_name }}" \
             --title "Release v${{ needs.compile.outputs.version }}" \
-            --notes "This has been deployed on the Discord bot `PyRamid#6882`.\nTo use the latest version the bot, please refer to the instructions outlined at https://github.com/tristiisch/PyRamid/#usage.\n\n## Changes\n${{ needs.info.outputs.commit_messages }}\n\n## Docker\nThis version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.\n\n### Images creation\n* ${{ env.REGISTRY_IMAGE_PRIVATE }}:${{ needs.compile.outputs.version }}-${{ needs.compile.outputs.commit_id }}\n\n### Images update\n* ${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.version_tag }}\n* ${{ env.REGISTRY_IMAGE }}:${{ needs.compile.outputs.version }}"
-        # --draft false \
-        # --prerelease false
+            --draft=false \
+            --prerelease=false \
+            --note-files -
+          The latest version of the Discord bot PyRamid#6882 has been successfully deployed.
+          To start using this updated version, please follow the instructions provided at [PyRamid Usage Guide](https://github.com/tristiisch/PyRamid/#usage).
+
+          ${{ needs.info.outputs.changelog }}
+
+          ## Docker
+          This version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.
+        
+          ### Images Uniques
+          *  `${{ env.REGISTRY_IMAGE_PRIVATE }}:${{ needs.compile.outputs.version }}-${{ needs.info.outputs.commit_id }}`
+
+          ### Images Updates
+          * `${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.docker_tag }}`
+          * `${{ env.REGISTRY_IMAGE }}:${{ needs.compile.outputs.version }}`
+          $EOF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

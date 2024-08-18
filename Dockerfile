@@ -52,7 +52,7 @@ COPY ./requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # <===================================> Executable image <===================================>
-FROM python:$PYTHON_VERSION-alpine as executable
+FROM python:$PYTHON_VERSION-alpine AS executable
 
 ARG VERSION
 ARG GIT_COMMIT_ID
