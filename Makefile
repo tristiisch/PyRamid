@@ -46,8 +46,8 @@ dev:
 	@docker compose -f $(DOCKER_COMPOSE_FILE_DEV) up -d --remove-orphans --pull always --force-recreate
 
 test:
-	@pip install -e .
-	@pytest --cov=pyramid tests/
+	@docker build -f Dockerfile --target tests -t pyramid:tests .
+	@docker run --rm -t pyramid:tests
 
 img-b:
 	@python scripts/environnement.py --build
