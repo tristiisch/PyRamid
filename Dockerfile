@@ -1,4 +1,4 @@
-# Define the Python version to be used
+# Define the Python version and other build arguments
 ARG PYTHON_VERSION=3.12
 ARG VERSION=0.0.0
 ARG GIT_COMMIT_ID=0000000
@@ -7,16 +7,16 @@ ARG GIT_LAST_AUTHOR=unknown
 ARG APP_USER=app-usr
 ARG APP_GROUP=app-grp
 
-# <===================================> Builder image <===================================>
+# ============================ Builder Image ============================
 FROM python:$PYTHON_VERSION-alpine AS builder
 
 WORKDIR /building
 
 RUN \
-	# Install virtual environment
-	python -m venv /opt/venv && \
-	# Upgrade pip to the latest version
-	pip install --no-cache-dir --upgrade pip
+    # Install virtual environment
+    python -m venv /opt/venv && \
+    # Upgrade pip to the latest version
+    pip install --no-cache-dir --upgrade pip
 
 # Add the virtual environment to the PATH
 ENV PATH="/opt/venv/bin:$PATH"
@@ -25,19 +25,20 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY ./requirements.txt requirements.txt
 
 RUN \
-	# Install dependencies necessary for building Python packages
-	# Use only for arch linux/arm64
-	if [ "$(uname -m)" = "aarch64" ]; then \
+    # Install dependencies necessary for building Python packages
+    # Only for ARM64 architecture
+    if [ "$(uname -m)" = "aarch64" ]; then \
         apk update && \
-		apk add --no-cache --virtual .build-deps gcc musl-dev libffi-dev; \
+        apk add --no-cache --virtual .build-deps gcc musl-dev libffi-dev; \
     fi && \
-	# Install Python dependencies for the application
-	pip install --no-cache-dir -r requirements.txt && \
-	if [ "$(uname -m)" = "aarch64" ]; then \
-		apk remove .build-deps; \
+    # Install Python dependencies
+    pip install --no-cache-dir -r requirements.txt && \
+    # Clean up build dependencies for ARM64 architecture
+    if [ "$(uname -m)" = "aarch64" ]; then \
+        apk del .build-deps; \
     fi
 
-# <===================================> Base image <===================================>
+# ============================ Base Image ============================
 FROM python:$PYTHON_VERSION-alpine AS base
 
 ARG APP_USER
@@ -47,19 +48,19 @@ ARG APP_GROUP
 RUN apk update && \
     apk upgrade && \
     apk add --no-cache ffmpeg opus-dev binutils && \
+    # Clean up apk cache
     rm -rf /var/cache/apk/* /etc/apk/cache/* /root/.cache/*
 
-# Set the working directory in the container
 WORKDIR /app
 
 # Create a user and group for running the application
 RUN addgroup -S $APP_GROUP && adduser -S $APP_USER -G $APP_GROUP
 
-# Create directory for downloaded songs
-RUN mkdir -p ./songs && chmod -R 770 ./songs && chown -R root:$APP_GROUP ./songs
-RUN mkdir -p ./logs && chmod -R 770 ./logs && chown -R root:$APP_GROUP ./logs
+# Create and set permissions for directories
+RUN mkdir -p ./songs && chmod 770 ./songs && chown root:$APP_GROUP ./songs && \
+    mkdir -p ./logs && chmod 770 ./logs && chown root:$APP_GROUP ./logs
 
-# <===================================> Executable image <===================================>
+# ============================ Executable Image ============================
 FROM base AS executable
 
 ARG VERSION
@@ -67,49 +68,50 @@ ARG GIT_COMMIT_ID
 ARG APP_USER
 ARG APP_GROUP
 
-# Label for the image source
-LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid"
-LABEL org.opencontainers.image.authors="tristiisch"
-LABEL version="$VERSION-$GIT_COMMIT_ID"
+LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid" \
+      org.opencontainers.image.authors="tristiisch" \
+      version="$VERSION-$GIT_COMMIT_ID"
 
 # Copy the virtual environment from the builder stage
 COPY --chown=root:$APP_GROUP --chmod=550 --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy the current directory contents into the container at /app
+# Copy application sources into the container
 COPY --chown=root:$APP_GROUP --chmod=750 ./src ./src
 COPY --chown=root:$APP_GROUP --chmod=550 ./setup.py ./setup.py
 
+# Create project information folder and set permissions
 RUN mkdir -p ./src/pyramid.egg-info && \
-	chmod 770 -R ./src/pyramid.egg-info && \
-	chown $APP_USER:$APP_GROUP -R ./src/pyramid.egg-info
+    chmod 770 -R ./src/pyramid.egg-info && \
+    chown $APP_USER:$APP_GROUP -R ./src/pyramid.egg-info
 
 # Switch to the non-root user
 USER $APP_USER
 
+# Install the project
 RUN pip install -e .
 
 HEALTHCHECK --interval=30s --retries=3 --timeout=30s CMD python ./src/cli.py health
-# Socket port for external health
+
+# Expose port for health check
 EXPOSE 49150
 
-# Define the entrypoint and default command
-ENTRYPOINT entrypoint.sh
 CMD ["python", "./src"]
 
-# <===================================> Builder Dev image <===================================>
+# ============================ Builder Dev Image ============================
 FROM builder AS builder-dev
 
 COPY ./requirements-dev.txt requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
-# <===================================> Test image <===================================>
+# ============================ Test Image ============================
 FROM base AS tests
 
 ARG APP_GROUP
 ARG APP_USER
 WORKDIR /app
 
+# Copy the virtual environment and sources for testing
 COPY --chown=root:$APP_GROUP --chmod=550 --from=builder-dev /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -117,13 +119,18 @@ COPY --chown=root:$APP_GROUP --chmod=750 ./src ./src
 COPY --chown=root:$APP_GROUP --chmod=750 ./tests ./tests
 COPY --chown=root:$APP_GROUP --chmod=550 ./setup.py ./setup.py
 
+# Create and set permissions for project information folder
 RUN mkdir -p ./src/pyramid.egg-info && \
-	chmod 770 -R ./src/pyramid.egg-info && \
-	chown $APP_USER:$APP_GROUP -R ./src/pyramid.egg-info && \
-	chown $APP_USER:$APP_GROUP . && \
-	chmod 770 .
+    chmod 770 -R ./src/pyramid.egg-info && \
+    chown $APP_USER:$APP_GROUP -R ./src/pyramid.egg-info && \
+    chown $APP_USER:$APP_GROUP . && \
+    chmod 770 .
 
+# Install the project
 RUN pip install -e .
 
+# Switch to the non-root user
 USER $APP_USER
-CMD pip freeze && pytest --cov=pyramid tests/
+
+# Run tests
+CMD ["pytest", "--cov=pyramid tests/"]
