@@ -1,11 +1,17 @@
-*
-!src/
-!setup.py
-!requirements.txt
-!config.exemple.yml
-!./entrypoint.sh
+__pycache__/
+__pypackages__/
+*.py[cod]
+*$py.class
 
-!./.git/HEAD
-!./.git/refs
-!./.git/logs/HEAD
-!.env*
+.github/
+.pytest_cache/
+.venv/
+build/
+
+.vscode/
+.cache/
+.coverage/
+Dockerfile
+README
+LICENSE
+Makefile
