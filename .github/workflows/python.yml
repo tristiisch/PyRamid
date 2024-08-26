@@ -60,7 +60,6 @@ jobs:
           script: |
             const refType = context.ref_type;
             const ref = context.ref;
-            const refName = context.ref_name;
             const sha = context.sha;
             const shortSha = sha.slice(0, 7);
 
@@ -71,15 +70,15 @@ jobs:
             if (refType === 'tag') {
               dockerTag = 'latest';
               gitEnvironment = 'production';
-              projectVersion = refName;
+              projectVersion = context.ref_name;
             } else if (ref === 'refs/heads/main') {
               dockerTag = 'pre-prod';
               gitEnvironment = 'pre-production';
-              projectVersion = `${refName}-${shortSha}`;
+              projectVersion = `${shortSha}`;
             } else {
               dockerTag = 'dev';
               gitEnvironment = 'development';
-              projectVersion = `${refName}-${shortSha}`;
+              projectVersion = `${shortSha}`;
             }
 
             const reset = "\x1b[0m";
@@ -136,7 +135,7 @@ jobs:
             });
 
             let contributors = `### Contributors
-            Thanks to @${Array.from(contributorsNames).join(', ')}.\n`;
+            Thanks to @${Array.from(contributorsNames).join(', @')}.\n`;
 
             const fullChangelog = `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${lastRelease}...${currentSha}`;
             const changelog = changes + '\n' + (contributorsNames.size ? contributors + '\n' : '') + fullChangelog;
@@ -150,6 +149,28 @@ jobs:
     
       - name: Output Changelog
         run: echo "${{ steps.changelog.outputs.result.changelog }}"
+
+  info_debug:
+    name: "Informations DEBUG"
+    needs: ["info"]
+    runs-on: ubuntu-latest
+    outputs:
+        project_version: ${{ steps.environment.outputs.result.project_version }}
+        environment: ${{ steps.environment.outputs.result.git_environment }}
+        docker_tag: ${{ steps.environment.outputs.result.docker_tag }}
+        commit_id: ${{ steps.environment.outputs.result.commit_id }}
+        last_release_ref: ${{ steps.last_release.outputs.result.last_release_ref }}
+        changelog: ${{ steps.changelog.outputs.result.changelog }}
+
+    steps:
+      - name: Print vars
+        run: |
+          echo "project_version ${{ needs.info.outputs.project_version }}"
+          echo "environment ${{ needs.info.outputs.environment }}"
+          echo "docker_tag ${{ needs.info.outputs.docker_tag }}"
+          echo "commit_id ${{ needs.info.outputs.commit_id }}"
+          echo "last_release_ref ${{ needs.info.outputs.last_release_ref }}"
+          echo "changelog ${{ needs.info.outputs.changelog }}"
 
   docker_image_build:
     name: "Build"
