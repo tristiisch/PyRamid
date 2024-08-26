@@ -39,7 +39,7 @@ class DeezerTokenProvider:
         self._tokens: list[DeezerToken] = []
 
     def generate(self, force: bool = False) -> bool:
-        if not force and self._soup is None:
+        if not force and self._soup is not None:
             return False
         self._fetch()
         self._tokens = self._parse()

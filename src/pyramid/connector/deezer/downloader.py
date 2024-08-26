@@ -26,6 +26,7 @@ class DeezerDownloader:
 			self.__deezer_dl_api = None
 			self.__token_provider = DeezerTokenProvider()
 		self.music_format = track_formats.MP3_128
+		os.makedirs(self.folder_path, exist_ok=True)
 
 	async def check_credentials(self):
 		if not self.__deezer_dl_api:
