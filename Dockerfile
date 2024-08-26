@@ -85,11 +85,11 @@ RUN mkdir -p ./src/pyramid.egg-info && \
     chmod 770 -R ./src/pyramid.egg-info && \
     chown $APP_USER:$APP_GROUP -R ./src/pyramid.egg-info
 
-# Switch to the non-root user
-USER $APP_USER
-
 # Install the project
 RUN pip install -e .
+
+# Switch to the non-root user
+USER $APP_USER
 
 HEALTHCHECK --interval=30s --retries=3 --timeout=30s CMD python ./src/cli.py health
 

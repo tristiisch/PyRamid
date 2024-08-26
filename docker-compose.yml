@@ -1,8 +1,9 @@
 services:
   discord:
     build:
+      dockerfile: ./Dockerfile
+      target: executable
       context: .
-      dockerfile: Dockerfile
     restart: always
     volumes:
       - ./logs:/app/logs

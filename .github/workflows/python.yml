@@ -342,6 +342,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          target: executable
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
