@@ -1,6 +1,9 @@
 # Define the Python version and other build arguments
 ARG PYTHON_VERSION=3.12
 ARG VERSION=0.0.0
+ARG GIT_COMMIT_ID=0000000
+ARG GIT_BRANCH=unknown
+ARG GIT_LAST_AUTHOR=unknown
 ARG APP_USER=app-usr
 ARG APP_GROUP=app-grp
 
@@ -46,13 +49,12 @@ RUN apk update && \
     apk upgrade && \
     apk add --no-cache ffmpeg opus-dev binutils && \
     # Clean up apk cache
-    ls -lah /var/cache/apk/ && \
-    rm -rf /var/cache/apk/*
+    rm -rf /var/cache/apk/* /etc/apk/cache/* /root/.cache/*
 
 WORKDIR /app
 
 # Create a user and group for running the application
-RUN addgroup -g 1000 -S $APP_GROUP && adduser -u 1000 -S $APP_USER -G $APP_GROUP
+RUN addgroup -S $APP_GROUP && adduser -S $APP_USER -G $APP_GROUP
 
 # Create and set permissions for directories
 RUN mkdir -p ./songs && chmod 770 ./songs && chown root:$APP_GROUP ./songs && \
@@ -62,12 +64,13 @@ RUN mkdir -p ./songs && chmod 770 ./songs && chown root:$APP_GROUP ./songs && \
 FROM base AS executable
 
 ARG VERSION
+ARG GIT_COMMIT_ID
 ARG APP_USER
 ARG APP_GROUP
 
 LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid" \
       org.opencontainers.image.authors="tristiisch" \
-      version="$VERSION"
+      version="$VERSION-$GIT_COMMIT_ID"
 
 # Copy the virtual environment from the builder stage
 COPY --chown=root:$APP_GROUP --chmod=550 --from=builder /opt/venv /opt/venv
@@ -130,4 +133,4 @@ RUN pip install -e .
 USER $APP_USER
 
 # Run tests
-CMD ["pytest", "--cov=pyramid tests/", "--cov-config=.coveragerc"]
+CMD ["pytest", "--cov=pyramid tests/"]

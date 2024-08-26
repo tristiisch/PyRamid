@@ -51,7 +51,7 @@ class BotCmd:
 				self.__logger.warning("Unable to get self user instance")
 
 			info = self.__info
-			embed = Embed(title=info.__name.capitalize(), color=Color.gold())
+			embed = Embed(title=info.name.capitalize(), color=Color.gold())
 			if bot_user is not None and bot_user.avatar is not None:
 				embed.set_thumbnail(url=bot_user.avatar.url)
 
@@ -80,8 +80,8 @@ class BotCmd:
 					icon_url=owner.avatar.url if owner.avatar is not None else None,
 				)
 
-			embed.add_field(name="Version", value=info.get_version(), inline=True)
-			embed.add_field(name="OS", value=info.get_os(), inline=True)
+			embed.add_field(name="Version", value=info.get_full_version(), inline=True)
+			embed.add_field(name="OS", value=info.os, inline=True)
 			embed.add_field(
 				name="Environment",
 				value=self.__environment.name.capitalize(),
