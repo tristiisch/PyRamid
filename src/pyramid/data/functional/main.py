@@ -26,10 +26,18 @@ class Main:
 	def args(self):
 		parser = argparse.ArgumentParser(description="Music Bot Discord using Deezer.")
 		parser.add_argument("--version", action="store_true", help="Print version", required=False)
+		parser.add_argument(
+			"--git", action="store_true", help="Print git informations", required=False
+		)
 		args = parser.parse_args()
 
 		if args.version:
-			print(f"{self._info.get_version()}")
+			self._info.load_git_info()
+			print(f"{self._info.to_json()}")
+			sys.exit(0)
+		elif args.git:
+			self._info.load_git_info()
+			print(f"{self._info.git_info.to_json()}")
 			sys.exit(0)
 
 	# Logs management
@@ -44,6 +52,11 @@ class Main:
 
 		# Deletion of log files over 10
 		tools.keep_latest_files(log_dir, 10, "error")
+
+	# Logs management
+	def git_info(self):
+		self._info.load_git_info()
+		logging.info(self._info)
 
 	def config(self):
 		# Config load
