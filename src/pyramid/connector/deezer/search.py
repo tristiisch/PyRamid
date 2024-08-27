@@ -212,9 +212,9 @@ class DeezerSearch(ASearchId, ASearch):
 			return TrackMinimalDeezer(track)
 
 		except CliDeezerRateLimitError:
-			logging.error("Search RateLimit %s - %s", artist_name, track_title)
+			logging.error("Search Deezer RateLimit %s - %s", artist_name, track_title)
 			await asyncio.sleep(5)
-			return await self.search_exact_track(artist_name, album_title, track_title)
+			return await self._search_exact_track(artist_name, album_title, track_title)
 
 	def __remove_special_chars(
 		self, input_string: str | None, allowed_brackets: tuple = ("(", ")", "[", "]")
