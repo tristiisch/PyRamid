@@ -10,6 +10,9 @@ class ApplicationInfo:
 		self.__os = self.__detect_os().lower()
 		self.__version = os.getenv("PROJECT_VERSION")
 
+	def get_name(self):
+		return self.__name.capitalize()
+
 	def get_version(self):
 		return f"v{self.__version}"
 
