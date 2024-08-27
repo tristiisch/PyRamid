@@ -339,8 +339,8 @@ jobs:
           This version is now accessible through various Docker images. Each image creation corresponds to a unique snapshot of this version, while updating the image corresponds to using an updated Docker image tag.
 
           ### Images availables
-          * `${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.docker_tag }}`
-          * `${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.project_version }}`
+          * \`${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.docker_tag }}\`
+          * \`${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.project_version }}\`
           $EOF
           gh release edit "${{ github.ref_name }}" \
             --title "Release v${{ needs.info.outputs.project_version }}" \
