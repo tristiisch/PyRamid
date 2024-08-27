@@ -329,11 +329,8 @@ jobs:
         run: |
           set -eu
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          gh release edit "${{ github.ref_name }}" \
-            --title "Release v${{ needs.info.outputs.project_version }}" \
-            --draft=false \
-            --prerelease=false \
-            --notes 'The latest version of the Discord bot PyRamid#6882 has been successfully deployed.
+          cat <<$EOF > ./changelog.txt
+          The latest version of the Discord bot PyRamid#6882 has been successfully deployed.
           To start using this updated version, please follow the instructions provided at [PyRamid Usage Guide](https://github.com/tristiisch/PyRamid/#usage).
 
           ${{ needs.info.outputs.changelog }}
@@ -344,7 +341,12 @@ jobs:
           ### Images availables
           * `${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.docker_tag }}`
           * `${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.project_version }}`
-          '
+          $EOF
+          gh release edit "${{ github.ref_name }}" \
+            --title "Release v${{ needs.info.outputs.project_version }}" \
+            --draft=false \
+            --prerelease=false \
+            --notes-file "./changelog.txt"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
