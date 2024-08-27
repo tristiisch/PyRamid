@@ -303,7 +303,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy v${{ needs.info.outputs.project_version }} to ${{ needs.info.outputs.environment }}
+      - name: Deploy ${{ needs.info.outputs.project_version }} to ${{ needs.info.outputs.environment }}
         uses: tristiisch/docker-stack-deployment@master
         with:
           deployment_mode: docker-swarm

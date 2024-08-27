@@ -40,6 +40,8 @@ FROM python:$PYTHON_VERSION-alpine AS base
 
 ARG APP_USER
 ARG APP_GROUP
+ARG PROJECT_VERSION
+ENV PROJECT_VERSION=$PROJECT_VERSION
 
 # Install necessary dependencies
 RUN apk update && \
