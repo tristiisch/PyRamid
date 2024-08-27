@@ -5,7 +5,6 @@ def startup():
 
 	main.args()
 	main.logs()
-	main.git_info()
 	main.config()
 	main.clean_data()
 

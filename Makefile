@@ -9,7 +9,13 @@ DOCKER_CONTEXT_PREPROD			:=	cookie-pulsheberg
 
 all: up-b logs
 
-start:
+build:
+	@docker compose build --pull
+
+build-c:
+	@docker compose build --pull
+
+up:
 	@docker compose up -d --remove-orphans
 
 up-f:
@@ -45,9 +51,10 @@ exec-pp:
 dev:
 	@docker compose -f $(DOCKER_COMPOSE_FILE_DEV) up -d --remove-orphans --pull always --force-recreate
 
-test:
+tests:
 	@docker build -f Dockerfile --target tests -t pyramid:tests .
-	@docker run --rm -t pyramid:tests
+	@mkdir -p ./cover && chmod 777 ./cover
+	@docker run --rm -v ./cover:/app/cover pyramid:tests
 
 img-b:
 	@python scripts/environnement.py --build
@@ -60,3 +67,5 @@ img-c:
 
 clean:
 	@python scripts/environnement.py --clean
+
+.PHONY: build tests
