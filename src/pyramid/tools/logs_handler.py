@@ -46,7 +46,7 @@ class LogsHandler:
 		self.logger.addHandler(file_handler)
 
 	def log_to_file_exceptions(self):
-		log_filename = os.path.join(self.__logs_dir, "errors", self.__error_filename)
+		log_filename = os.path.join(self.__logs_dir, self.__error_filename)
 		tools.create_parent_directories(log_filename)
 
 		file_handler = logging.handlers.RotatingFileHandler(
