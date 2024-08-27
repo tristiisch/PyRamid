@@ -58,7 +58,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const refType = context.ref_type;
+            const refType = '${{ github.ref_type }}';
             const ref = context.ref;
             const sha = context.sha;
             const shortSha = sha.slice(0, 7);
@@ -70,7 +70,7 @@ jobs:
             if (refType === 'tag') {
               dockerTag = 'latest';
               gitEnvironment = 'production';
-              projectVersion = context.ref_name;
+              projectVersion = '${{ github.ref_name }}';
             } else if (ref === 'refs/heads/main') {
               dockerTag = 'pre-prod';
               gitEnvironment = 'pre-production';
