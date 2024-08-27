@@ -204,7 +204,7 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: mode=max
           build-args: |
-            VERSION=${{ needs.info.outputs.project_version }}
+            PROJECT_VERSION=${{ needs.info.outputs.project_version }}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
@@ -378,7 +378,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VERSION=${{ needs.info.outputs.project_version }}-tests
+            PROJECT_VERSION=${{ needs.info.outputs.project_version }}-tests
           push: false
           outputs: type=docker
 

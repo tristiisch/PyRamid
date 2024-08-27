@@ -1,6 +1,6 @@
 # Define the Python version and other build arguments
 ARG PYTHON_VERSION=3.12
-ARG VERSION=0.0.0
+ARG PROJECT_VERSION=0.0.0
 ARG APP_USER=app-usr
 ARG APP_GROUP=app-grp
 
@@ -61,13 +61,13 @@ RUN mkdir -p ./songs && chmod 770 ./songs && chown root:$APP_GROUP ./songs && \
 # ============================ Executable Image ============================
 FROM base AS executable
 
-ARG VERSION
+ARG PROJECT_VERSION
 ARG APP_USER
 ARG APP_GROUP
 
 LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid" \
       org.opencontainers.image.authors="tristiisch" \
-      version="$VERSION"
+      version="$PROJECT_VERSION"
 
 # Copy the virtual environment from the builder stage
 COPY --chown=root:$APP_GROUP --chmod=550 --from=builder /opt/venv /opt/venv

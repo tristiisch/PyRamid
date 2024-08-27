@@ -8,7 +8,7 @@ class ApplicationInfo:
 	def __init__(self):
 		self.__name = "pyramid"
 		self.__os = self.__detect_os().lower()
-		self.__version = os.getenv("VERSION")
+		self.__version = os.getenv("PROJECT_VERSION")
 
 	def get_version(self):
 		return f"v{self.__version}"
