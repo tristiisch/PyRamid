@@ -333,7 +333,7 @@ jobs:
             --title "Release v${{ needs.info.outputs.project_version }}" \
             --draft=false \
             --prerelease=false \
-            --notes "The latest version of the Discord bot PyRamid#6882 has been successfully deployed.
+            --notes 'The latest version of the Discord bot PyRamid#6882 has been successfully deployed.
           To start using this updated version, please follow the instructions provided at [PyRamid Usage Guide](https://github.com/tristiisch/PyRamid/#usage).
 
           ${{ needs.info.outputs.changelog }}
@@ -344,7 +344,7 @@ jobs:
           ### Images availables
           * `${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.docker_tag }}`
           * `${{ env.REGISTRY_IMAGE }}:${{ needs.info.outputs.project_version }}`
-          "
+          '
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
