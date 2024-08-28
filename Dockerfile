@@ -25,7 +25,6 @@ RUN \
     # Install dependencies necessary for building Python packages
     # Only for ARM64 architecture
     if [ "$(uname -m)" = "aarch64" ]; then \
-        apk update && \
         apk add --no-cache --virtual .build-deps gcc musl-dev libffi-dev; \
     fi && \
     # Install Python dependencies
@@ -44,9 +43,7 @@ ARG PROJECT_VERSION
 ENV PROJECT_VERSION=$PROJECT_VERSION
 
 # Install necessary dependencies
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache ffmpeg opus-dev binutils && \
+RUN apk add --no-cache ffmpeg opus-dev binutils && \
     # Clean up apk cache
     ls -lah /var/cache/apk/ && \
     rm -rf /var/cache/apk/*
