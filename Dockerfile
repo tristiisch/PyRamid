@@ -43,10 +43,7 @@ ARG PROJECT_VERSION
 ENV PROJECT_VERSION=$PROJECT_VERSION
 
 # Install necessary dependencies
-RUN apk add --no-cache ffmpeg opus-dev binutils && \
-    # Clean up apk cache
-    ls -lah /var/cache/apk/ && \
-    rm -rf /var/cache/apk/*
+RUN apk add --no-cache ffmpeg opus-dev binutils
 
 WORKDIR /app
 
