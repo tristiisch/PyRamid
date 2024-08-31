@@ -116,7 +116,7 @@ def human_string_array(
 
 	# Build the table string using the calculated column sizes
 	lines = [
-		" | ".join(
+		" │ ".join(
 			(
 				col
 				if isinstance(col, int)
@@ -127,11 +127,13 @@ def human_string_array(
 			)
 		)
 	]
-	lines.append("-" * (sum(col_widths) + 3 * len(columns) - 1))
+
+	separator = "─┼─".join("─" * width for width in col_widths)
+	lines.append(separator)
 
 	# Add rows to the table with truncated column data
 	for row in data:
-		row_str = " | ".join(
+		row_str = " │ ".join(
 			(
 				str(col)
 				if isinstance(col, int)
@@ -144,30 +146,6 @@ def human_string_array(
 		lines.append(row_str)
 
 	return "\n".join(lines)
-
-
-def reduce_columns(column_sizes, total_max_size):
-	# Calculate the sum of the original column sizes
-	total_current_size = sum(column_sizes)
-
-	# Check if the total current size is greater than the total max size
-	if total_current_size > total_max_size:
-		# Calculate the scaling factor
-		scaling_factor = total_max_size / total_current_size
-
-		# Reduce each column size proportionally
-		reduced_column_sizes = [int(size * scaling_factor) for size in column_sizes]
-
-		# Ensure that the reduced sizes still add up to the total max size
-		while sum(reduced_column_sizes) > total_max_size:
-			# Reduce the size of the last column by 1 until the sum is equal to the total max size
-			reduced_column_sizes[-1] -= 1
-
-		return reduced_column_sizes
-
-	# If the total current size is already less than or equal to the total max size, no reduction is needed
-	return column_sizes
-
 
 @contextmanager
 def temp_locale(name):
