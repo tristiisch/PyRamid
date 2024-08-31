@@ -1,5 +1,8 @@
 import asyncio
 
+import discord
+
+from pyramid.data.exceptions import MissingPermissionException
 import pyramid.tools.utils as tools
 from discord import Interaction, Message, WebhookMessage
 from discord.utils import MISSING
@@ -146,22 +149,29 @@ class MessageSender:
 		last_channel_message = await self._get_last_channel_message()
 
 		# If the last message of channel is the last reply
-		if last_channel_message.id == self.last_message.id:
-			last_message = await self.txt_channel.send(self._tuncate_msg_if_overflow(content))
+		if last_channel_message is not None and last_channel_message.id == self.last_message.id:
+			try:
+				last_message = await self.txt_channel.send(self._tuncate_msg_if_overflow(content))
+			except discord.errors.Forbidden:
+				raise MissingPermissionException(discord.Permissions.send_messages)
 
 		# If not, send a message linked to the last message
 		else:
-			last_message = await self.last_message.reply(self._tuncate_msg_if_overflow(content))
+			try:
+				last_message = await self.last_message.reply(self._tuncate_msg_if_overflow(content))
+			except discord.errors.Forbidden:
+				raise MissingPermissionException(discord.Permissions.send_messages)
 		self.last_message = last_message
 		return last_message
 
-	async def _get_last_channel_message(self) -> Message:
+	async def _get_last_channel_message(self) -> Message|None:
 		last_channel_message = None
 		history = self.txt_channel.history(limit=1)
-		async for message in history:
-			last_channel_message = message
-		if not last_channel_message:
-			raise Exception("Channel didn't have history")
+		try:
+			async for message in history:
+				last_channel_message = message
+		except discord.errors.Forbidden:
+			return None
 		return last_channel_message
 
 	def _tuncate_msg_if_overflow(self, content: str) -> str:

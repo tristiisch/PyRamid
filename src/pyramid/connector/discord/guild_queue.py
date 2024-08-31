@@ -4,6 +4,7 @@ import sys
 import discord
 from discord import VoiceChannel, VoiceClient
 
+from pyramid.data.exceptions import MissingPermissionException
 from pyramid.data.track import Track
 from pyramid.data.tracklist import TrackList
 from pyramid.data.guild_data import GuildData
@@ -72,7 +73,12 @@ class GuildQueue(AGuildQueue):
 		)
 
 		# Message in channel with player
-		await self.mpi.send_player(msg_sender.txt_channel, track, msg_sender.ctx.locale)
+		try:
+			await self.mpi.send_player(msg_sender.txt_channel, track, msg_sender.ctx.locale)
+		except MissingPermissionException as err:
+			msg_sender.add_message(err.get_message())
+			return False
+			
 		return True
 
 	def stop(self) -> bool:

@@ -3,6 +3,7 @@ from discord import ButtonStyle, Embed, Interaction, Locale, Message
 from discord.abc import Messageable
 from discord.ui import Button
 
+from pyramid.data.exceptions import MissingPermissionException
 from pyramid.data.track import Track
 from pyramid.data.tracklist import TrackList
 from pyramid.data.a_guild_cmd import AGuildCmd
@@ -53,8 +54,11 @@ class MusicPlayerInterface:
 
 		last_channel_message = None
 		history = txt_channel.history(limit=1)
-		async for message in history:
-			last_channel_message = message
+		try:
+			async for message in history:
+				last_channel_message = message
+		except discord.errors.Forbidden:
+			raise MissingPermissionException(discord.Permissions.read_message_history)
 
 		if last_channel_message and self.last_message is not None:
 			if last_channel_message.id == self.last_message.id:
