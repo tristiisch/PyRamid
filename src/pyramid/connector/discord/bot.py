@@ -139,7 +139,6 @@ class DiscordBot:
 
 	async def start(self):
 		try:
-			# self.bot.run(self.__token, log_handler=None)
 			self.__logger.info("Discord bot login")
 			await self.bot.login(self.__token)
 			self.__logger.info("Discord bot connecting")
