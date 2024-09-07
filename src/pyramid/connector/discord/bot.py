@@ -134,8 +134,8 @@ class DiscordBot:
 		async def on_command(ctx: Context):
 			logging.debug("on_command :  %s", ctx.author)
 
-		self.listeners.register()
 		self.cmd.register()
+		self.listeners.register()
 
 	async def start(self):
 		try:
