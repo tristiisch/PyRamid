@@ -293,7 +293,7 @@ def count_public_variables(obj):
 	return len(public_variables)
 
 
-def format_bytes_speed(bytes_per_second):
+def format_bytes_speed(bytes_per_second: float):
 	units = ["bps", "Kbps", "Mbps", "Gbps", "Tbps"]
 	factor = 1000
 	for unit in units:
@@ -302,3 +302,12 @@ def format_bytes_speed(bytes_per_second):
 		bytes_per_second /= factor
 
 	return f"{round(bytes_per_second)} {units[-1]}"
+
+def camel_to_snake(name: str):
+	snake_case = ""
+	for i, char in enumerate(name):
+		if char.isupper() and i != 0:
+			snake_case += "_" + char.lower()
+		else:
+			snake_case += char.lower()
+	return snake_case
