@@ -6,7 +6,7 @@ import signal
 from datetime import datetime
 from threading import Thread
 
-import pyramid.tools.utils as tools
+from pyramid.tools import utils
 from pyramid.data.functional.application_info import ApplicationInfo
 from pyramid.connector.discord.bot import DiscordBot
 from pyramid.client.server import SocketServer
@@ -43,7 +43,7 @@ class Main:
 		self.logger = logging.getLogger()
 
 		# Deletion of log files over 10
-		tools.keep_latest_files(log_dir, 10, "error")
+		utils.keep_latest_files(log_dir, 10, "error")
 
 	def config(self):
 		# Config load
@@ -60,7 +60,7 @@ class Main:
 
 	def clean_data(self):
 		# Songs folder clear
-		tools.clear_directory(self._config.deezer__folder)
+		utils.clear_directory(self._config.deezer__folder)
 
 	def start(self):
 		# Discord Bot Instance

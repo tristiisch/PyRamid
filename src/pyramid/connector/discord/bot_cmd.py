@@ -6,6 +6,8 @@ from typing import Callable
 from discord import Guild, Interaction
 from discord.ext.commands import Bot
 from pyramid.connector.discord.commands.about_command import AboutCommand
+from pyramid.connector.discord.commands.api.parameters_command import ParametersCommand
+from pyramid.connector.discord.commands.api.register_command import register_commands
 from pyramid.connector.discord.commands.help_command import HelpCommand
 from pyramid.connector.discord.commands.ping_command import PingCommand
 from pyramid.connector.discord.guild_cmd import GuildCmd
@@ -35,14 +37,16 @@ class BotCmd:
 	def register(self):
 		bot = self.__bot
 
-		ping = PingCommand(self.__bot, self.__logger)
-		ping.register(self.__environment.name.lower())
+		register_commands(self.__bot, self.__logger, self.__environment.name.lower())
 
-		about = AboutCommand(self.__bot, self.__logger, self.__started, self.__environment, self.__info)
-		about.register(self.__environment.name.lower())
+		# ping = PingCommand(ParametersCommand("ping"), self.__bot, self.__logger)
+		# ping.register(self.__environment.name.lower())
 
-		help = HelpCommand(self.__bot, self.__logger)
-		help.register(self.__environment.name.lower())
+		# about = AboutCommand(self.__bot, self.__logger, self.__started, self.__environment, self.__info)
+		# about.register(self.__environment.name.lower())
+
+		# help = HelpCommand(self.__bot, self.__logger)
+		# help.register(self.__environment.name.lower())
 
 		@bot.tree.command(name="play", description="Adds a track to the end of the queue and plays it")
 		async def cmd_play(ctx: Interaction, input: str, engine: SourceType | None):

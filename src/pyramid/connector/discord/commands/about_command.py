@@ -1,24 +1,19 @@
-import logging
 import time
-from typing import Union
 from discord import AppInfo, ClientUser, Color, Embed,  Interaction
-from discord.ext.commands import Bot
 from discord.user import BaseUser
-from discord.app_commands import locale_str
-from pyramid.connector.discord.commands.abstract_command import AbstractCommand
-from pyramid.data.environment import Environment
-from pyramid.data.functional.application_info import ApplicationInfo
-import pyramid.tools.utils as tools
+from pyramid.connector.discord.commands.api.abstract_command import AbstractCommand
+from pyramid.connector.discord.commands.api.annotation_command import discord_command
+from pyramid.connector.discord.commands.api.parameters_command import ParametersCommand
+from pyramid.tools import utils
 
+@discord_command(parameters=ParametersCommand(description="About the bot"))
 class AboutCommand(AbstractCommand):
-	def __init__(self, bot: Bot, logger: logging.Logger, started: float, environment: Environment, info: ApplicationInfo):
-		super().__init__(bot, logger)
-		self.__started = started
-		self.__environment = environment
-		self.__info = info
 
-	def description(self) -> Union[str, locale_str]:
-		return "About the bot"
+	# def __init__(self, bot: Bot, logger: logging.Logger, started: float, environment: Environment, info: ApplicationInfo):
+	# 	super().__init__(bot, logger)
+	# 	self.__started = started
+	# 	self.__environment = environment
+	# 	self.__info = info
 
 	async def execute(self, ctx: Interaction):
 		await ctx.response.defer(thinking=True)
@@ -68,7 +63,7 @@ class AboutCommand(AbstractCommand):
 		)
 		embed.add_field(
 			name="Uptime",
-			value=tools.time_to_duration(int(round(time.time() - self.__started))),
+			value=utils.time_to_duration(int(round(time.time() - self.__started))),
 			inline=True,
 		)
 

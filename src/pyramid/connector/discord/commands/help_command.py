@@ -1,12 +1,11 @@
-from typing import List, Union
+from typing import List
 from discord import Color, Embed, Interaction
-from discord.app_commands import Command, locale_str
-from pyramid.connector.discord.commands.abstract_command import AbstractCommand
+from discord.app_commands import Command
+from pyramid.connector.discord.commands.api.abstract_command import AbstractCommand, ParametersCommand
+from pyramid.connector.discord.commands.api.annotation_command import discord_command
 
+@discord_command(parameters=ParametersCommand(description="List all commands"))
 class HelpCommand(AbstractCommand):
-
-	def description(self) -> Union[str, locale_str]:
-		return "List all commands"
 
 	async def execute(self, ctx: Interaction):
 		await ctx.response.defer(thinking=True)

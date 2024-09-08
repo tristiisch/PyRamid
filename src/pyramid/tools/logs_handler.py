@@ -4,7 +4,7 @@ import os
 import sys
 
 import coloredlogs
-import pyramid.tools.utils as tools
+from pyramid.tools import utils
 from pyramid.data.functional.application_info import ApplicationInfo
 from pyramid.data.environment import Environment
 
@@ -32,7 +32,7 @@ class LogsHandler:
 
 	def log_to_file(self):
 		log_filename = os.path.join(self.__logs_dir, self.__log_filename)
-		tools.create_parent_directories(log_filename)
+		utils.create_parent_directories(log_filename)
 
 		file_handler = logging.handlers.RotatingFileHandler(
 			filename=log_filename,
@@ -47,7 +47,7 @@ class LogsHandler:
 
 	def log_to_file_exceptions(self):
 		log_filename = os.path.join(self.__logs_dir, self.__error_filename)
-		tools.create_parent_directories(log_filename)
+		utils.create_parent_directories(log_filename)
 
 		file_handler = logging.handlers.RotatingFileHandler(
 			filename=log_filename,

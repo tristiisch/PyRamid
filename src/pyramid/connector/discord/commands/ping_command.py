@@ -1,13 +1,11 @@
 import math
-from typing import Union
 from discord import Interaction
-from discord.app_commands import locale_str
-from pyramid.connector.discord.commands.abstract_command import AbstractCommand
+from pyramid.connector.discord.commands.api.abstract_command import AbstractCommand
+from pyramid.connector.discord.commands.api.annotation_command import discord_command
+from pyramid.connector.discord.commands.api.parameters_command import ParametersCommand
 
+@discord_command(parameters=ParametersCommand(description="Displays response time between bot and Discord API"))
 class PingCommand(AbstractCommand):
-
-	def description(self) -> Union[str, locale_str]:
-		return "Displays response time between bot and Discord API"
 
 	async def execute(self, ctx: Interaction):
 		await ctx.response.defer(thinking=True)
