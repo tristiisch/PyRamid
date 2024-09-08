@@ -1,7 +1,6 @@
-import abc
 import asyncio
 import time
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any, Generic, Literal, Self
 from urllib.parse import parse_qs, urlparse
 
@@ -41,7 +40,7 @@ class AsyncRateLimiter:
 
 
 class ACliDeezer(ABC):
-	@abc.abstractmethod
+	@abstractmethod
 	async def async_request(
 		self,
 		method: str,
