@@ -24,20 +24,28 @@ class BotCmd:
 		get_guild_cmd: Callable[[Guild], GuildCmd],
 		logger: Logger,
 		info: ApplicationInfo,
-		environment: Environment,
-		started: float,
+		environment: Environment
 	):
 		self.__bot = bot
 		self.__get_guild_cmd = get_guild_cmd
 		self.__logger = logger
 		self.__info = info
 		self.__environment = environment
-		self.__started = started
 
 	def register(self):
 		bot = self.__bot
 
-		register_commands(self.__bot, self.__logger, self.__environment.name.lower())
+		services: dict[str, object] = dict()
+
+		service = self.__environment
+		service_name = service.__class__.__name__
+		services[service_name] = service
+
+		service = self.__info
+		service_name = service.__class__.__name__
+		services[service_name] = service
+		
+		register_commands(services, self.__bot, self.__logger, self.__environment.name.lower())
 
 		# ping = PingCommand(ParametersCommand("ping"), self.__bot, self.__logger)
 		# ping.register(self.__environment.name.lower())

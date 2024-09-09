@@ -6,6 +6,8 @@ import signal
 from datetime import datetime
 from threading import Thread
 
+from pyramid.connector.discord.services.api.register import get_service, register_services
+from pyramid.connector.discord.services.environment import EnvironmentService
 from pyramid.tools import utils
 from pyramid.data.functional.application_info import ApplicationInfo
 from pyramid.connector.discord.bot import DiscordBot
@@ -21,6 +23,7 @@ class Main:
 		# Program information
 		self._info = ApplicationInfo()
 		self._health = HealthModules()
+		self._discord_bot = None
 
 	# Argument management
 	def args(self):
@@ -88,6 +91,18 @@ class Main:
 		def handle_signal(signum: int, frame):
 			logging.info(f"Received signal {signum}. shutting down ...")
 			asyncio.run_coroutine_threadsafe(shutdown(loop), loop)
+
+		# -- Service [TEMP]
+		self._discord_bot = discord_bot
+		if self._discord_bot is None:
+			raise Exception("Bot is not connected")
+		register_services(self._discord_bot.bot, self.logger)
+		environment_service = get_service("EnvironmentService")
+		self.logger.info("environment_service %s" % environment_service)
+		if not isinstance(environment_service, EnvironmentService):
+			raise Exception("environment_service is not from type EnvironmentService, got %s" % type(environment_service))
+		environment_service.set_type(self._config.mode)
+		# --
 
 		previous_handler = signal.signal(signal.SIGTERM, handle_signal)
 

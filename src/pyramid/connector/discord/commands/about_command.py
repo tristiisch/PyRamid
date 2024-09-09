@@ -1,9 +1,12 @@
+
 import time
 from discord import AppInfo, ClientUser, Color, Embed,  Interaction
 from discord.user import BaseUser
 from pyramid.connector.discord.commands.api.abc import AbstractCommand
 from pyramid.connector.discord.commands.api.annotation import discord_command
 from pyramid.connector.discord.commands.api.parameters import ParametersCommand
+from pyramid.data.environment import Environment
+from pyramid.data.functional.application_info import ApplicationInfo
 from pyramid.tools import utils
 
 @discord_command(parameters=ParametersCommand(description="About the bot"))
@@ -14,6 +17,11 @@ class AboutCommand(AbstractCommand):
 	# 	self.__started = started
 	# 	self.__environment = environment
 	# 	self.__info = info
+
+	def injectService(self, environment: Environment, info: ApplicationInfo):
+		self.__environment = environment
+		self.__info = info
+		# self.logger.info("Injected !")
 
 	async def execute(self, ctx: Interaction):
 		await ctx.response.defer(thinking=True)
@@ -63,7 +71,7 @@ class AboutCommand(AbstractCommand):
 		)
 		embed.add_field(
 			name="Uptime",
-			value=utils.time_to_duration(int(round(time.time() - self.__started))),
+			value=utils.time_to_duration(int(round(time.time() - self.__info.get_started_at()))),
 			inline=True,
 		)
 
