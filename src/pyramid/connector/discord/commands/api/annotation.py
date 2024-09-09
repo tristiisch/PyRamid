@@ -4,7 +4,7 @@ from discord.utils import MISSING
 
 from pyramid.connector.discord.commands.api.abc import AbstractCommand
 from pyramid.connector.discord.commands.api.parameters import ParametersCommand
-from pyramid.connector.discord.commands.api.register import COMMANDS_AUTOREGISTRED
+from pyramid.connector.discord.commands.api.register import COMMANDS_TO_REGISTER
 
 
 def discord_command(*, parameters: ParametersCommand):
@@ -23,7 +23,7 @@ def discord_command(*, parameters: ParametersCommand):
 				parameters.description = '…'
 			else:
 				parameters.description = _shorten(cls.__doc__)
-		COMMANDS_AUTOREGISTRED[cls] = parameters
+		COMMANDS_TO_REGISTER[cls] = parameters
 		return cls
 	return decorator
 

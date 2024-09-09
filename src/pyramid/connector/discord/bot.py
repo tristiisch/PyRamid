@@ -42,7 +42,6 @@ class DiscordBot:
 		self.__ffmpeg = config.discord__ffmpeg
 		self.__environment: Environment = config.mode
 		self.__engine_source = EngineSource(config)
-		self.__started = time.time()
 
 		intents = discord.Intents.default()
 		# intents.members = True
@@ -68,8 +67,7 @@ class DiscordBot:
 			self.__get_guild_cmd,
 			self.__logger,
 			self.__information,
-			self.__environment,
-			self.__started,
+			self.__environment
 		)
 		self._health = health
 
