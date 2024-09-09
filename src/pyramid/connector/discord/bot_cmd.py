@@ -6,8 +6,8 @@ from typing import Callable
 from discord import Guild, Interaction
 from discord.ext.commands import Bot
 from pyramid.connector.discord.commands.about_command import AboutCommand
-from pyramid.connector.discord.commands.api.parameters_command import ParametersCommand
-from pyramid.connector.discord.commands.api.register_command import register_commands
+from pyramid.connector.discord.commands.api.parameters import ParametersCommand
+from pyramid.connector.discord.commands.api.register import register_commands
 from pyramid.connector.discord.commands.help_command import HelpCommand
 from pyramid.connector.discord.commands.ping_command import PingCommand
 from pyramid.connector.discord.guild_cmd import GuildCmd

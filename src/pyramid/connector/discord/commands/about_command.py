@@ -1,9 +1,9 @@
 import time
 from discord import AppInfo, ClientUser, Color, Embed,  Interaction
 from discord.user import BaseUser
-from pyramid.connector.discord.commands.api.abstract_command import AbstractCommand
-from pyramid.connector.discord.commands.api.annotation_command import discord_command
-from pyramid.connector.discord.commands.api.parameters_command import ParametersCommand
+from pyramid.connector.discord.commands.api.abc import AbstractCommand
+from pyramid.connector.discord.commands.api.annotation import discord_command
+from pyramid.connector.discord.commands.api.parameters import ParametersCommand
 from pyramid.tools import utils
 
 @discord_command(parameters=ParametersCommand(description="About the bot"))

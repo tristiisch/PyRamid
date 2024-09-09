@@ -2,9 +2,9 @@ import re
 from textwrap import TextWrapper
 from discord.utils import MISSING
 
-from pyramid.connector.discord.commands.api.abstract_command import AbstractCommand
-from pyramid.connector.discord.commands.api.parameters_command import ParametersCommand
-from pyramid.connector.discord.commands.api.register_command import COMMANDS_AUTOREGISTRED
+from pyramid.connector.discord.commands.api.abc import AbstractCommand
+from pyramid.connector.discord.commands.api.parameters import ParametersCommand
+from pyramid.connector.discord.commands.api.register import COMMANDS_AUTOREGISTRED
 
 
 def discord_command(*, parameters: ParametersCommand):

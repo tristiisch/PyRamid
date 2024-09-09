@@ -1,8 +1,8 @@
 from typing import List
 from discord import Color, Embed, Interaction
 from discord.app_commands import Command
-from pyramid.connector.discord.commands.api.abstract_command import AbstractCommand, ParametersCommand
-from pyramid.connector.discord.commands.api.annotation_command import discord_command
+from pyramid.connector.discord.commands.api.abc import AbstractCommand, ParametersCommand
+from pyramid.connector.discord.commands.api.annotation import discord_command
 
 @discord_command(parameters=ParametersCommand(description="List all commands"))
 class HelpCommand(AbstractCommand):
