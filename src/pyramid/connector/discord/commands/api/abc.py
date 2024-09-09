@@ -7,7 +7,7 @@ from discord.app_commands import Command
 from discord.ext.commands import Bot
 from discord.utils import MISSING
 
-from pyramid.connector.discord.commands.api.parameters_command import ParametersCommand
+from pyramid.connector.discord.commands.api.parameters import ParametersCommand
 
 class AbstractCommand(ABC):
 
