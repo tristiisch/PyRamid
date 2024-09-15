@@ -2,15 +2,15 @@ import re
 from textwrap import TextWrapper
 from discord.utils import MISSING
 
-from pyramid.connector.discord.commands.api.abc import AbstractCommand
-from pyramid.connector.discord.commands.api.parameters import ParametersCommand
-from pyramid.connector.discord.commands.api.register import COMMANDS_TO_REGISTER
+from pyramid.connector.discord.commands.tools.abc import AbstractCommand
+from pyramid.connector.discord.commands.tools.parameters import ParametersCommand
+from pyramid.connector.discord.commands.tools.register import CommandRegister
 
 
 def discord_command(*, parameters: ParametersCommand):
 	def decorator(cls):
 		if not issubclass(cls, AbstractCommand):
-			raise TypeError(f"Class {cls.__name__} must extend from AbstractCommand")
+			raise TypeError("Class %s must extend from AbstractCommand" % cls.__name__)
 
 		if parameters.name is MISSING:
 			class_name = cls.__name__
@@ -23,7 +23,7 @@ def discord_command(*, parameters: ParametersCommand):
 				parameters.description = '…'
 			else:
 				parameters.description = _shorten(cls.__doc__)
-		COMMANDS_TO_REGISTER[cls] = parameters
+		CommandRegister.register_command(cls, parameters)
 		return cls
 	return decorator
 

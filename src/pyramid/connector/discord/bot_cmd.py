@@ -1,15 +1,9 @@
-import math
 from logging import Logger
-import time
 from typing import Callable
 
 from discord import Guild, Interaction
 from discord.ext.commands import Bot
-from pyramid.connector.discord.commands.about_command import AboutCommand
-from pyramid.connector.discord.commands.api.parameters import ParametersCommand
-from pyramid.connector.discord.commands.api.register import register_commands
-from pyramid.connector.discord.commands.help_command import HelpCommand
-from pyramid.connector.discord.commands.ping_command import PingCommand
+from pyramid.connector.discord.commands.tools.register import CommandRegister
 from pyramid.connector.discord.guild_cmd import GuildCmd
 from pyramid.data.environment import Environment
 from pyramid.data.functional.application_info import ApplicationInfo
@@ -45,7 +39,8 @@ class BotCmd:
 		service_name = service.__class__.__name__
 		services[service_name] = service
 		
-		register_commands(services, self.__bot, self.__logger, self.__environment.name.lower())
+		CommandRegister.import_commands()
+		CommandRegister.create_commands(services, self.__bot, self.__logger, self.__environment.name.lower())
 
 		# ping = PingCommand(ParametersCommand("ping"), self.__bot, self.__logger)
 		# ping.register(self.__environment.name.lower())

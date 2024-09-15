@@ -1,23 +1,22 @@
-import logging
-from logging import Logger
-
+from pyramid.api.services.configuration import IConfigurationService
+from pyramid.api.services.logger import ILoggerService
+from pyramid.api.services.tools.annotation import pyramid_service
+from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.tools import utils
-from pyramid.data.environment import Environment
 from pyramid.tools.configuration.configuration_load import ConfigurationFromEnv, ConfigurationFromYAML
 from pyramid.tools.configuration.configuration_save import ConfigurationToYAML
 
+@pyramid_service(interface=IConfigurationService)
+class ConfigurationService(IConfigurationService, ConfigurationFromYAML, ConfigurationToYAML, ConfigurationFromEnv, ServiceInjector):
 
-class Configuration(ConfigurationFromYAML, ConfigurationToYAML, ConfigurationFromEnv):
-	def __init__(self):
-		self.discord__token: str = ""
-		self.discord__ffmpeg: str = ""
-		self.deezer__arl: str = ""
-		self.deezer__folder: str = ""
-		self.spotify__client_id: str = ""
-		self.spotify__client_secret: str = ""
-		self.general__limit_tracks: int = 0
-		self.mode: Environment = Environment.PRODUCTION
-		self.version: str = ""
+	def injectService(self,
+			logger_service: ILoggerService
+		):
+		self.logger = logger_service
+		super().set_logger(logger_service)
+
+	def start(self):
+		self.load()
 
 	def load(self, config_file: str = "config.yml", use_env_vars: bool = True) -> bool:
 		"""

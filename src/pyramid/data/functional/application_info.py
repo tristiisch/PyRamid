@@ -3,10 +3,6 @@ import platform
 import subprocess
 import time
 
-from pyramid.connector.discord.services.api.annotation import pyramid_service
-
-
-@pyramid_service()
 class ApplicationInfo:
 	def __init__(self):
 		self.__name = "pyramid"
