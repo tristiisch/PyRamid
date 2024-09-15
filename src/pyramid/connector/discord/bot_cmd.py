@@ -36,12 +36,12 @@ class BotCmd:
 		bot = self.__bot
 
 		@bot.tree.command(
-			name="ping", description="Displays response time between bot and dioscord"
+			name="ping", description="Shows the response time between the bot and Discord API"
 		)
 		async def cmd_ping(ctx: Interaction):
 			await ctx.response.send_message(f"Pong ! ({math.trunc(bot.latency * 1000)}ms)")
 
-		@bot.tree.command(name="about", description="About the bot")
+		@bot.tree.command(name="about", description="Information about the bot")
 		async def cmd_about(ctx: Interaction):
 			bot_user: ClientUser | None
 			if bot.user is not None:
@@ -122,7 +122,7 @@ class BotCmd:
 				else:
 					await ctx.followup.send(embeds=embeds_chunk)
 
-		@bot.tree.command(name="play", description="Play a single track at end of queue")
+		@bot.tree.command(name="play", description="Adds a track to the end of the queue and plays it")
 		async def cmd_play(ctx: Interaction, input: str, engine: SourceType | None):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -133,7 +133,7 @@ class BotCmd:
 
 			await guild_cmd.play(ms, ctx, input, engine)
 
-		@bot.tree.command(name="play_next", description="Play a single track next to the current")
+		@bot.tree.command(name="play_next", description="Plays a track next the current one")
 		async def cmd_play_next(ctx: Interaction, input: str, engine: SourceType | None):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -144,7 +144,7 @@ class BotCmd:
 
 			await guild_cmd.play(ms, ctx, input, engine, at_end=False)
 
-		@bot.tree.command(name="pause", description="Pause music")
+		@bot.tree.command(name="pause", description="Pauses the music")
 		async def cmd_pause(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -155,7 +155,7 @@ class BotCmd:
 
 			await guild_cmd.pause(ms, ctx)
 
-		@bot.tree.command(name="resume", description="Resume music")
+		@bot.tree.command(name="resume", description="Resumes the paused music")
 		async def cmd_resume(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -166,7 +166,7 @@ class BotCmd:
 
 			await guild_cmd.resume(ms, ctx)
 
-		@bot.tree.command(name="stop", description="Stop music and exit channel")
+		@bot.tree.command(name="stop", description="Stops the music and leaves the channel")
 		async def cmd_stop(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -177,7 +177,7 @@ class BotCmd:
 
 			await guild_cmd.stop(ms, ctx)
 
-		@bot.tree.command(name="next", description="Next track")
+		@bot.tree.command(name="next", description="Skips to the next track")
 		async def cmd_next(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -188,7 +188,7 @@ class BotCmd:
 
 			await guild_cmd.next(ms, ctx)
 
-		@bot.tree.command(name="shuffle", description="Randomize the queue")
+		@bot.tree.command(name="shuffle", description="Randomizes the track queue")
 		async def cmd_shuffle(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -199,7 +199,7 @@ class BotCmd:
 
 			await guild_cmd.shuffle(ms, ctx)
 
-		@bot.tree.command(name="remove", description="Remove an element in the queue")
+		@bot.tree.command(name="remove", description="Removes a track from the queue")
 		async def cmd_remove(ctx: Interaction, number_in_queue: int):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -210,7 +210,7 @@ class BotCmd:
 
 			await guild_cmd.remove(ms, ctx, number_in_queue)
 
-		@bot.tree.command(name="goto", description="Go to an element in the queue")
+		@bot.tree.command(name="goto", description="Jumps to a specific track in the queue")
 		async def cmd_goto(ctx: Interaction, number_in_queue: int):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -221,7 +221,7 @@ class BotCmd:
 
 			await guild_cmd.goto(ms, ctx, number_in_queue)
 
-		@bot.tree.command(name="queue", description="List the track queue")
+		@bot.tree.command(name="queue", description="Displays the current track queue")
 		async def cmd_queue(ctx: Interaction):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -243,7 +243,7 @@ class BotCmd:
 
 		# 	await guild_cmd.searchV1(ms, input, engine)
 
-		@bot.tree.command(name="search", description="Search tracks")
+		@bot.tree.command(name="search", description="Searches for tracks")
 		async def cmd_search(ctx: Interaction, input: str, engine: SourceType | None):
 			if (await self.__use_on_guild_only(ctx)) is False:
 				return
@@ -255,7 +255,7 @@ class BotCmd:
 			await guild_cmd.search(ms, input, engine)
 
 		@bot.tree.command(
-			name="play_url", description="Plays track, artist, album or playlist by URL"
+			name="play_url", description="Plays a track, artist, album, or playlist from a URL"
 		)
 		async def cmd_play_url(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
@@ -269,7 +269,7 @@ class BotCmd:
 
 		@bot.tree.command(
 			name="play_url_next",
-			description="Plays track, artist, album or playlist by URL next to the current",
+			description="Plays a track, artist, album, or playlist from a URL next in the queue",
 		)
 		async def cmd_play_url_next(ctx: Interaction, url: str):
 			if (await self.__use_on_guild_only(ctx)) is False:
