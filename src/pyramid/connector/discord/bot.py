@@ -19,6 +19,7 @@ from discord.ext.commands.errors import (
 	CommandError,
 )
 from discord.app_commands.errors import AppCommandError, CommandInvokeError
+from pyramid.api.services.configuration import IConfigurationService
 from pyramid.data.functional.application_info import ApplicationInfo
 from pyramid.data.environment import Environment
 from pyramid.data.guild_data import GuildData
@@ -35,7 +36,7 @@ from pyramid.tools.configuration.configuration import Configuration
 
 
 class DiscordBot:
-	def __init__(self, logger: logging.Logger, information: ApplicationInfo, config: Configuration):
+	def __init__(self, logger: logging.Logger, information: ApplicationInfo, config: IConfigurationService):
 		self.__logger = logger
 		self.__information = information
 		self.__token = config.discord__token
@@ -59,7 +60,8 @@ class DiscordBot:
 
 		self.guilds_instances: Dict[int, GuildInstances] = {}
 
-	def create(self, health: HealthModules):
+	# def create(self, health: HealthModules):
+	def create(self):
 		self.__logger.info("Discord bot creating with discord.py v%s ...", discord.__version__)
 		self.listeners = BotListener(self.bot, self.__logger)
 		self.cmd = BotCmd(
@@ -69,7 +71,7 @@ class DiscordBot:
 			self.__information,
 			self.__environment
 		)
-		self._health = health
+		# self._health = health
 
 		@self.bot.event
 		async def on_command_error(ctx: Context, error: CommandError):
@@ -140,10 +142,10 @@ class DiscordBot:
 			self.__logger.info("Discord bot login")
 			await self.bot.login(self.__token)
 			self.__logger.info("Discord bot connecting")
-			self._health.discord = True
+			# self._health.discord = True
 			await self.bot.connect()
 		except PrivilegedIntentsRequired as ex:
-			self._health.discord = False
+			# self._health.discord = False
 			self.__logger.critical(ex)
 			sys.exit(1)
 

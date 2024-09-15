@@ -5,7 +5,7 @@ from discord import Interaction
 from discord.app_commands import Command
 from discord.ext.commands import Bot
 
-from pyramid.connector.discord.commands.api.parameters import ParametersCommand
+from pyramid.connector.discord.commands.tools.parameters import ParametersCommand
 
 class AbstractCommand(ABC):
 
@@ -27,6 +27,7 @@ class AbstractCommand(ABC):
 			auto_locale_strings=self.parameters.auto_locale_strings,
 			extras=self.parameters.extras,
 		)
+		# TODO check this usage
 		# self.bot.tree.add_command(command, guilds=self.parameters.guilds)
 		self.bot.tree.add_command(command)
 

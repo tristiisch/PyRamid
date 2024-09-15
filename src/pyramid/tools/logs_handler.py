@@ -7,8 +7,10 @@ import coloredlogs
 from pyramid.tools import utils
 from pyramid.data.functional.application_info import ApplicationInfo
 from pyramid.data.environment import Environment
+from pyramid.tools.deprecated_class import deprecated_class
 
 
+@deprecated_class
 class LogsHandler:
 	def __init__(self):
 		self.__date = "%d/%m/%Y %H:%M:%S"

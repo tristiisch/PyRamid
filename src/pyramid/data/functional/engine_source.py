@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Dict
 
+from pyramid.api.services.configuration import IConfigurationService
 from pyramid.connector.deezer.downloader import DeezerDownloader
 from pyramid.connector.deezer.search import DeezerSearch
 from pyramid.connector.spotify.search import SpotifySearch
@@ -16,7 +17,7 @@ class SourceType(Enum):
 
 
 class EngineSource:
-	def __init__(self, config: Configuration):
+	def __init__(self, config: IConfigurationService):
 		self.__downloader = DeezerDownloader(config.deezer__folder, config.deezer__arl)
 		self.__deezer_search = DeezerSearch(config.general__limit_tracks)
 		self.__spotify_search = SpotifySearch(
