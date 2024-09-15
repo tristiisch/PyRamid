@@ -7,7 +7,7 @@ from pyramid.api.services.configuration import IConfigurationService
 from pyramid.tools import utils
 
 @pyramid_service()
-class LoggerLevelService(ServiceInjector):
+class CleanService(ServiceInjector):
 
 	def injectService(self,
 			configuration_service: IConfigurationService
