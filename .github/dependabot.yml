@@ -23,7 +23,6 @@ updates:
 
   - package-ecosystem: docker
     directory: "/"
-    versioning-strategy: "increase"
     schedule:
       interval: monthly
       time: "06:00"
@@ -36,7 +35,6 @@ updates:
 
   - package-ecosystem: github-actions
     directory: "/"
-    versioning-strategy: "increase"
     schedule:
       interval: monthly
       time: "06:00"
