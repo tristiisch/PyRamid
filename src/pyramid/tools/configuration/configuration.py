@@ -1,12 +1,11 @@
-import logging
-from logging import Logger
-
 from pyramid.tools import utils
+from pyramid.tools.deprecated_class import deprecated_class
 from pyramid.data.environment import Environment
 from pyramid.tools.configuration.configuration_load import ConfigurationFromEnv, ConfigurationFromYAML
 from pyramid.tools.configuration.configuration_save import ConfigurationToYAML
 
 
+@deprecated_class
 class Configuration(ConfigurationFromYAML, ConfigurationToYAML, ConfigurationFromEnv):
 	def __init__(self):
 		self.discord__token: str = ""

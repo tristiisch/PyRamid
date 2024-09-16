@@ -1,6 +1,6 @@
 import logging
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from pyramid.tools.configuration.configuration import Configuration
 
@@ -11,11 +11,6 @@ class ConfigurationTest(unittest.TestCase):
 	def test_default_logger(self):
 		self.assertIsNotNone(logging.getLogger("config"))
 		self.assertEqual(logging.getLogger("config").name, "config")
-
-	def test_custom_logger(self):
-		custom_logger = MagicMock()
-		self.config = Configuration(logger=custom_logger)
-		self.assertEqual(getattr(self.config, "_Configuration__logger"), custom_logger)
 
 	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromEnv._get_env_vars")
 	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromYAML._get_file_vars")
