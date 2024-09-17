@@ -1,8 +1,7 @@
 
 from threading import Thread
 
-from pyramid.api.services.logger import ILoggerService
-from pyramid.api.services.socket_server import ISocketServerService
+from pyramid.api.services import ILoggerService, ISocketServerService
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.client.server import SocketServer

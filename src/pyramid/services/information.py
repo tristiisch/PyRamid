@@ -1,5 +1,5 @@
 
-from pyramid.api.services.information import IInformationService
+from pyramid.api.services import IInformationService
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.data.functional.application_info import ApplicationInfo
