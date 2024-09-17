@@ -86,7 +86,6 @@ def run_task(func: Callable, loop: asyncio.AbstractEventLoop | None, **kwargs):
 		result = func(**kwargs)
 	return result
 
-
 class Queue:
 	all_queue = deque()
 
@@ -97,10 +96,12 @@ class Queue:
 		self.__threads_list: List[Thread] = []
 		self.__lock = Lock()
 		self.__worker = worker
+		self.__name = name
 
+	def create_threads(self):
 		for thread_id in range(1, self.__threads + 1):
 			thread = Thread(
-				name=f"{name} n°{thread_id}",
+				name="%s n°%d{thread_id}" % (self.__name, thread_id),
 				target=self.__worker,
 				args=(self.__queue, thread_id, self.__lock, self.__event),
 				daemon=True,

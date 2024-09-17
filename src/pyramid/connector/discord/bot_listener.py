@@ -22,11 +22,11 @@ class BotListener:
 				self.__logger.warning("Unable to get discord bot name")
 			else:
 				self.__logger.info("Discord bot name '%s'", bot.user.name)
-			self.__logger.info("------ GUILDS ------")
+			self.__logger.info("────── GUILDS ──────")
 
 			for guild in bot.guilds:
 				self.show_info_guild(guild)
-				self.__logger.info("----------------------")
+				self.__logger.info("─────────────────────")
 			self.__logger.info("Discord bot ready")
 			# await client.close()
 

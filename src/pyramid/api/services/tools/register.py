@@ -144,7 +144,7 @@ class ServiceRegister:
 		for root in root_services:
 			build_tree(root)
 
-		return "Services dependencies :\n" + "\n".join(buffer)
+		return "Services tree :\n" + "\n".join(buffer)
 
 
 	@staticmethod

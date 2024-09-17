@@ -7,6 +7,7 @@ from pyramid.tools.custom_queue import Queue, QueueItem  # noqa: E402
 class SimpleQueue(unittest.TestCase):
 	def test_add(self):
 		queue = Queue(threads=1)
+		queue.create_threads()
 		self.assertEqual(queue.length(), 0)
 
 		item = QueueItem(name="test", func=lambda x: x, x=5)
@@ -15,6 +16,7 @@ class SimpleQueue(unittest.TestCase):
 
 	def test_add_at_start(self):
 		queue = Queue(threads=1)
+		queue.create_threads()
 		self.assertEqual(queue.length(), 0)
 
 		item = QueueItem(name="test", func=lambda x: x, x=5)
@@ -23,6 +25,7 @@ class SimpleQueue(unittest.TestCase):
 
 	def test_worker_start_before(self):
 		queue = Queue(threads=1)
+		queue.create_threads()
 		self.assertEqual(queue.length(), 0)
 
 		queue.start()
@@ -36,6 +39,7 @@ class SimpleQueue(unittest.TestCase):
 
 	def test_worker_start_after(self):
 		queue = Queue(threads=1)
+		queue.create_threads()
 		self.assertEqual(queue.length(), 0)
 
 		item = QueueItem(name="test", func=lambda x: x, x=5)
@@ -49,6 +53,7 @@ class SimpleQueue(unittest.TestCase):
 
 	def test_wait_for_end(self):
 		queue = Queue(threads=1)
+		queue.create_threads()
 		queue.register_to_wait_on_exit()
 		queue.start()
 
@@ -62,6 +67,7 @@ class MediumQueue(unittest.TestCase):
 	def test_order_simple(self):
 		thread_nb = 1
 		queue = Queue(threads=thread_nb)
+		queue.create_threads()
 		results = []
 		results_excepted = list(range(1, 10))
 
@@ -80,6 +86,7 @@ class MediumQueue(unittest.TestCase):
 	def test_order_reverse(self):
 		thread_nb = 1
 		queue = Queue(threads=thread_nb)
+		queue.create_threads()
 		results = []
 		results_excepted = list(range(9, 0, -1))
 
@@ -98,6 +105,7 @@ class MediumQueue(unittest.TestCase):
 	def test_order_mixed(self):
 		thread_nb = 1
 		queue = Queue(threads=thread_nb)
+		queue.create_threads()
 		results = []
 		results_excepted = list(range(1, 100))
 
@@ -154,6 +162,7 @@ class MediumQueue(unittest.TestCase):
 		items = 100
 
 		queue = Queue(threads=thread_nb)
+		queue.create_threads()
 		queue.register_to_wait_on_exit()
 
 		for i in range(items):
