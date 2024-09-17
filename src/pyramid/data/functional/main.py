@@ -9,6 +9,7 @@ from pyramid.api.services.configuration import IConfigurationService
 from pyramid.api.services.information import IInformationService
 from pyramid.api.services.logger import ILoggerService
 from pyramid.api.services.tools.register import ServiceRegister
+from pyramid.api.tasks.tools.register import TaskRegister
 from pyramid.data.functional.application_info import ApplicationInfo
 from pyramid.connector.discord.bot import DiscordBot
 from pyramid.tools.custom_queue import Queue
@@ -39,55 +40,14 @@ class Main:
 		ServiceRegister.start_services()
 
 		logger = ServiceRegister.get_service(ILoggerService)
-		info = ServiceRegister.get_service(IInformationService)
-		config = ServiceRegister.get_service(IConfigurationService)
 
 		logger.debug(ServiceRegister.get_dependency_tree())
 
 		MainQueue.init()
 
-		# Discord Bot Instance
-		discord_bot = DiscordBot(logger.getChild("Discord"), info.get(), config)
-		# Create bot
-		discord_bot.create()
-
-		loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
-
-		def running(loop: asyncio.AbstractEventLoop):
-			asyncio.set_event_loop(loop)
-
-			# Run the asynchronous function in the thread without blocking it
-			loop.create_task(discord_bot.start())
-			try:
-				# Run tasks in thread infinitly
-				loop.run_forever()
-			finally:
-				loop.close()
-
-
-		async def shutdown(loop: asyncio.AbstractEventLoop):
-			await discord_bot.stop()
-			loop.stop()
-
-		def handle_signal(signum: int, frame):
-			logging.info(f"Received signal {signum}. shutting down ...")
-			asyncio.run_coroutine_threadsafe(shutdown(loop), loop)
-
-		previous_handler = signal.signal(signal.SIGTERM, handle_signal)
-
-		# Connect bot to Discord servers in his own thread
-		thread = Thread(name="Discord", target=running, args=(loop,))
-		thread.start()
-		thread.join()
-
-		signal.signal(signal.SIGTERM, previous_handler)
-
-		# def running_async(discord_bot: DiscordBot):
-		# 	asyncio.run(discord_bot.start())
-
-		# thread = Thread(name="Discord", target=running_async, args=(discord_bot,))
-		# thread.start()
-		# thread.join()
+		TaskRegister.import_tasks()
+		TaskRegister.inject_tasks()
+		TaskRegister.start_tasks()
 
   
 	def stop(self):
