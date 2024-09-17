@@ -11,8 +11,8 @@ from pyramid.api.services.logger import ILoggerService
 from pyramid.api.services.tools.register import ServiceRegister
 from pyramid.data.functional.application_info import ApplicationInfo
 from pyramid.connector.discord.bot import DiscordBot
-from pyramid.tools import utils
 from pyramid.tools.custom_queue import Queue
+from pyramid.tools.main_queue import MainQueue
 
 
 class Main:
@@ -44,6 +44,8 @@ class Main:
 
 		logger.debug(ServiceRegister.get_dependency_tree())
 
+		MainQueue.init()
+
 		# Discord Bot Instance
 		discord_bot = DiscordBot(logger.getChild("Discord"), info.get(), config)
 		# Create bot
@@ -62,6 +64,7 @@ class Main:
 			finally:
 				loop.close()
 
+
 		async def shutdown(loop: asyncio.AbstractEventLoop):
 			await discord_bot.stop()
 			loop.stop()
@@ -69,17 +72,6 @@ class Main:
 		def handle_signal(signum: int, frame):
 			logging.info(f"Received signal {signum}. shutting down ...")
 			asyncio.run_coroutine_threadsafe(shutdown(loop), loop)
-
-		# # -- Service [TEMP]
-		# self._discord_bot = discord_bot
-		# if self._discord_bot is None:
-		# 	raise Exception("Bot is not connected")
-		# # environment_service = get_service("EnvironmentService")
-		# # self.logger.info("environment_service %s" % environment_service)
-		# # if not isinstance(environment_service, EnvironmentService):
-		# # 	raise Exception("environment_service is not from type EnvironmentService, got %s" % type(environment_service))
-		# # environment_service.set_type(self._config.mode)
-		# # --
 
 		previous_handler = signal.signal(signal.SIGTERM, handle_signal)
 
@@ -89,6 +81,14 @@ class Main:
 		thread.join()
 
 		signal.signal(signal.SIGTERM, previous_handler)
+
+		# def running_async(discord_bot: DiscordBot):
+		# 	asyncio.run(discord_bot.start())
+
+		# thread = Thread(name="Discord", target=running_async, args=(discord_bot,))
+		# thread.start()
+		# thread.join()
+
   
 	def stop(self):
 		logging.info("Wait for background tasks to stop")

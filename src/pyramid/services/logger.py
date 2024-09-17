@@ -39,6 +39,9 @@ class LoggerService(ILoggerService, ServiceInjector):
 		self.__enable_log_to_file()
 		self.__enable_log_to_file_exceptions()
 
+		self.logger.info("────────────────────────────────────────────")
+		self.logger.info(self.__information_service.get())
+
 		# Deletion of log files over 10
 		utils.keep_latest_files(self.__logs_dir, 10, "error")
 

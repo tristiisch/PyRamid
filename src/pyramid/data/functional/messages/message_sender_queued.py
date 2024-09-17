@@ -4,13 +4,9 @@ from pyramid.data.functional.messages.message_sender import MessageSender
 from discord import Interaction, Message, WebhookMessage
 from discord.utils import MISSING
 from pyramid.tools.custom_queue import Queue, QueueItem
+from pyramid.tools.main_queue import MainQueue
 
 MAX_MSG_LENGTH = 2000
-
-queue = Queue(1, "MessageSender")
-queue.start()
-queue.register_to_wait_on_exit()
-
 
 class MessageSenderQueued(MessageSender):
 	def __init__(self, ctx: Interaction):
@@ -22,7 +18,7 @@ class MessageSenderQueued(MessageSender):
 		content: str = MISSING,
 		callback: Callable[[Message | WebhookMessage], Any] | None = None,
 	) -> None:
-		queue.add(
+		MainQueue.instance.add(
 			QueueItem("add_message", super().add_message, self.loop, callback, content=content)
 		)
 
@@ -32,7 +28,7 @@ class MessageSenderQueued(MessageSender):
 		surname_content: str | None = None,
 		callback: Callable[[Message | WebhookMessage], Any] | None = None,
 	):
-		queue.add(
+		MainQueue.instance.add(
 			QueueItem(
 				"response_message",
 				super().edit_message,
@@ -44,7 +40,7 @@ class MessageSenderQueued(MessageSender):
 		)
 
 	def add_code_message(self, content: str, prefix=None, suffix=None):
-		queue.add(
+		MainQueue.instance.add(
 			QueueItem(
 				"add_code_message",
 				super().add_code_message,

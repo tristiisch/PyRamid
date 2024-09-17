@@ -49,3 +49,6 @@ class ApplicationInfo:
 			except FileNotFoundError:
 				pass
 			return "Linux distribution information not available."
+
+	def __str__(self):
+		return f"{self.__name.capitalize()} {self.get_version()} on {self.get_os()}"

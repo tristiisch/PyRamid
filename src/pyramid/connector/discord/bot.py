@@ -86,13 +86,13 @@ class DiscordBot:
 					"You dont have all the requirements or permissions for using this command :angry:"
 				)
 				return
-			logging.error("Command error from on_command_error : %s", error)
+			self.__logger.error("Command error from on_command_error : %s", error)
 
 		@self.bot.event
 		async def on_error(event, *args, **kwargs):
 			# message = args[0] # Message object
 			# traceback.extract_stack
-			logging.error("Error from on_error : %s", traceback.format_exc())
+			self.__logger.error("Error from on_error : %s", traceback.format_exc())
 			# await bot.send_message(message.channel, "You caused an error!")
 
 		async def on_tree_error(ctx: Interaction, app_error: AppCommandError, /):
@@ -105,7 +105,7 @@ class DiscordBot:
 				msg = "Error from on_tree_error"
 				error = app_error
 			trace = "".join(traceback.format_exception(type(error), error, error.__traceback__))
-			logging.error("%s :\n%s", msg, trace)
+			self.__logger.error("%s :\n%s", msg, trace)
 
 			discord_explanation = ":warning: You caused an error!"
 			if isinstance(error, DiscordMessageException):
@@ -132,7 +132,7 @@ class DiscordBot:
 
 		@self.bot.event
 		async def on_command(ctx: Context):
-			logging.debug("on_command :  %s", ctx.author)
+			self.__logger.debug("on_command :  %s", ctx.author)
 
 		self.cmd.register()
 		self.listeners.register()
@@ -151,9 +151,9 @@ class DiscordBot:
 
 	async def stop(self):
 		# self.bot.clear()
-		logging.info("Discord bot stop")
+		self.__logger.info("Discord bot stop")
 		await self.bot.close()
-		logging.info("Discord bot stopped")
+		self.__logger.info("Discord bot stopped")
 
 	def __get_guild_cmd(self, guild: Guild) -> GuildCmd:
 		if guild.id not in self.guilds_instances:
