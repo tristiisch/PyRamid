@@ -17,20 +17,19 @@ from pyramid.tools.main_queue import MainQueue
 
 
 class Main:
-	def __init__(self):
+	# def __init__(self):
 		# Program information
-		self._info = ApplicationInfo()
 		# self._health = HealthModules()
-		self._discord_bot = None
+		# self._discord_bot = None
 
-	# Argument management
 	def args(self):
 		parser = argparse.ArgumentParser(description="Music Bot Discord using Deezer.")
 		parser.add_argument("--version", action="store_true", help="Print version", required=False)
 		args = parser.parse_args()
 
 		if args.version:
-			print(f"{self._info.get_version()}")
+			info = ApplicationInfo()
+			print(info.get_version())
 			sys.exit(0)
 
 	def start(self):

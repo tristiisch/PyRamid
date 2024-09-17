@@ -15,6 +15,15 @@ class ServiceRegister:
 	__SERVICE_REGISTERED: dict[str, ServiceInjector] = {}
 
 	@classmethod
+	def import_services(cls):
+		package_name = "pyramid.services"
+		package = importlib.import_module(package_name)
+
+		for loader, module_name, is_pkg in pkgutil.iter_modules(package.__path__):
+			full_module_name = f"{package_name}.{module_name}"
+			importlib.import_module(full_module_name) 
+
+	@classmethod
 	def register_service(cls, name: str, type: type[object]):
 		if not issubclass(type, ServiceInjector):
 			raise TypeError("Service %s is not a subclass of ServiceInjector and cannot be initialized." % name)
@@ -25,15 +34,6 @@ class ServiceRegister:
 				% (name, type.__name__, already_class_name)
 			)
 		cls.__SERVICE_TO_REGISTER[name] = type
-
-	@classmethod
-	def import_services(cls):
-		package_name = "pyramid.services"
-		package = importlib.import_module(package_name)
-
-		for loader, module_name, is_pkg in pkgutil.iter_modules(package.__path__):
-			full_module_name = f"{package_name}.{module_name}"
-			importlib.import_module(full_module_name)
 
 	@classmethod
 	def create_services(cls):

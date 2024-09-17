@@ -4,8 +4,7 @@ import coloredlogs
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.data.environment import Environment
-from pyramid.api.services.configuration import IConfigurationService
-from pyramid.api.services.logger import ILoggerService
+from pyramid.api.services import IConfigurationService, ILoggerService
 
 @pyramid_service()
 class LoggerLevelService(ServiceInjector):
