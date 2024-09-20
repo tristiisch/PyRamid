@@ -1,5 +1,4 @@
-from abc import ABC, abstractmethod
-from discord.ext.commands import Bot
+from abc import ABC
 
 class ServiceInjector(ABC):
 

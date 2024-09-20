@@ -1,14 +1,16 @@
 import asyncio
-import logging
 import os
 import traceback
-from typing import Optional
+from typing import Any
 
 import pydeezer.util
+from pyramid.api.services import IConfigurationService, ILoggerService
+from pyramid.api.services.deezer_downloader import IDeezerDownloaderService
+from pyramid.api.services.tools.annotation import pyramid_service
+from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.connector.deezer.downloader_progress_bar import DownloaderProgressBar
 from pyramid.connector.deezer.py_deezer import PyDeezer
 from pyramid.data.track import Track
-from pyramid.tools.deprecated_class import deprecated_class
 from pyramid.tools.generate_token import DeezerTokenProvider, DeezerTokenEmptyException, DeezerTokenOverflowException
 from pydeezer.constants import track_formats
 from pydeezer.exceptions import LoginError
@@ -16,10 +18,20 @@ from urllib3.exceptions import MaxRetryError
 
 from pyramid.data.exceptions import CustomException
 
-@deprecated_class
-class DeezerDownloader:
-	def __init__(self, folder: str, arl: Optional[str] = None):
-		self.folder_path = folder
+
+@pyramid_service(interface=IDeezerDownloaderService)
+class DeezerDownloaderService(IDeezerDownloaderService, ServiceInjector):
+
+	def injectService(self,
+			logger_service: ILoggerService,
+			configuration_service: IConfigurationService
+		):
+		self.__logger = logger_service
+		self.__configuration_service = configuration_service
+
+	def start(self):
+		# arl = self.__configuration_service.deezer__arl
+		arl = None
 		if arl is not None and arl != "":
 			self.__deezer_dl_api = PyDeezer(arl)
 			self.__token_provider = None
@@ -27,9 +39,9 @@ class DeezerDownloader:
 			self.__deezer_dl_api = None
 			self.__token_provider = DeezerTokenProvider()
 		self.music_format = track_formats.MP3_128
-		os.makedirs(self.folder_path, exist_ok=True)
+		os.makedirs(self.__configuration_service.deezer__folder, exist_ok=True)
 
-	async def check_credentials(self):
+	async def check_credentials(self) -> dict[str, Any]:
 		if not self.__deezer_dl_api:
 			raise Exception("deezer_dl_api not init")
 		try:
@@ -43,17 +55,17 @@ class DeezerDownloader:
 		# try:
 		track_info = await client.get_track_info(track_id)
 		# except APIRequestError as err:
-		# 	logging.warn(f"Unable to download deezer song {track_id} : {err}", exc_info=True)
+		# 	self.__logger.warn(f"Unable to download deezer song {track_id} : {err}", exc_info=True)
 		# 	return None  # Track unvailable in this country
 
 		if not track_info:
-			logging.error(f"Unable to find deezer song to download {track_id} : Unknown error")
+			self.__logger.error(f"Unable to find deezer song to download {track_id} : Unknown error")
 			return None
 
 		file_name = pydeezer.util.clean_filename(
 			f"{track_info['ART_NAME']} - {track_info['SNG_TITLE']}"
 		)
-		file_path = os.path.join(self.folder_path, file_name) + ".mp3"
+		file_path = os.path.join(self.__configuration_service.deezer__folder, file_name) + ".mp3"
 
 		if os.path.exists(file_path) is False:
 			is_dl = await self.__dl_track(track_info, file_name)
@@ -68,7 +80,7 @@ class DeezerDownloader:
 			client = await self._get_client()
 			await client.download_track(
 				track_info,
-				self.folder_path,
+				self.__configuration_service.deezer__folder,
 				self.music_format,
 				True,  # fallback quality if not available
 				file_name,
@@ -82,18 +94,18 @@ class DeezerDownloader:
 			return True
 		except MaxRetryError:
 			track = Track(track_info, None)
-			logging.warning("Downloader MaxRetryError %s", track)
+			self.__logger.warning("Downloader MaxRetryError %s", track)
 			await asyncio.sleep(5)
 			return await self.__dl_track(track_info, file_name)
 
 		except CustomException as error:
 			trace = "".join(traceback.format_exception(type(error), error, error.__traceback__))
-			logging.warning("%s :\n%s", error.msg, trace)
+			self.__logger.warning("%s :\n%s", error.msg, trace)
 			return False
 
 		except Exception:
 			track = Track(track_info, None)
-			logging.warning("Unable to dl track %s", track, exc_info=True)
+			self.__logger.warning("Unable to dl track %s", track, exc_info=True)
 			return False
 	
 	async def _get_client(self) -> PyDeezer:

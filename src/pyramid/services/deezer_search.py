@@ -5,7 +5,12 @@ from enum import Enum
 import aiohttp
 
 import deezer
-from pyramid.data.a_engine_tools import AEngineTools
+from pyramid.api.services.configuration import IConfigurationService
+from pyramid.api.services.deezer_search import IDeezerSearchService
+from pyramid.api.services.tools.annotation import pyramid_service
+from pyramid.api.services.tools.injector import ServiceInjector
+from pyramid.connector.deezer.deezer_type import DeezerType
+from pyramid.connector.deezer.tools import DeezerTools
 from pyramid.data.a_search import ASearch, ASearchId
 from pyramid.data.track import TrackMinimalDeezer
 
@@ -15,13 +20,17 @@ from pyramid.connector.deezer.cli_deezer import (
 	CliDeezerRateLimitError,
 	CliPaginatedList,
 )
-from pyramid.services.deezer_search import DeezerTools, DeezerType
-from pyramid.tools.deprecated_class import deprecated_class
 
-@deprecated_class
-class DeezerSearch(ASearchId, ASearch):
-	def __init__(self, default_limit: int):
-		self.default_limit = default_limit
+
+@pyramid_service(interface=IDeezerSearchService)
+class DeezerSearchService(IDeezerSearchService, ASearchId, ASearch, ServiceInjector):
+
+	def injectService(self,
+			configuration_service: IConfigurationService
+		):
+		self.__configuration_service = configuration_service
+
+	def start(self):
 		self.client = CliDeezer()
 		self.tools = DeezerTools()
 		self.strict = False
@@ -52,7 +61,7 @@ class DeezerSearch(ASearchId, ASearch):
 		self, search, limit: int | None = None
 	) -> list[TrackMinimalDeezer] | None:
 		if limit is None:
-			limit = self.default_limit
+			limit = self.__configuration_service.general__limit_tracks
 
 		pagination_results = self.client.search(query=search, strict=self.strict)
 		tracks = await pagination_results.get_maximum(limit)
@@ -125,7 +134,7 @@ class DeezerSearch(ASearchId, ASearch):
 		self, artist_name, limit: int | None = None
 	) -> list[TrackMinimalDeezer] | None:
 		if limit is None:
-			limit = self.default_limit
+			limit = self.__configuration_service.general__limit_tracks
 		pagination_results = self.client.search_artists(query=artist_name, strict=self.strict)
 		artist = await pagination_results.get_first()
 		if not artist:
@@ -138,7 +147,7 @@ class DeezerSearch(ASearchId, ASearch):
 		self, artist_id: int, limit: int | None = None
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | None:
 		if limit is None:
-			limit = self.default_limit
+			limit = self.__configuration_service.general__limit_tracks
 		artist = await self.client.async_get_artist(artist_id)  # TODO handle HTTP errors
 		if not artist:
 			return None
