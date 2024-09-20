@@ -3,6 +3,7 @@ import inspect
 import logging
 import pkgutil
 from discord.ext.commands import Bot
+from pyramid.api.services.tools.register import ServiceRegister
 from pyramid.connector.discord.commands.tools.abc import AbstractCommand
 from pyramid.connector.discord.commands.tools.parameters import ParametersCommand
 
@@ -24,11 +25,21 @@ class CommandRegister:
 			importlib.import_module(full_module_name)
 
 	@classmethod
-	def create_commands(cls, services: dict[str, object], bot: Bot, logger: logging.Logger, command_prefix: str | None = None):
-		for cls, parameters in cls.__COMMANDS_TO_REGISTER.items():
-			class_instance = cls(parameters, bot, logger)
+	def create_commands(cls, bot: Bot, logger: logging.Logger, command_prefix: str | None = None):
+		for type, parameters in cls.__COMMANDS_TO_REGISTER.items():
+			class_instance = type(parameters, bot, logger)
 			class_instance.register(command_prefix)
-			signature = inspect.signature(class_instance.injectService)
-			parameters = list(signature.parameters.values())
-			dependencies = [services[param.annotation.__name__] for param in parameters]
-			class_instance.injectService(*dependencies)
+
+	@classmethod
+	def inject_tasks(cls):
+		for type, parameters in cls.__COMMANDS_TO_REGISTER.items():
+			signature = inspect.signature(type.injectService)
+			method_parameters = list(signature.parameters.values())
+
+			services_dependencies = []
+			for method_parameter in method_parameters:
+				dependency_cls = method_parameter.annotation
+				dependency_instance = ServiceRegister.get_service(dependency_cls)
+				services_dependencies.append(dependency_instance)
+
+			type.injectService(*services_dependencies)

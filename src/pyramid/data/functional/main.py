@@ -5,13 +5,10 @@ import sys
 import signal
 from threading import Thread
 
-from pyramid.api.services.configuration import IConfigurationService
-from pyramid.api.services.information import IInformationService
-from pyramid.api.services.logger import ILoggerService
+from pyramid.api.services import ILoggerService
 from pyramid.api.services.tools.register import ServiceRegister
 from pyramid.api.tasks.tools.register import TaskRegister
 from pyramid.data.functional.application_info import ApplicationInfo
-from pyramid.connector.discord.bot import DiscordBot
 from pyramid.tools.custom_queue import Queue
 from pyramid.tools.main_queue import MainQueue
 

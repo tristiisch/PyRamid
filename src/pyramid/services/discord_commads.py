@@ -3,6 +3,12 @@ from typing import Callable
 
 from discord import Guild, Interaction
 from discord.ext.commands import Bot
+from pyramid.api.services.configuration import IConfigurationService
+from pyramid.api.services.discord import IDiscordService
+from pyramid.api.services.information import IInformationService
+from pyramid.api.services.logger import ILoggerService
+from pyramid.api.services.tools.annotation import pyramid_service
+from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.connector.discord.commands.tools.register import CommandRegister
 from pyramid.connector.discord.guild_cmd import GuildCmd
 from pyramid.data.environment import Environment
@@ -11,36 +17,23 @@ from pyramid.data.functional.messages.message_sender_queued import MessageSender
 from pyramid.data.functional.engine_source import SourceType
 
 
-class BotCmd:
-	def __init__(
-		self,
-		bot: Bot,
-		get_guild_cmd: Callable[[Guild], GuildCmd],
-		logger: Logger,
-		info: ApplicationInfo,
-		environment: Environment
-	):
-		self.__bot = bot
-		self.__get_guild_cmd = get_guild_cmd
-		self.__logger = logger
-		self.__info = info
-		self.__environment = environment
+@pyramid_service()
+class DiscordCommands(ServiceInjector):
 
-	def register(self):
-		bot = self.__bot
+	def injectService(self,
+			logger_service: ILoggerService,
+			configuration_service: IConfigurationService,
+			discord_service: IDiscordService
+		):
+		self.__logger = logger_service
+		self.__configuration_service = configuration_service
+		self.__discord_service = discord_service
 
-		services: dict[str, object] = dict()
+	def start(self):
+		bot = self.__discord_service.bot
 
-		service = self.__environment
-		service_name = service.__class__.__name__
-		services[service_name] = service
-
-		service = self.__info
-		service_name = service.__class__.__name__
-		services[service_name] = service
-		
 		CommandRegister.import_commands()
-		CommandRegister.create_commands(services, self.__bot, self.__logger, self.__environment.name.lower())
+		CommandRegister.create_commands(bot, self.__logger.getChild("Discord"), self.__configuration_service.mode.name.lower())
 
 		# ping = PingCommand(ParametersCommand("ping"), self.__bot, self.__logger)
 		# ping.register(self.__environment.name.lower())
@@ -58,7 +51,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.play(ms, ctx, input, engine)
 
@@ -69,7 +62,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.play(ms, ctx, input, engine, at_end=False)
 
@@ -80,7 +73,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.pause(ms, ctx)
 
@@ -91,7 +84,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.resume(ms, ctx)
 
@@ -102,7 +95,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.stop(ms, ctx)
 
@@ -113,7 +106,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.next(ms, ctx)
 
@@ -124,7 +117,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.shuffle(ms, ctx)
 
@@ -135,7 +128,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.remove(ms, ctx, number_in_queue)
 
@@ -146,7 +139,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.goto(ms, ctx, number_in_queue)
 
@@ -157,7 +150,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			guild_cmd.queue_list(ms, ctx)
 
@@ -168,7 +161,7 @@ class BotCmd:
 		# 	ms = MessageSenderQueued(ctx)
 		# 	await ms.thinking()
 		# 	guild: Guild = ctx.guild  # type: ignore
-		# 	guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+		# 	guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 		# 	await guild_cmd.searchV1(ms, input, engine)
 
@@ -179,7 +172,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.search(ms, input, engine)
 
@@ -192,7 +185,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.play_url(ms, ctx, url)
 
@@ -206,7 +199,7 @@ class BotCmd:
 			ms = MessageSenderQueued(ctx)
 			await ms.thinking()
 			guild: Guild = ctx.guild  # type: ignore
-			guild_cmd: GuildCmd = self.__get_guild_cmd(guild)
+			guild_cmd: GuildCmd = self.__discord_service.get_guild_cmd(guild)
 
 			await guild_cmd.play_url(ms, ctx, url, at_end=False)
 

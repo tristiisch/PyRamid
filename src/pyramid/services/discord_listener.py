@@ -1,18 +1,25 @@
-from logging import Logger
 from discord import (
 	Guild,
 	Role,
 )
-from discord.ext.commands import Bot
+
+from pyramid.api.services import ILoggerService, IDiscordService
+from pyramid.api.services.tools.annotation import pyramid_service
+from pyramid.api.services.tools.injector import ServiceInjector
 
 
-class BotListener:
-	def __init__(self, bot: Bot, logger: Logger):
-		self.__bot = bot
-		self.__logger = logger
+@pyramid_service()
+class DiscordListeners(ServiceInjector):
 
-	def register(self):
-		bot = self.__bot
+	def injectService(self,
+			logger_service: ILoggerService,
+			discord_service: IDiscordService
+		):
+		self.__logger = logger_service
+		self.__discord_service = discord_service
+
+	def start(self):
+		bot = self.__discord_service.bot
 
 		@bot.event
 		async def on_ready():  # TODO changed to -> await bot.setup_hook()
@@ -41,6 +48,8 @@ class BotListener:
 			self.show_info_guild(guild)
 
 	def show_info_guild(self, guild: Guild):
+		bot = self.__discord_service.bot
+
 		self.__logger.info(
 			"'%s' has %d members. Creator is %s.",
 			guild.name,
@@ -48,10 +57,10 @@ class BotListener:
 			guild.owner,
 		)
 
-		if self.__bot.user is None:
+		if bot.user is None:
 			self.__logger.warning("Enable to get discord bot - Unable to get his roles")
 		else:
-			bot_member = guild.get_member(self.__bot.user.id)
+			bot_member = guild.get_member(bot.user.id)
 			if bot_member is None:
 				self.__logger.warning("  Enable to get discord bot role on %s", guild.name)
 			else:
