@@ -15,8 +15,7 @@ class DiscordTask(TaskInjector):
 		self.__discord_service = discord_service
 
 	async def worker_asyc(self):
-		self.discord_bot = self.__discord_service.discord_bot
-		await self.discord_bot.start()
+		await self.__discord_service.connect_bot()
 
 	async def stop_asyc(self):
-		await self.discord_bot.stop()
+		await self.__discord_service.disconnect_bot()

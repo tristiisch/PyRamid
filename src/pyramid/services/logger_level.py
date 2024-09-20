@@ -13,12 +13,12 @@ class LoggerLevelService(ServiceInjector):
 			logger_service: ILoggerService,
 			configuration_service: IConfigurationService
 		):
-		self.__logger_service = logger_service
+		self.__logger = logger_service
 		self.__configuration_service = configuration_service
 
 	def start(self):
-		logger = self.__logger_service.getLogger()
-		# logger_colored = self.__logger_service.getLogger()
+		logger = self.__logger.getLogger()
+		# logger_colored = self.__logger.getLogger()
 		logger_discord = logging.getLogger("discord")
 		# logger_aiohttpweb = logging.getLogger("aiohttpweb")
 		# logger_urllib3 = logging.getLogger("urllib3")
