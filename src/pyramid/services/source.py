@@ -1,28 +1,33 @@
-from enum import Enum
 from typing import Dict
 
 from pyramid.api.services.configuration import IConfigurationService
-from pyramid.connector.deezer.downloader import DeezerDownloader
-from pyramid.connector.deezer.search import DeezerSearch
+from pyramid.api.services.deezer_downloader import IDeezerDownloaderService
+from pyramid.api.services.deezer_search import IDeezerSearchService
+from pyramid.api.services.source_service import ISourceService
+from pyramid.api.services.spotify_search import ISpotifySearchService
+from pyramid.api.services.tools.annotation import pyramid_service
+from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.connector.spotify.search import SpotifySearch
 from pyramid.data.a_search import ASearch
 from pyramid.data.exceptions import EngineSourceNotFoundException, TrackNotFoundException
+from pyramid.data.source_type import SourceType
 from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
-from pyramid.tools.configuration.configuration import Configuration
 
 
-class SourceType(Enum):
-	Spotify = 1
-	Deezer = 2
+@pyramid_service(interface=ISourceService)
+class SourceService(ISourceService, ServiceInjector):
 
+	def injectService(self,
+			downloader_service: IDeezerDownloaderService,
+			deezer_search_service: IDeezerSearchService,
+			spotify_search_service: ISpotifySearchService,
+			
+		):
+		self.__downloader = downloader_service
+		self.__deezer_search = deezer_search_service
+		self.__spotify_search = spotify_search_service
 
-class EngineSource:
-	def __init__(self, config: IConfigurationService):
-		self.__downloader = DeezerDownloader(config.deezer__folder, config.deezer__arl)
-		self.__deezer_search = DeezerSearch(config.general__limit_tracks)
-		self.__spotify_search = SpotifySearch(
-			config.general__limit_tracks, config.spotify__client_id, config.spotify__client_secret
-		)
+	def start(self):
 		self.__default_source: ASearch = self.__deezer_search
 		self.__downloader_source = self.__deezer_search
 		self.__sources: Dict[SourceType, ASearch] = dict(

@@ -3,13 +3,14 @@ from logging import Logger
 from discord import Interaction, Member, User, VoiceChannel
 import discord
 
+from pyramid.api.services.source_service import ISourceService
 from pyramid.data import tracklist as utils_list_track
 from pyramid.data.guild_data import GuildData
+from pyramid.data.source_type import SourceType
 from pyramid.data.track import TrackMinimal
 from pyramid.connector.discord.guild_cmd_tools import GuildCmdTools
 from pyramid.connector.discord.guild_queue import GuildQueue
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
-from pyramid.data.functional.engine_source import EngineSource, SourceType
 from pyramid.data.exceptions import DiscordMessageException
 from pyramid.data.a_guild_cmd import AGuildCmd
 from pyramid.data.select_view import SelectView
@@ -21,7 +22,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		logger: Logger,
 		guild_data: GuildData,
 		guild_queue: GuildQueue,
-		engine_source: EngineSource,
+		engine_source: ISourceService,
 	):
 		self.logger = logger
 		self.engine_source = engine_source

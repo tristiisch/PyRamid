@@ -17,9 +17,9 @@ from discord.ext.commands.errors import (
 )
 from discord.app_commands.errors import AppCommandError, CommandInvokeError
 from pyramid.api.services.configuration import IConfigurationService
+from pyramid.api.services.source_service import ISourceService
 from pyramid.data.environment import Environment
 from pyramid.connector.discord.guild_cmd import GuildCmd
-from pyramid.data.functional.engine_source import EngineSource
 from pyramid.data.exceptions import DiscordMessageException
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
 from pyramid.data.guild_instance import GuildInstances
@@ -35,14 +35,15 @@ class DiscordBotService(IDiscordService, ServiceInjector):
 	def injectService(self,
 			logger_service: ILoggerService,
 			information_service: IInformationService,
-			configuration_service: IConfigurationService
+			configuration_service: IConfigurationService,
+			source_service: ISourceService
 		):
 		self.__logger = logger_service
 		self.__information_service = information_service
 		self.__configuration_service = configuration_service
+		self.__source_service = source_service
 
 	def start(self):
-		self.__engine_source = EngineSource(self.__configuration_service)
 
 		intents = discord.Intents.default()
 		# intents.members = True
@@ -143,7 +144,7 @@ class DiscordBotService(IDiscordService, ServiceInjector):
 	def get_guild_cmd(self, guild: Guild) -> GuildCmd:
 		if guild.id not in self.guilds_instances:
 			self.guilds_instances[guild.id] = GuildInstances(
-				guild, self.__logger.getChild(guild.name), self.__engine_source, self.__configuration_service.discord__ffmpeg
+				guild, self.__logger.getChild(guild.name), self.__source_service, self.__configuration_service.discord__ffmpeg
 			)
 
 		return self.guilds_instances[guild.id].cmds

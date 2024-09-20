@@ -1,15 +1,15 @@
-import re
-from enum import Enum
 from typing import Any
 
-from pyramid.data.a_engine_tools import AEngineTools
+from pyramid.connector.spotify.spotify_tools import SpotifyTools
+from pyramid.connector.spotify.spotify_type import SpotifyType
 from pyramid.data.a_search import ASearch, ASearchId
 from pyramid.data.track import TrackMinimalSpotify
 from spotipy.oauth2 import SpotifyClientCredentials
 
 from pyramid.connector.spotify.cli_spotify import CliSpotify
+from pyramid.tools.deprecated_class import deprecated_class
 
-
+@deprecated_class
 class SpotifySearchBase(ASearch):
 	def __init__(self, default_limit: int, client_id: str, client_secret: str):
 		self.default_limit = default_limit
@@ -19,7 +19,6 @@ class SpotifySearchBase(ASearch):
 			client_id=self.client_id, client_secret=self.client_secret
 		)
 		self.client = CliSpotify(client_credentials_manager=self.client_credentials_manager)
-		self.tools = SpotifyTools()
 
 	async def items(
 		self, results: dict[str, Any], item_name="items"
@@ -53,6 +52,7 @@ class SpotifySearchBase(ASearch):
 		return tracks
 
 
+@deprecated_class
 class SpotifySearchId(ASearchId, SpotifySearchBase):
 	def __init__(self, default_limit: int, client_id: str, client_secret: str):
 		super().__init__(default_limit, client_id, client_secret)
@@ -105,7 +105,7 @@ class SpotifySearchId(ASearchId, SpotifySearchBase):
 			tracks = tracks[:limit]
 		return [TrackMinimalSpotify(element) for element in tracks], []
 
-
+@deprecated_class
 class SpotifyResponse:
 	def __init__(self, client: CliSpotify, default_limit: int, item_name="items") -> None:
 		self.client = client
@@ -131,6 +131,7 @@ class SpotifyResponse:
 		return tracks
 
 
+@deprecated_class
 class SpotifySearch(SpotifySearchId):
 	def __init__(self, default_limit: int, client_id: str, client_secret: str):
 		super().__init__(default_limit, client_id, client_secret)
@@ -202,7 +203,7 @@ class SpotifySearch(SpotifySearchId):
 	async def get_by_url(
 		self, url
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | TrackMinimalSpotify | None:
-		id, type = self.tools.extract_from_url(url)
+		id, type = SpotifyTools.extract_from_url(url)
 
 		if id is None:
 			return None
@@ -226,32 +227,3 @@ class SpotifySearch(SpotifySearchId):
 
 		return tracks
 
-
-class SpotifyType(Enum):
-	PLAYLIST = 1
-	ARTIST = 2
-	ALBUM = 3
-	TRACK = 4
-
-
-class SpotifyTools(AEngineTools):
-	def extract_from_url(self, url) -> tuple[str, SpotifyType | None] | tuple[None, None]:
-		# Extract ID and type using regex
-		pattern = r"(?<=open\.spotify\.com/)(intl-(?P<intl>\w+)/)?(?P<type>\w+)/(?P<id>\w+)"
-		match = re.search(pattern, url)
-		if not match:
-			return None, None
-		type_str = match.group("type").upper()
-		if type_str == "PLAYLIST":
-			type = SpotifyType.PLAYLIST
-		elif type_str == "ARTIST":
-			type = SpotifyType.ARTIST
-		elif type_str == "ALBUM":
-			type = SpotifyType.ALBUM
-		elif type_str == "TRACK":
-			type = SpotifyType.TRACK
-		else:
-			type = None
-
-		id = match.group("id")
-		return id, type

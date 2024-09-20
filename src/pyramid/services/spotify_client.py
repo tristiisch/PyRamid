@@ -7,10 +7,13 @@ import aiohttp
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 
-from pyramid.tools.deprecated_class import deprecated_class
+from pyramid.api.services.spotify_client import ISpotifyClientService
+from pyramid.api.services.tools.annotation import pyramid_service
+from pyramid.api.services.tools.injector import ServiceInjector
 
-@deprecated_class
-class CliSpotify(Spotify):
+
+@pyramid_service(interface=ISpotifyClientService)
+class SpotifyClientService(Spotify, ISpotifyClientService, ServiceInjector):
 
 	async def async_search(self, q, limit=10, offset=0, type="track", market=None) -> dict[str, Any]:
 		return await self._get_async(

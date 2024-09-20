@@ -9,12 +9,14 @@ from pyramid.connector.deezer.downloader_progress_bar import DownloaderProgressB
 from pyramid.connector.deezer.py_deezer import PyDeezer
 from pyramid.data.track import Track
 from pyramid.tools.generate_token import DeezerTokenProvider
+from pyramid.tools.deprecated_class import deprecated_class
+from pyramid.tools.generate_token import DeezerTokenProvider
 from pydeezer.constants import track_formats
 from urllib3.exceptions import MaxRetryError
 
 from pyramid.data.exceptions import CustomException, DeezerTokensUnavailableException, DeezerTokenInvalidException, DeezerTokenOverflowException
 
-
+@deprecated_class
 class DeezerDownloader:
 	def __init__(self, folder: str, arl: Optional[str] = None):
 		self.folder_path = folder
@@ -77,7 +79,7 @@ class DeezerDownloader:
 
 		except CustomException as error:
 			trace = "".join(traceback.format_exception(type(error), error, error.__traceback__))
-			logging.warning("%s :\n%s", error.msg, trace)
+			logging.warning("%s :\n%s", error.args, trace)
 			return False
 
 		except Exception:
