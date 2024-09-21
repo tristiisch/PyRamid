@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from pyramid.data.a_search import ASearch
-from pyramid.data.track import TrackMinimalDeezer
+from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
 
 
 class IDeezerSearchService(ASearch):

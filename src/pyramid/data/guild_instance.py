@@ -6,7 +6,7 @@ from discord import Guild
 from pyramid.api.services.source_service import ISourceService
 from pyramid.connector.discord.guild_cmd import GuildCmd
 from pyramid.connector.discord.guild_queue import GuildQueue
-from pyramid.connector.discord.music_player_interface import MusicPlayerInterface
+from pyramid.connector.discord.music.player_interface import MusicPlayerInterface
 from pyramid.data.guild_data import GuildData
 
 

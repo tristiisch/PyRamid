@@ -7,7 +7,7 @@ from pyramid.api.services.source_service import ISourceService
 from pyramid.data import tracklist as utils_list_track
 from pyramid.data.guild_data import GuildData
 from pyramid.data.source_type import SourceType
-from pyramid.data.track import TrackMinimal
+from pyramid.data.music.track_minimal import TrackMinimal
 from pyramid.connector.discord.guild_cmd_tools import GuildCmdTools
 from pyramid.connector.discord.guild_queue import GuildQueue
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued

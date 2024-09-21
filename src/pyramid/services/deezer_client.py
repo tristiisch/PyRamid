@@ -3,16 +3,19 @@ from typing import Any
 import aiohttp
 from deezer import Album, Artist, Client, Playlist, Resource, Track
 
+from pyramid.api.services.deezer_client import IDeezerClientService
+from pyramid.api.services.tools.annotation import pyramid_service
+from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.connector.deezer.client.a_deezer_client import ADeezerClient
 from pyramid.connector.deezer.client.exceptions import CliDeezerErrorResponse, CliDeezerHTTPError
 from pyramid.connector.deezer.client.list_paginated import DeezerListPaginated
 from pyramid.connector.deezer.client.rate_limiter_async import RateLimiterAsync
-from pyramid.tools.deprecated_class import deprecated_class
 
-@deprecated_class
-class CliDeezer(ADeezerClient, Client):
+@pyramid_service(interface=IDeezerClientService)
+class DeezerClientService(IDeezerClientService, ADeezerClient, Client, ServiceInjector):
+
 	def __init__(self, app_id=None, app_secret=None, access_token=None, headers=None, **kwargs):
-		# super().__init__(app_id, app_secret, access_token, headers, **kwargs)
+		# super(Client, self).__init__(app_id, app_secret, access_token, headers, **kwargs)
 
 		self.app_id = app_id
 		self.app_secret = app_secret
@@ -36,7 +39,6 @@ class CliDeezer(ADeezerClient, Client):
 				parent=self,
 				**kwargs,
 			)
-
 		Resource.get_paginated_list = get_paginated_list  # type: ignore
 
 		# def __getattr__(self, item: str) -> Any:
@@ -59,7 +61,7 @@ class CliDeezer(ADeezerClient, Client):
 		ordering: str | None = None,
 		**advanced_params: str | int | None,
 	) -> DeezerListPaginated:
-		return super()._search(path, query, strict, ordering, **advanced_params)  # type: ignore
+		return Client._search(self, path, query, strict, ordering, **advanced_params)  # type: ignore
 
 	def search(
 		self,

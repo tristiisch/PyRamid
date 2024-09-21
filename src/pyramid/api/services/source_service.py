@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from pyramid.data.source_type import SourceType
-from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
+from pyramid.data.music.track import Track
+from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
+from pyramid.data.music.track_minimal import TrackMinimal
 
 class ISourceService(ABC):
 

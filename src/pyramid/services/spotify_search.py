@@ -7,7 +7,7 @@ from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.connector.spotify.spotify_tools import SpotifyTools
 from pyramid.connector.spotify.spotify_type import SpotifyType
-from pyramid.data.track import TrackMinimalSpotify
+from pyramid.data.music.track_minimal_spotify import TrackMinimalSpotify
 
 
 @pyramid_service(interface=ISpotifySearchService)

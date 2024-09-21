@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from pyramid.data.a_search import ASearch
-from pyramid.data.track import TrackMinimalSpotify
+from pyramid.data.music.track_minimal_spotify import TrackMinimalSpotify
 
 
 class ISpotifySearchService(ASearch):

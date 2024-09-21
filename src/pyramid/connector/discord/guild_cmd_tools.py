@@ -6,7 +6,9 @@ from discord import Member, StageChannel, TextChannel, User, VoiceChannel, Voice
 
 from pyramid.data.exceptions import DeezerTokenException
 from pyramid.api.services.source_service import ISourceService
-from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
+from pyramid.data.music.track import Track
+from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
+from pyramid.data.music.track_minimal import TrackMinimal
 from pyramid.data.guild_data import GuildData
 from pyramid.data.tracklist import TrackList
 from pyramid.connector.discord.guild_queue import GuildQueue

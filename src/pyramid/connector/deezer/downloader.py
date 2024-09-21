@@ -5,10 +5,9 @@ import traceback
 from typing import Optional
 
 import pydeezer.util
+from pyramid.connector.deezer.download.client import PyDeezer
 from pyramid.connector.deezer.downloader_progress_bar import DownloaderProgressBar
-from pyramid.connector.deezer.py_deezer import PyDeezer
-from pyramid.data.track import Track
-from pyramid.tools.generate_token import DeezerTokenProvider
+from pyramid.data.music.track import Track
 from pyramid.tools.deprecated_class import deprecated_class
 from pyramid.tools.generate_token import DeezerTokenProvider
 from pydeezer.constants import track_formats

@@ -9,8 +9,8 @@ from pyramid.api.services.deezer_downloader import IDeezerDownloaderService
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.connector.deezer.downloader_progress_bar import DownloaderProgressBar
-from pyramid.connector.deezer.py_deezer import PyDeezer
-from pyramid.data.track import Track
+from pyramid.connector.deezer.download.client import PyDeezer
+from pyramid.data.music.track import Track
 from pyramid.tools.generate_token import DeezerTokenProvider, DeezerTokenEmptyException, DeezerTokenOverflowException
 from pydeezer.constants import track_formats
 from pydeezer.exceptions import LoginError
