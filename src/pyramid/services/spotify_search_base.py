@@ -3,11 +3,10 @@
 
 from typing import Any
 from pyramid.api.services.configuration import IConfigurationService
+from pyramid.api.services.spotify_client import ISpotifyClientService
 from pyramid.api.services.spotify_search_base import ISpotifySearchBaseService
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
-from pyramid.connector.spotify.spotify_tools import SpotifyTools
-from spotipy.oauth2 import SpotifyClientCredentials
 
 from pyramid.connector.spotify.cli_spotify import CliSpotify
 
@@ -16,15 +15,13 @@ class SpotifySearchBaseService(ISpotifySearchBaseService, ServiceInjector):
 
 	def injectService(self,
 			configuration_service: IConfigurationService,
+			spotify_client: ISpotifyClientService,
 		):
 		self.__configuration_service = configuration_service
+		self.__spotify_client = spotify_client
 
-	def start(self):
-		self.client_credentials_manager = SpotifyClientCredentials(
-			client_id=self.__configuration_service.spotify__client_id,
-			client_secret=self.__configuration_service.spotify__client_secret
-		)
-		self.client = CliSpotify(client_credentials_manager=self.client_credentials_manager)
+	# def start(self):
+		# self.__spotify_client = CliSpotify(client_credentials_manager=self.client_credentials_manager)
 
 	async def items(
 		self,
@@ -36,7 +33,7 @@ class SpotifySearchBaseService(ISpotifySearchBaseService, ServiceInjector):
 		tracks: list = results[item_name]
 
 		while results["next"]:
-			results = await self.client.async_next(results)  # type: ignore
+			results = await self.__spotify_client.async_next(results)  # type: ignore
 			tracks.extend(results[item_name])
 
 		return tracks
@@ -56,7 +53,7 @@ class SpotifySearchBaseService(ISpotifySearchBaseService, ServiceInjector):
 
 		results_tracks: dict[str, Any] = results["tracks"]
 		while results["tracks"]["next"] and limit > len(tracks):
-			results = await self.client.async_next(results_tracks)  # type: ignore
+			results = await self.__spotify_client.async_next(results_tracks)  # type: ignore
 			tracks.extend(results_tracks[item_name])
 
 		if len(tracks) > limit:

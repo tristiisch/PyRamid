@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any
-from pyramid.data.track import Track
+from pyramid.data.music.track import Track
 
 class IDeezerDownloaderService(ABC):
 

@@ -6,14 +6,27 @@ from venv import logger
 import aiohttp
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
+from spotipy.oauth2 import SpotifyClientCredentials
 
+from pyramid.api.services.configuration import IConfigurationService
 from pyramid.api.services.spotify_client import ISpotifyClientService
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
 
-
 @pyramid_service(interface=ISpotifyClientService)
 class SpotifyClientService(Spotify, ISpotifyClientService, ServiceInjector):
+
+	def injectService(self,
+			configuration_service: IConfigurationService
+		):
+		self.__configuration_service = configuration_service
+
+	def start(self):
+		self.client_credentials_manager = SpotifyClientCredentials(
+			client_id=self.__configuration_service.spotify__client_id,
+			client_secret=self.__configuration_service.spotify__client_secret
+		)
+		self.auth_manager = None
 
 	async def async_search(self, q, limit=10, offset=0, type="track", market=None) -> dict[str, Any]:
 		return await self._get_async(

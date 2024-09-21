@@ -4,10 +4,10 @@ import sys
 import discord
 from discord import VoiceChannel, VoiceClient
 
-from pyramid.data.track import Track
+from pyramid.data.music.track import Track
 from pyramid.data.tracklist import TrackList
 from pyramid.data.guild_data import GuildData
-from pyramid.connector.discord.music_player_interface import MusicPlayerInterface
+from pyramid.connector.discord.music.player_interface import MusicPlayerInterface
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
 from pyramid.data.a_guid_queue import AGuildQueue
 

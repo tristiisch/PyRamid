@@ -2,7 +2,9 @@ import os
 import random
 
 from pyramid.tools import utils
-from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
+from pyramid.data.music.track import Track
+from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
+from pyramid.data.music.track_minimal import TrackMinimal
 
 
 class TrackList:

@@ -6,7 +6,9 @@ from pyramid.services.deezer_search import DeezerType
 
 
 class DeezerTools(AEngineTools):
-	async def extract_from_url(self, url) -> tuple[int, DeezerType | None] | tuple[None, None]:
+
+	@classmethod
+	async def extract_from_url(cls, url) -> tuple[int, DeezerType | None] | tuple[None, None]:
 		# Resolve if URL is a deezer.page.link URL
 		if "deezer.page.link" in url:
 			async with aiohttp.ClientSession() as session:

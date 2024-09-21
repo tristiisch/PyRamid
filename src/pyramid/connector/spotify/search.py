@@ -3,7 +3,7 @@ from typing import Any
 from pyramid.connector.spotify.spotify_tools import SpotifyTools
 from pyramid.connector.spotify.spotify_type import SpotifyType
 from pyramid.data.a_search import ASearch, ASearchId
-from pyramid.data.track import TrackMinimalSpotify
+from pyramid.data.music.track_minimal_spotify import TrackMinimalSpotify
 from spotipy.oauth2 import SpotifyClientCredentials
 
 from pyramid.connector.spotify.cli_spotify import CliSpotify

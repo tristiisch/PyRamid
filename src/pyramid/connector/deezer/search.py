@@ -5,16 +5,12 @@ from enum import Enum
 import aiohttp
 
 import deezer
-from pyramid.data.a_engine_tools import AEngineTools
+from pyramid.connector.deezer.client.exceptions import CliDeezerNoDataException, CliDeezerRateLimitError
+from pyramid.connector.deezer.client.list_paginated import DeezerListPaginated
 from pyramid.data.a_search import ASearch, ASearchId
-from pyramid.data.track import TrackMinimalDeezer
+from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
 
-from pyramid.connector.deezer.cli_deezer import (
-	CliDeezer,
-	CliDeezerNoDataException,
-	CliDeezerRateLimitError,
-	CliPaginatedList,
-)
+from pyramid.connector.deezer.cli_deezer import CliDeezer
 from pyramid.services.deezer_search import DeezerTools, DeezerType
 from pyramid.tools.deprecated_class import deprecated_class
 
@@ -23,7 +19,6 @@ class DeezerSearch(ASearchId, ASearch):
 	def __init__(self, default_limit: int):
 		self.default_limit = default_limit
 		self.client = CliDeezer()
-		self.tools = DeezerTools()
 		self.strict = False
 
 	async def search_track(self, search) -> TrackMinimalDeezer | None:
@@ -66,7 +61,7 @@ class DeezerSearch(ASearchId, ASearch):
 		playlist = await pagination_results.get_first()
 		if not playlist:
 			return None
-		pagination_tracks: CliPaginatedList[deezer.Track] = playlist.get_tracks()  # type: ignore
+		pagination_tracks: DeezerListPaginated[deezer.Track] = playlist.get_tracks()  # type: ignore
 		tracks = await pagination_tracks.get_all()
 		return [TrackMinimalDeezer(element) for element in tracks]
 
@@ -77,7 +72,7 @@ class DeezerSearch(ASearchId, ASearch):
 		if not playlist:
 			return None
 		# Tracks id are the not the good one
-		playlist_tracks: CliPaginatedList[deezer.Track] = playlist.get_tracks()  # type: ignore
+		playlist_tracks: DeezerListPaginated[deezer.Track] = playlist.get_tracks()  # type: ignore
 
 		# So we search the id for same name and artist
 		real_tracks: list[TrackMinimalDeezer] = []
@@ -107,7 +102,7 @@ class DeezerSearch(ASearchId, ASearch):
 		album = await pagination_results.get_first()
 		if not album:
 			return None
-		pagination_tracks: CliPaginatedList[deezer.Track] = album.get_tracks()  # type: ignore
+		pagination_tracks: DeezerListPaginated[deezer.Track] = album.get_tracks()  # type: ignore
 		tracks = await pagination_tracks.get_all()
 		return [TrackMinimalDeezer(element) for element in tracks]
 
@@ -117,7 +112,7 @@ class DeezerSearch(ASearchId, ASearch):
 		album = await self.client.async_get_album(album_id)  # TODO handle HTTP errors
 		if not album:
 			return None
-		pagination_tracks: CliPaginatedList[deezer.Track] = album.get_tracks()  # type: ignore
+		pagination_tracks: DeezerListPaginated[deezer.Track] = album.get_tracks()  # type: ignore
 		tracks = await pagination_tracks.get_all()
 		return [TrackMinimalDeezer(element) for element in tracks], []
 
@@ -130,7 +125,7 @@ class DeezerSearch(ASearchId, ASearch):
 		artist = await pagination_results.get_first()
 		if not artist:
 			return None
-		pagination_tracks: CliPaginatedList[deezer.Track] = artist.get_top()  # type: ignore
+		pagination_tracks: DeezerListPaginated[deezer.Track] = artist.get_top()  # type: ignore
 		tracks = await pagination_tracks.get_maximum(limit)
 		return [TrackMinimalDeezer(element) for element in tracks]
 
@@ -142,14 +137,14 @@ class DeezerSearch(ASearchId, ASearch):
 		artist = await self.client.async_get_artist(artist_id)  # TODO handle HTTP errors
 		if not artist:
 			return None
-		pagination_tracks: CliPaginatedList[deezer.Track] = artist.get_top()  # type: ignore
+		pagination_tracks: DeezerListPaginated[deezer.Track] = artist.get_top()  # type: ignore
 		tracks = await pagination_tracks.get_maximum(limit)
 		return [TrackMinimalDeezer(element) for element in tracks], []
 
 	async def get_by_url(
 		self, url
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None:
-		id, type = await self.tools.extract_from_url(url)
+		id, type = await DeezerTools.extract_from_url(url)
 
 		if id is None:
 			return None

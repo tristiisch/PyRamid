@@ -1,17 +1,17 @@
 from typing import Dict
 
-from pyramid.api.services.configuration import IConfigurationService
 from pyramid.api.services.deezer_downloader import IDeezerDownloaderService
 from pyramid.api.services.deezer_search import IDeezerSearchService
 from pyramid.api.services.source_service import ISourceService
 from pyramid.api.services.spotify_search import ISpotifySearchService
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
-from pyramid.connector.spotify.search import SpotifySearch
 from pyramid.data.a_search import ASearch
 from pyramid.data.exceptions import EngineSourceNotFoundException, TrackNotFoundException
 from pyramid.data.source_type import SourceType
-from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
+from pyramid.data.music.track import Track
+from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
+from pyramid.data.music.track_minimal import TrackMinimal
 
 
 @pyramid_service(interface=ISourceService)
@@ -115,7 +115,7 @@ class SourceService(ISourceService, ServiceInjector):
 		for key, value in self.__sources.items():
 			if value == engine:
 				return key.name
-		return None
+		raise Exception("Engine %s not found" % engine.__class__.__name__)
 
 	def _resolve_engine(self, engine: SourceType | None):
 		if engine is None:

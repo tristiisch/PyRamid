@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from pyramid.data.track import TrackMinimal
+from pyramid.data.music.track_minimal import TrackMinimal
 
 
 class ASearch(ABC):
