@@ -39,10 +39,12 @@ class BotCmd:
 			name="ping", description="Shows the response time between the bot and Discord API"
 		)
 		async def cmd_ping(ctx: Interaction):
-			await ctx.response.send_message(f"Pong ! ({math.trunc(bot.latency * 1000)}ms)")
+			await ctx.response.defer(thinking=True)
+			await ctx.followup.send(f"Pong ! ({math.trunc(bot.latency * 1000)}ms)")
 
 		@bot.tree.command(name="about", description="Information about the bot")
 		async def cmd_about(ctx: Interaction):
+			await ctx.response.defer(thinking=True)
 			bot_user: ClientUser | None
 			if bot.user is not None:
 				bot_user = bot.user
@@ -93,10 +95,11 @@ class BotCmd:
 				inline=True,
 			)
 
-			await ctx.response.send_message(embed=embed)
+			await ctx.followup.send(embed=embed)
 
 		@bot.tree.command(name="help", description="List all commands")
 		async def cmd_help(ctx: Interaction):
+			await ctx.response.defer(thinking=True)
 			all_commands: List[Command] = bot.tree.get_commands()  # type: ignore
 			commands_dict = {command.name: command.description for command in all_commands}
 			embed_template = Embed(title="List of every commands available", color=Color.gold())
@@ -117,10 +120,7 @@ class BotCmd:
 			# Sending the first embed as a response and subsequent follow-up embeds
 			for i in range(0, len(embeds), max_embed):
 				embeds_chunk = embeds[i : i + max_embed]
-				if i == 0:
-					await ctx.response.send_message(embeds=embeds_chunk)
-				else:
-					await ctx.followup.send(embeds=embeds_chunk)
+				await ctx.followup.send(embeds=embeds_chunk)
 
 		@bot.tree.command(name="play", description="Adds a track to the end of the queue and plays it")
 		async def cmd_play(ctx: Interaction, input: str, engine: SourceType | None):
