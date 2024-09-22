@@ -42,6 +42,14 @@ ARG APP_GROUP
 ARG PROJECT_VERSION
 ENV PROJECT_VERSION=$PROJECT_VERSION
 
+LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid" \
+      org.opencontainers.image.authors="tristiisch" \
+      version="$PROJECT_VERSION"
+
+HEALTHCHECK --interval=30s --retries=3 --timeout=30s CMD python ./src/cli.py health
+# Expose port for health check
+EXPOSE 49150
+
 # Install necessary dependencies
 RUN apk add --no-cache ffmpeg opus-dev binutils
 
@@ -54,16 +62,20 @@ RUN addgroup -g 1000 -S $APP_GROUP && adduser -u 1000 -S $APP_USER -G $APP_GROUP
 RUN mkdir -p ./songs && chmod 770 ./songs && chown root:$APP_GROUP ./songs && \
     mkdir -p ./logs && chmod 770 ./logs && chown root:$APP_GROUP ./logs
 
+# Create project information folder and set permissions
+COPY --chown=root:$APP_GROUP --chmod=550 ./setup.py ./setup.py
+RUN mkdir -p ./src/pyramid.egg-info && \
+	chmod 770 -R ./src/pyramid.egg-info && \
+	chown $APP_USER:$APP_GROUP -R ./src/pyramid.egg-info
+
+# Install the project in editable mode
+RUN pip install -e .
+
 # ============================ Executable Image ============================
 FROM base AS executable
 
-ARG PROJECT_VERSION
 ARG APP_USER
 ARG APP_GROUP
-
-LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid" \
-      org.opencontainers.image.authors="tristiisch" \
-      version="$PROJECT_VERSION"
 
 # Copy the virtual environment from the builder stage
 COPY --chown=root:$APP_GROUP --chmod=550 --from=builder /opt/venv /opt/venv
@@ -71,43 +83,32 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy application sources into the container
 COPY --chown=root:$APP_GROUP --chmod=750 ./src ./src
-COPY --chown=root:$APP_GROUP --chmod=550 ./setup.py ./setup.py
-
-# Create project information folder and set permissions
-RUN mkdir -p ./src/pyramid.egg-info && \
-    chmod 770 -R ./src/pyramid.egg-info && \
-    chown $APP_USER:$APP_GROUP -R ./src/pyramid.egg-info
-
-# Install the project
-RUN pip install -e .
 
 # Switch to the non-root user
 USER $APP_USER
 
-HEALTHCHECK --interval=30s --retries=3 --timeout=30s CMD python ./src/cli.py health
-
-# Expose port for health check
-EXPOSE 49150
-
 CMD ["python", "./src"]
-
-# ============================ Executable Image Dev ============================
-FROM executable AS executable-dev
-
-ARG APP_USER
-
-USER root
-COPY ./requirements-dev.txt requirements-dev.txt
-RUN pip install --no-cache-dir -r requirements-dev.txt
-USER $APP_USER
-
-CMD ["python", "-Xfrozen_modules=off", "./src/dev.py"]
 
 # ============================ Builder Dev Image ============================
 FROM builder AS builder-dev
 
 COPY ./requirements-dev.txt requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
+
+# ============================ Executable Image Dev ============================
+FROM base AS executable-dev
+
+ARG APP_USER
+ARG APP_GROUP
+
+COPY --chown=root:$APP_GROUP --chmod=550 --from=builder-dev /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY --chown=root:$APP_GROUP --chmod=750 ./src ./src
+
+USER $APP_USER
+
+CMD ["python", "-Xfrozen_modules=off", "./src/dev.py"]
 
 # ============================ Test Image ============================
 FROM base AS tests
