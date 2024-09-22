@@ -8,8 +8,6 @@ from pyramid.api.services.spotify_search_base import ISpotifySearchBaseService
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
 
-from pyramid.connector.spotify.cli_spotify import CliSpotify
-
 @pyramid_service(interface=ISpotifySearchBaseService)
 class SpotifySearchBaseService(ISpotifySearchBaseService, ServiceInjector):
 
@@ -19,9 +17,6 @@ class SpotifySearchBaseService(ISpotifySearchBaseService, ServiceInjector):
 		):
 		self.__configuration_service = configuration_service
 		self.__spotify_client = spotify_client
-
-	# def start(self):
-		# self.__spotify_client = CliSpotify(client_credentials_manager=self.client_credentials_manager)
 
 	async def items(
 		self,

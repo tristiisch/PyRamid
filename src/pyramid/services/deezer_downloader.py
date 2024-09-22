@@ -39,7 +39,6 @@ class DeezerDownloaderService(IDeezerDownloaderService, ServiceInjector):
 			self.__deezer_dl_api = None
 			self.__token_provider = DeezerTokenProvider()
 		self.music_format = track_formats.MP3_128
-		os.makedirs(self.__configuration_service.deezer__folder, exist_ok=True)
 
 	async def check_credentials(self) -> dict[str, Any]:
 		if not self.__deezer_dl_api:

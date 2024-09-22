@@ -147,5 +147,4 @@ class SpotifyClientService(Spotify, ISpotifyClientService, ServiceInjector):
 						headers=response.headers,
 					)
 
-		logger.debug("RESULTS: %s", results)
 		return results
