@@ -78,7 +78,9 @@ class MusicPlayerInterface:
 			color=discord.Color.blue(),
 		)
 		embed.add_field(name="Album", value=track.album_title)
-		embed.add_field(name="Release", value=track.get_date(locale.value))
+		release_date = track.get_date(locale.value)
+		if release_date is not None:
+			embed.add_field(name="Release", value=release_date)
 
 		embed.set_author(name=", ".join(track.authors), icon_url=track.author_picture)
 		embed.set_thumbnail(url=track.album_picture)

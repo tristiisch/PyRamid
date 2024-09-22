@@ -2,7 +2,7 @@ from abc import ABC
 from datetime import datetime
 
 import deezer
-import pyramid.tools.utils as tools
+from pyramid.tools import utils
 
 
 class TrackMinimal(ABC):
@@ -95,9 +95,24 @@ class Track(TrackMinimal):
 		self.duration_seconds: int = int(data["DURATION"])
 		self.duration: str = self.format_duration(int(data["DURATION"]))
 		self.file_size: int = int(data["FILESIZE"])
-		self.date: datetime = datetime.strptime(data["PHYSICAL_RELEASE_DATE"], "%Y-%m-%d")
+		if self.__is_valid_date(data["PHYSICAL_RELEASE_DATE"]):
+			self.date = datetime.strptime(data["PHYSICAL_RELEASE_DATE"], "%Y-%m-%d")
+		else:
+			self.date = None
 		self.file_local: str = file_path
 
-	def get_date(self, locale: str = "en-US") -> str:
-		date_formatted = tools.format_date_by_country(self.date, locale)
+	def get_date(self, locale: str = "en-US") -> str | None:
+		if self.date is None:
+			return None
+		date_formatted = utils.format_date_by_country(self.date, locale)
 		return date_formatted
+
+	def __is_valid_date(self, date: str):
+		# Check if the format is exactly "YYYY-MM-DD"
+		parts = date.split("-")
+		if len(parts) == 3 and len(parts[0]) == 4 and len(parts[1]) == 2 and len(parts[2]) == 2:
+			year, month, day = parts
+			if year.isdigit() and month.isdigit() and day.isdigit():
+				if 1 <= int(month) <= 12 and 1 <= int(day) <= 31:
+					return True
+		return False
