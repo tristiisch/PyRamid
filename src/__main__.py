@@ -1,16 +1,4 @@
-from pyramid.data.functional.main import Main
-
-def startup():
-	main = Main()
-
-	main.args()
-	main.logs()
-	main.config()
-	main.clean_data()
-
-	main.open_socket()
-	main.start()
-	main.stop()
+from startup import startup
 
 if __name__ == "__main__":
 	startup()

@@ -91,6 +91,18 @@ EXPOSE 49150
 
 CMD ["python", "./src"]
 
+# ============================ Executable Image Dev ============================
+FROM executable AS executable-dev
+
+ARG APP_USER
+
+USER root
+COPY ./requirements-dev.txt requirements-dev.txt
+RUN pip install --no-cache-dir -r requirements-dev.txt
+USER $APP_USER
+
+CMD ["python", "-Xfrozen_modules=off", "./src/dev.py"]
+
 # ============================ Builder Dev Image ============================
 FROM builder AS builder-dev
 

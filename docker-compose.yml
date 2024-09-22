@@ -2,15 +2,17 @@ services:
   discord:
     build:
       dockerfile: ./Dockerfile
-      target: executable
+      target: executable-dev
       context: .
-    restart: always
+    restart: no
     volumes:
       - ./src:/app/src
       - ./logs:/app/logs
       - ./songs:/app/songs
     networks:
       - pyramid_network
+    ports:
+      - 5678:5678
     env_file: .env
 
 networks:
