@@ -5,10 +5,7 @@ from pyramid.api.services.tools.register import ServiceRegister
 
 def pyramid_service(*, interface: Optional[type] = None):
 	def decorator(cls):
-		class_name = cls.__name__
-		if not issubclass(cls, ServiceInjector):
-			raise TypeError("Class %s must inherit from ServiceInjector" % class_name)
-		
+		class_name: str = cls.__name__		
 		service_name = class_name
 		if interface is not None:
 			service_name = interface.__name__

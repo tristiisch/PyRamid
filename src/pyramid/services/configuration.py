@@ -18,15 +18,6 @@ class ConfigurationService(IConfigurationService, ConfigurationFromYAML, Configu
 		self.load()
 
 	def load(self, config_file: str = "config.yml", use_env_vars: bool = True) -> bool:
-		"""
-		Loads configuration values from environment variables and/or a configuration file.
-
-		Parameters:
-		- use_env_vars (bool): If True, loads configuration values from environment variables.
-
-		Returns:
-		- bool: True if the loading process is successful, False otherwise.
-		"""
 		keys_length = utils.count_public_variables(self)
 
 		# Load from environment variables if enabled
@@ -55,11 +46,5 @@ class ConfigurationService(IConfigurationService, ConfigurationFromYAML, Configu
 
 		return result_1 and result_2
 
-	def save(self, file_name):
-		"""
-		Saves the configuration values to a YAML file.
-
-		Parameters:
-		- file_name (str): The name of the file to which the configuration will be saved.
-		"""
+	def save(self, file_name: str):
 		self._save_to_yaml(file_name)

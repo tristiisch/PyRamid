@@ -1,12 +1,12 @@
 import argparse
 
-from pyramid.data.functional.application_info import ApplicationInfo
+from pyramid.api.services.information import IInformationService
+from pyramid.api.services.tools.tester import ServiceStandalone
 from pyramid.client.client import SocketClient
 from pyramid.client.requests.health import HealthRequest
-from pyramid.tools.logs_handler import LogsHandler
 
 def startup_cli():
-	info = ApplicationInfo()
+	ServiceStandalone.import_services()
 
 	parser = argparse.ArgumentParser(description="Readme at https://github.com/tristiisch/PyRamid")
 	parser.add_argument("--version", action="store_true", help="Print version", required=False)
@@ -23,7 +23,9 @@ def startup_cli():
 	args = parser.parse_args()
 
 	if args.version:
-		print(info.get_version())
+		information_service = ServiceStandalone.get_service(IInformationService)
+		information = information_service.get()
+		print(information.get_version())
 
 	elif args.health:
 		sc = SocketClient(args.host, args.port)

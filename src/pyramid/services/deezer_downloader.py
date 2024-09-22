@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import traceback
 from typing import Any
@@ -11,12 +12,12 @@ from pyramid.api.services.tools.injector import ServiceInjector
 from pyramid.connector.deezer.downloader_progress_bar import DownloaderProgressBar
 from pyramid.connector.deezer.download.client import PyDeezer
 from pyramid.data.music.track import Track
-from pyramid.tools.generate_token import DeezerTokenProvider, DeezerTokenEmptyException, DeezerTokenOverflowException
+from pyramid.tools.generate_token import DeezerTokenProvider
 from pydeezer.constants import track_formats
 from pydeezer.exceptions import LoginError
 from urllib3.exceptions import MaxRetryError
 
-from pyramid.data.exceptions import CustomException
+from pyramid.data.exceptions import CustomException, DeezerTokenInvalidException, DeezerTokenOverflowException, DeezerTokensUnavailableException
 
 
 @pyramid_service(interface=IDeezerDownloaderService)
@@ -30,25 +31,13 @@ class DeezerDownloaderService(IDeezerDownloaderService, ServiceInjector):
 		self.__configuration_service = configuration_service
 
 	def start(self):
-		# arl = self.__configuration_service.deezer__arl
-		arl = None
+		arl = self.__configuration_service.deezer__arl
 		if arl is not None and arl != "":
-			self.__deezer_dl_api = PyDeezer(arl)
-			self.__token_provider = None
+			self.__arls = [arl]
 		else:
-			self.__deezer_dl_api = None
-			self.__token_provider = DeezerTokenProvider()
+			self.__arls = None
+		self.__token_provider = DeezerTokenProvider()
 		self.music_format = track_formats.MP3_128
-		os.makedirs(self.__configuration_service.deezer__folder, exist_ok=True)
-
-	async def check_credentials(self) -> dict[str, Any]:
-		if not self.__deezer_dl_api:
-			raise Exception("deezer_dl_api not init")
-		try:
-			await self.__deezer_dl_api.get_user_data()
-			return self.__deezer_dl_api.user
-		except LoginError as err:
-			raise err  # Arl is invalid
 
 	async def dl_track_by_id(self, track_id) -> Track | None:
 		client = await self._get_client()
@@ -100,7 +89,7 @@ class DeezerDownloaderService(IDeezerDownloaderService, ServiceInjector):
 
 		except CustomException as error:
 			trace = "".join(traceback.format_exception(type(error), error, error.__traceback__))
-			self.__logger.warning("%s :\n%s", error.msg, trace)
+			self.__logger.warning("%s :\n%s", error.args, trace)
 			return False
 
 		except Exception:
@@ -109,34 +98,55 @@ class DeezerDownloaderService(IDeezerDownloaderService, ServiceInjector):
 			return False
 	
 	async def _get_client(self) -> PyDeezer:
-		i = 0
-		max_error = 10
+		return await self._define_client()
+	
+	async def _define_client(self) -> PyDeezer:
+		last_err_local = None
+		if self.__arls:
+			for arl in self.__arls:
+				deezer_dl_api = PyDeezer(arl)
+				try:
+					await deezer_dl_api.get_user_data()
+					return deezer_dl_api
+				except DeezerTokenInvalidException as err:
+					last_err_local = err
+					continue
 
-		if self.__deezer_dl_api:
-			return self.__deezer_dl_api
-		if not self.__token_provider:
-			raise Exception("token_provider not init")
-		
-		while True:
+		last_err_remote = None
+		already_overflow = False
+		while self.__token_provider.count_valids_tokens() != 0:
 			try:
 				token = self.__token_provider.next()
-				self.__deezer_dl_api = PyDeezer(token.token)
-				await self.check_credentials()
-				break
+				deezer_dl_api = PyDeezer(token.token)
+				await deezer_dl_api.get_user_data()
+				return deezer_dl_api
 
-			except DeezerTokenEmptyException as err:
-				if i > max_error:
-					raise err
-				self.__token_provider = DeezerTokenProvider()
+			except DeezerTokenInvalidException as err:
+				last_err_remote = err
+				continue
 
 			except DeezerTokenOverflowException as err:
-				if i > max_error:
-					raise err
+				last_err_remote = err
+				if already_overflow is True:
+					break
+				already_overflow = True
 				self.__token_provider = DeezerTokenProvider()
+				continue
 
-			except LoginError as err:
-				if i > max_error:
-					raise err
-			i += 1
+			except DeezerTokensUnavailableException as err:
+				last_err_remote = err
+				break
 
-		return self.__deezer_dl_api
+		if last_err_local is not None:
+			tb = traceback.TracebackException.from_exception(last_err_local)
+			formatted_tb = ''.join(tb.format())
+			logging.warning("Failed to fetch valid Deezer client from local\n%s", formatted_tb)
+
+		if last_err_remote is not None:
+			tb = traceback.TracebackException.from_exception(last_err_remote)
+			formatted_tb = ''.join(tb.format())
+			logging.warning("Failed to fetch valid Deezer client from remote\n%s", formatted_tb)
+
+		if last_err_remote is not None and last_err_local is not None:
+			raise last_err_remote
+		raise Exception("Unknown func exit")

@@ -3,16 +3,16 @@ from collections import defaultdict, deque
 import importlib
 import inspect
 import pkgutil
-from typing import Type, TypeVar
-from pyramid.api.services.tools.exceptions import ServiceAlreadyNotRegisterException, ServiceAlreadyRegisterException, ServiceCicularDependencyException
+from typing import Any, Type, TypeVar
+from pyramid.api.services.tools.exceptions import ServiceNotRegisterException, ServiceAlreadyRegisterException, ServiceCicularDependencyException
 from pyramid.api.services.tools.injector import ServiceInjector
 
 T = TypeVar('T')
 
 class ServiceRegister:
 
-	__SERVICE_TO_REGISTER: dict[str, type[ServiceInjector]] = {}
-	__SERVICE_REGISTERED: dict[str, ServiceInjector] = {}
+	__SERVICES_REGISTRED: dict[str, type[ServiceInjector]] = {}
+	__SERVICES_INSTANCES: dict[str, ServiceInjector] = {}
 
 	@classmethod
 	def import_services(cls):
@@ -21,25 +21,25 @@ class ServiceRegister:
 
 		for loader, module_name, is_pkg in pkgutil.iter_modules(package.__path__):
 			full_module_name = f"{package_name}.{module_name}"
-			importlib.import_module(full_module_name) 
+			importlib.import_module(full_module_name)
 
 	@classmethod
 	def register_service(cls, name: str, type: type[object]):
 		if not issubclass(type, ServiceInjector):
 			raise TypeError("Service %s is not a subclass of ServiceInjector and cannot be initialized." % name)
-		if name in cls.__SERVICE_TO_REGISTER:
-			already_class_name = cls.__SERVICE_TO_REGISTER[name].__name__
+		if name in cls.__SERVICES_REGISTRED:
+			already_class_name = cls.__SERVICES_REGISTRED[name].__name__
 			raise ServiceAlreadyRegisterException(
 				"Cannot register %s with %s, it is already registered with the class %s."
 				% (name, type.__name__, already_class_name)
 			)
-		cls.__SERVICE_TO_REGISTER[name] = type
+		cls.__SERVICES_REGISTRED[name] = type
 
 	@classmethod
 	def create_services(cls):
-		for name, service_type in cls.__SERVICE_TO_REGISTER.items():
+		for name, service_type in cls.__SERVICES_REGISTRED.items():
 			class_instance = service_type()
-			cls.__SERVICE_REGISTERED[name] = class_instance
+			cls.__SERVICES_INSTANCES[name] = class_instance
 
 	@classmethod
 	def inject_services(cls):
@@ -48,8 +48,8 @@ class ServiceRegister:
 		indegree = defaultdict(int)  # To track the number of dependencies
 
 		# Create instances but delay injecting dependencies
-		for name, service_type in cls.__SERVICE_TO_REGISTER.items():
-			class_instance = cls.__SERVICE_REGISTERED[name]
+		for name, service_type in cls.__SERVICES_REGISTRED.items():
+			class_instance = cls.__SERVICES_INSTANCES[name]
 
 			# Step 2: Parse dependencies for each service
 			signature = inspect.signature(class_instance.injectService)
@@ -57,8 +57,8 @@ class ServiceRegister:
 
 			for method_parameter in method_parameters:
 				dependency_name = method_parameter.annotation.__name__
-				if dependency_name not in cls.__SERVICE_REGISTERED:
-					raise ServiceAlreadyNotRegisterException(
+				if dependency_name not in cls.__SERVICES_INSTANCES:
+					raise ServiceNotRegisterException(
 						"Cannot register %s as a dependency for %s because the dependency is not registered."
 						% (dependency_name, name)
 					)
@@ -68,7 +68,7 @@ class ServiceRegister:
 
 		# Step 3: Perform a topological sort to determine the order of instantiation
 		sorted_services = []
-		queue = deque([service for service in cls.__SERVICE_TO_REGISTER if indegree[service] == 0])
+		queue = deque([service for service in cls.__SERVICES_REGISTRED if indegree[service] == 0])
 
 		while queue:
 			service = queue.popleft()
@@ -79,8 +79,8 @@ class ServiceRegister:
 				if indegree[dependent] == 0:
 					queue.append(dependent)
 
-		if len(sorted_services) != len(cls.__SERVICE_TO_REGISTER):
-			unresolved_services = set(cls.__SERVICE_TO_REGISTER) - set(sorted_services)
+		if len(sorted_services) != len(cls.__SERVICES_REGISTRED):
+			unresolved_services = set(cls.__SERVICES_REGISTRED) - set(sorted_services)
 			raise ServiceCicularDependencyException(
 				"Circular dependency detected! The following services are involved in a circular dependency: %s"
 				% ', '.join(unresolved_services)
@@ -88,14 +88,14 @@ class ServiceRegister:
 
 		# Step 4: Inject dependencies in the correct order
 		for service_name in sorted_services:
-			class_instance = cls.__SERVICE_REGISTERED[service_name]
+			class_instance = cls.__SERVICES_INSTANCES[service_name]
 			signature = inspect.signature(class_instance.injectService)
 			method_parameters = list(signature.parameters.values())
 
 			services_dependencies = []
 			for method_parameter in method_parameters:
 				dependency_name = method_parameter.annotation.__name__
-				dependency_instance = cls.__SERVICE_REGISTERED[dependency_name]
+				dependency_instance = cls.__SERVICES_INSTANCES[dependency_name]
 				services_dependencies.append(dependency_instance)
 
 			class_instance.injectService(*services_dependencies)
@@ -104,7 +104,7 @@ class ServiceRegister:
 	def get_dependency_tree(cls):
 		# Step 1: Build dependency graph
 		dependency_graph = defaultdict(list)
-		for name, class_instance in cls.__SERVICE_REGISTERED.items():
+		for name, class_instance in cls.__SERVICES_INSTANCES.items():
 
 			signature = inspect.signature(class_instance.injectService)
 			method_parameters = list(signature.parameters.values())
@@ -131,7 +131,7 @@ class ServiceRegister:
 				build_tree(child, prefix, i == len(children) - 1)
 
 		# Step 4: Find root services (those with no dependencies)
-		all_services = set(cls.__SERVICE_TO_REGISTER.keys())
+		all_services = set(cls.__SERVICES_REGISTRED.keys())
 		dependent_services = set(dep for deps in dependency_graph.values() for dep in deps)
 		root_services = all_services - dependent_services
 
@@ -146,10 +146,18 @@ class ServiceRegister:
 
 	@classmethod
 	def start_services(cls):
-		for name, class_instance in cls.__SERVICE_REGISTERED.items():
+		for name, class_instance in cls.__SERVICES_INSTANCES.items():
 			class_instance.start()
+
+	@classmethod
+	def get_service_registred(cls, class_name: str) -> type[ServiceInjector]:
+		if class_name not in cls.__SERVICES_REGISTRED:
+			raise ServiceNotRegisterException(
+				"Cannot get %s because the service is not registered." % (class_name)
+			)
+		return cls.__SERVICES_REGISTRED[class_name]
 
 	@classmethod
 	def get_service(cls, class_type: Type[T]) -> T:
 		class_name = class_type.__name__
-		return cls.__SERVICE_REGISTERED[class_name]
+		return cls.__SERVICES_INSTANCES[class_name]

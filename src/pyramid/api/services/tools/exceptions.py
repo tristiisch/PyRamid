@@ -4,7 +4,7 @@ class ServiceRegisterException(Exception):
 class ServiceAlreadyRegisterException(ServiceRegisterException):
 	pass
 
-class ServiceAlreadyNotRegisterException(ServiceRegisterException):
+class ServiceNotRegisterException(ServiceRegisterException):
 	pass
 
 class ServiceCicularDependencyException(ServiceRegisterException):
