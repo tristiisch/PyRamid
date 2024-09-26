@@ -35,10 +35,6 @@ class Main:
 		ServiceRegister.inject_services()
 		ServiceRegister.start_services()
 
-		logger = ServiceRegister.get_service(ILoggerService)
-
-		logger.debug(ServiceRegister.get_dependency_tree())
-
 		MainQueue.init()
 
 		TaskRegister.import_tasks()

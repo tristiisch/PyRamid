@@ -1,9 +1,10 @@
 import argparse
+import sys
 
 from pyramid.api.services.information import IInformationService
 from pyramid.api.services.tools.tester import ServiceStandalone
 from pyramid.client.client import SocketClient
-from pyramid.client.requests.health import HealthRequest
+from pyramid.client.requests.ping import PingRequest
 
 def startup_cli():
 	ServiceStandalone.import_services()
@@ -29,11 +30,10 @@ def startup_cli():
 
 	elif args.health:
 		sc = SocketClient(args.host, args.port)
-		health = HealthRequest()
-		sc.send(health)
+		health = PingRequest()
+		result = sc.send(health)
+		if result is not True:
+			sys.exit(1)
 
 	else:
 		parser.print_help()
-
-if __name__ == "__main__":
-	startup_cli()

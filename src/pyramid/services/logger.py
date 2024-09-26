@@ -45,6 +45,10 @@ class LoggerService(ILoggerService, ServiceInjector):
 
 	def critical(self, msg, *args, **kwargs):
 		self.logger.critical(msg, *args, **kwargs)
+		sys.exit(1)
+
+	def exception(self, msg, *args, **kwargs):
+		self.logger.exception(msg, *args, **kwargs)
 
 	def error(self, msg, *args, **kwargs):
 		self.logger.error(msg, *args, **kwargs)

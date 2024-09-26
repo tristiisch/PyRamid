@@ -101,7 +101,7 @@ class Queue:
 	def create_threads(self):
 		for thread_id in range(1, self.__threads + 1):
 			thread = Thread(
-				name="%s n°%d{thread_id}" % (self.__name, thread_id),
+				name="%s n°%d" % (self.__name, thread_id),
 				target=self.__worker,
 				args=(self.__queue, thread_id, self.__lock, self.__event),
 				daemon=True,

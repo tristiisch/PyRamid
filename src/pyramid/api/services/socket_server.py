@@ -1,8 +1,12 @@
-from abc import ABC, abstractmethod
-from pyramid.data.functional.application_info import ApplicationInfo
+from abc import abstractmethod
 
-class ISocketServerService(ABC):
+
+class ISocketServerService:
 
 	@abstractmethod
-	def start(self):
+	async def open(self):
+		pass
+
+	@abstractmethod
+	def close(self):
 		pass

@@ -82,3 +82,4 @@ class TaskRegister:
 			parameters.thread.join()
 
 		signal.signal(signal.SIGTERM, previous_handler)
+		logging.info("All tasks are stopped")

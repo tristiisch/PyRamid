@@ -29,7 +29,7 @@ class ConfigurationService(IConfigurationService, ConfigurationFromYAML, Configu
 				raw_values_env, result_values, "env vars", True, keys_length
 			)
 
-		# Load raw values from environment variables and config file
+		# Load raw values from config file
 		try:
 			raw_values_file = self._get_file_vars(config_file)
 			result_values = self._transform_all(raw_values_file, keys_length)
