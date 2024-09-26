@@ -24,16 +24,17 @@ class ServiceRegister:
 			importlib.import_module(full_module_name)
 
 	@classmethod
-	def register_service(cls, name: str, type: type[object]):
+	def register_service(cls, interface_name: str, type: type[object]):
+		type_name = type.__name__
 		if not issubclass(type, ServiceInjector):
-			raise TypeError("Service %s is not a subclass of ServiceInjector and cannot be initialized." % name)
-		if name in cls.__SERVICES_REGISTRED:
-			already_class_name = cls.__SERVICES_REGISTRED[name].__name__
+			raise TypeError("Service %s is not a subclass of ServiceInjector and cannot be initialized." % type_name)
+		if interface_name in cls.__SERVICES_REGISTRED:
+			already_class_name = cls.__SERVICES_REGISTRED[interface_name].__name__
 			raise ServiceAlreadyRegisterException(
 				"Cannot register %s with %s, it is already registered with the class %s."
-				% (name, type.__name__, already_class_name)
+				% (interface_name, type_name, already_class_name)
 			)
-		cls.__SERVICES_REGISTRED[name] = type
+		cls.__SERVICES_REGISTRED[interface_name] = type
 
 	@classmethod
 	def create_services(cls):

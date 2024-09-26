@@ -13,6 +13,7 @@ services:
       - pyramid_network
     ports:
       - 5678:5678
+      - 5679:5679
     env_file: .env
 
 networks:
