@@ -54,7 +54,7 @@ class TaskRegister:
 		for name, parameters in cls.__TASKS_REGISTERED.items():
 			async def shutdown(loop: asyncio.AbstractEventLoop):
 				await parameters.task_cls.stop_asyc()
-				parameters.loop.stop()
+				loop.stop()
 			asyncio.run_coroutine_threadsafe(shutdown(parameters.loop), parameters.loop)
 
 	@classmethod
