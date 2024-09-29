@@ -43,6 +43,6 @@ class Main:
 
   
 	def stop(self):
-		logging.info("Wait for background tasks to stop")
+		logging.info("Wait for others tasks to stop ...")
 		Queue.wait_for_end(5)
 		logging.info("Bye bye")

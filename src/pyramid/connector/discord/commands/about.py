@@ -2,6 +2,9 @@
 import time
 from discord import AppInfo, ClientUser, Color, Embed,  Interaction
 from discord.user import BaseUser
+from pyramid.api.services.configuration import IConfigurationService
+from pyramid.api.services.information import IInformationService
+from pyramid.api.services.logger import ILoggerService
 from pyramid.connector.discord.commands.tools.abc import AbstractCommand
 from pyramid.connector.discord.commands.tools.annotation import discord_command
 from pyramid.connector.discord.commands.tools.parameters import ParametersCommand
@@ -12,9 +15,14 @@ from pyramid.tools import utils
 @discord_command(parameters=ParametersCommand(description="About the bot"))
 class AboutCommand(AbstractCommand):
 
-	def injectService(self, environment: Environment, info: ApplicationInfo):
-		self.__environment = environment
-		self.__info = info
+	def injectService(self,
+			information_service: IInformationService,
+			configuration_service: IConfigurationService,
+			logger_service: ILoggerService
+		):
+		self.__information_service = information_service
+		self.logger = logger_service
+		self.__configuration_service = configuration_service
 
 	async def execute(self, ctx: Interaction):
 		await ctx.response.defer(thinking=True)
@@ -25,7 +33,7 @@ class AboutCommand(AbstractCommand):
 			bot_user = None
 			self.logger.warning("Unable to get self user instance")
 
-		info = self.__info
+		info = self.__information_service.get()
 		embed = Embed(title=info.get_name(), color=Color.gold())
 		if bot_user is not None and bot_user.avatar is not None:
 			embed.set_thumbnail(url=bot_user.avatar.url)
@@ -54,17 +62,18 @@ class AboutCommand(AbstractCommand):
 				text=f"Owned by {owner.display_name}",
 				icon_url=owner.avatar.url if owner.avatar is not None else None,
 			)
+		environnement = self.__configuration_service.mode.name.capitalize()
 
 		embed.add_field(name="Version", value=info.get_version(), inline=True)
 		embed.add_field(name="OS", value=info.get_os(), inline=True)
 		embed.add_field(
 			name="Environment",
-			value=self.__environment.name.capitalize(),
+			value=environnement,
 			inline=True,
 		)
 		embed.add_field(
 			name="Uptime",
-			value=utils.time_to_duration(int(round(time.time() - self.__info.get_started_at()))),
+			value=utils.time_to_duration(int(round(time.time() - info.get_started_at()))),
 			inline=True,
 		)
 

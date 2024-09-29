@@ -52,7 +52,6 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return await self._execute_play(ms, voice_channel, track, at_end=at_end)
 
 	async def stop(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
-		ctx.channel
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
@@ -195,22 +194,6 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 			return False
 
 		ms.add_code_message(queue, prefix="Here's the music in the queue :")
-		return True
-
-	async def searchV1(
-		self, ms: MessageSenderQueued, input: str, engine: SourceType | None = None
-	) -> bool:
-		try:
-			tracks, tracks_unfindable = await self.data.search_engine.search_tracks(input, engine)
-		except DiscordMessageException as err:
-			ms.add_message(err.msg)
-			return False
-
-		hsa = utils_list_track.to_str(tracks)
-		if tracks_unfindable:
-			hsa = utils_list_track.to_str(tracks_unfindable)
-			ms.add_code_message(hsa, prefix=":warning: Can't find the audio for these tracks :")
-		ms.add_code_message(hsa, prefix="Here are the results of your search :")
 		return True
 
 	async def search(

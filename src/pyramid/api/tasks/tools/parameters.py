@@ -9,4 +9,4 @@ class ParametersTask:
 	def __init__(self):
 		self.loop: asyncio.AbstractEventLoop
 		self.thread: Thread
-		self.task_cls: TaskInjector
+		self.cls_instance: TaskInjector
