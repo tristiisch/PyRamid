@@ -21,7 +21,6 @@ class SourceService(ISourceService, ServiceInjector):
 			downloader_service: IDeezerDownloaderService,
 			deezer_search_service: IDeezerSearchService,
 			spotify_search_service: ISpotifySearchService,
-			
 		):
 		self.__downloader = downloader_service
 		self.__deezer_search = deezer_search_service

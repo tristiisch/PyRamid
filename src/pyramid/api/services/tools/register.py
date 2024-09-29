@@ -31,7 +31,7 @@ class ServiceRegister:
 		if interface_name in cls.__SERVICES_REGISTRED:
 			already_class_name = cls.__SERVICES_REGISTRED[interface_name].__name__
 			raise ServiceAlreadyRegisterException(
-				"Cannot register %s with %s, it is already registered with the class %s."
+				"Cannot register service %s with %s, it is already registered with the class %s."
 				% (interface_name, type_name, already_class_name)
 			)
 		cls.__SERVICES_REGISTRED[interface_name] = type

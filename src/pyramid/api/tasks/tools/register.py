@@ -30,13 +30,13 @@ class TaskRegister:
 	def register_tasks(cls, type: type[object], parameters: ParametersTask):
 		if not issubclass(type, TaskInjector):
 			raise TypeError("Service %s is not a subclass of TaskInjector and cannot be initialized." % type.__name__)
-		parameters.task_cls = type()
+		parameters.cls_instance = type()
 		cls.__TASKS_REGISTERED[type.__name__] = parameters
 
 	@classmethod
 	def inject_tasks(cls):
 		for name, parameters in cls.__TASKS_REGISTERED.items():
-			signature = inspect.signature(parameters.task_cls.injectService)
+			signature = inspect.signature(parameters.cls_instance.injectService)
 			method_parameters = list(signature.parameters.values())
 
 			services_dependencies = []
@@ -45,7 +45,7 @@ class TaskRegister:
 				dependency_instance = ServiceRegister.get_service(dependency_cls)
 				services_dependencies.append(dependency_instance)
 
-			parameters.task_cls.injectService(*services_dependencies)
+			parameters.cls_instance.injectService(*services_dependencies)
 
 	@classmethod
 	def __handle_signal(cls, signum: int, frame):
@@ -53,7 +53,7 @@ class TaskRegister:
 
 		for name, parameters in cls.__TASKS_REGISTERED.items():
 			async def shutdown(loop: asyncio.AbstractEventLoop):
-				await parameters.task_cls.stop_asyc()
+				await parameters.cls_instance.stop_asyc()
 				loop.stop()
 			asyncio.run_coroutine_threadsafe(shutdown(parameters.loop), parameters.loop)
 
@@ -67,7 +67,7 @@ class TaskRegister:
 			def running(loop: asyncio.AbstractEventLoop):
 				asyncio.set_event_loop(loop)
 
-				loop.create_task(parameters.task_cls.worker_asyc())
+				loop.create_task(parameters.cls_instance.worker_asyc())
 				try:
 					loop.run_forever()
 				finally:
@@ -82,4 +82,4 @@ class TaskRegister:
 			parameters.thread.join()
 
 		signal.signal(signal.SIGTERM, previous_handler)
-		logging.info("All tasks are stopped")
+		logging.info("All registered tasks are stopped")

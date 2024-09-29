@@ -7,6 +7,7 @@ import aiohttp
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.cache_handler import MemoryCacheHandler
 
 from pyramid.api.services.configuration import IConfigurationService
 from pyramid.api.services.spotify_client import ISpotifyClientService
@@ -24,7 +25,8 @@ class SpotifyClientService(Spotify, ISpotifyClientService, ServiceInjector):
 	def start(self):
 		self.client_credentials_manager = SpotifyClientCredentials(
 			client_id=self.__configuration_service.spotify__client_id,
-			client_secret=self.__configuration_service.spotify__client_secret
+			client_secret=self.__configuration_service.spotify__client_secret,
+			cache_handler=MemoryCacheHandler()
 		)
 		self.auth_manager = None
 
