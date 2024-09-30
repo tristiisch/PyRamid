@@ -290,7 +290,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: tristiisch/PyRamid
-          files: ./coverage/cover/result
+          files: ./coverage/result
 
   docker_image_push:
     name: "Push"

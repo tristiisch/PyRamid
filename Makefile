@@ -53,8 +53,8 @@ dev:
 
 tests:
 	@docker build -f Dockerfile --target tests -t pyramid:tests .
-	@mkdir -p ./cover && chmod 777 ./cover
-	@docker run --rm --env-file ./.env -v ./cover:/app/cover pyramid:tests
+	@mkdir -p ./coverage && chmod 777 ./coverage
+	@docker run --rm --env-file ./.env -v ./coverage:/app/coverage -it pyramid:tests
 
 img-b:
 	@python scripts/environnement.py --build
