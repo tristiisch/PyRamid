@@ -290,7 +290,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: tristiisch/PyRamid
-          files: ./coverage/result
+          files: ./coverage/coverage1.xml
           fail_ci_if_error: true
 
   docker_image_push:

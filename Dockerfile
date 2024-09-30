@@ -139,4 +139,4 @@ RUN pip install -e .
 USER $APP_USER
 
 # Run tests
-CMD ["pytest", "--cov=pyramid", "tests/", "--cov-config=.coveragerc"]
+CMD ["pytest", "--cov=pyramid", "tests/", "--cov-config=.coveragerc", "--cov-report=xml"]
