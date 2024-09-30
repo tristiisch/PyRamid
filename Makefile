@@ -1,7 +1,7 @@
 COMPOSE_SERVICE					:=	discord
 VENV_NAME						:=	.venv
-DOCKER_COMPOSE_FILE_DEV			:=	docker-compose.dev.yml
-DOCKER_COMPOSE_FILE_PREPROD		:=	docker-compose.preprod.yml
+DOCKER_COMPOSE_FILE_DEV			:=	./.docker/docker-compose.dev.yml
+DOCKER_COMPOSE_FILE_PREPROD		:=	./.docker/docker-compose.preprod.yml
 DOCKER_SERVICE_PREPROD			:=	pyramid_preprod_pyramid
 DOCKER_CONTEXT_PREPROD			:=	cookie-pulsheberg
 
@@ -52,7 +52,7 @@ dev:
 	@docker compose -f $(DOCKER_COMPOSE_FILE_DEV) up -d --remove-orphans --pull always --force-recreate
 
 tests:
-	@docker build -f Dockerfile --target tests -t pyramid:tests .
+	@docker build -f ./.docker/Dockerfile --target tests -t pyramid:tests .
 	@mkdir -p ./coverage && chmod 777 ./coverage
 	@docker run --rm --env-file ./.env -v ./coverage:/app/coverage -it pyramid:tests
 
