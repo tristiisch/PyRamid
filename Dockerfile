@@ -9,29 +9,27 @@ FROM python:$PYTHON_VERSION-alpine AS builder
 
 WORKDIR /building
 
-RUN \
-    # Install virtual environment
-    python -m venv /opt/venv && \
-    # Upgrade pip to the latest version
-    pip install --no-cache-dir --upgrade pip
+# Install dependencies necessary for building Python packages
+# Only for ARM64 architecture
+RUN if [ "$(uname -m)" = "aarch64" ]; then \
+        apk add --no-cache --virtual .build-deps gcc musl-dev libffi-dev; \
+    fi
+
+# Install virtual environment
+RUN python -m venv /opt/venv
 
 # Add the virtual environment to the PATH
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy dependencies list 
 COPY ./requirements.txt requirements.txt
+    
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN \
-    # Install dependencies necessary for building Python packages
-    # Only for ARM64 architecture
-    if [ "$(uname -m)" = "aarch64" ]; then \
-        apk add --no-cache --virtual .build-deps gcc musl-dev libffi-dev; \
-    fi && \
-    # Install Python dependencies
-    pip install --no-cache-dir -r requirements.txt && \
-    # Clean up build dependencies for ARM64 architecture
-    if [ "$(uname -m)" = "aarch64" ]; then \
-        apk del .build-deps; \
+# Clean up build dependencies for ARM64 architecture
+RUN if [ "$(uname -m)" = "aarch64" ]; then \
+		apk del .build-deps; \
     fi
 
 # ============================ Base Image ============================
@@ -39,12 +37,9 @@ FROM python:$PYTHON_VERSION-alpine AS base
 
 ARG APP_USER
 ARG APP_GROUP
-ARG PROJECT_VERSION
-ENV PROJECT_VERSION=$PROJECT_VERSION
 
 LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid" \
-      org.opencontainers.image.authors="tristiisch" \
-      version="$PROJECT_VERSION"
+      org.opencontainers.image.authors="tristiisch"
 
 HEALTHCHECK --interval=30s --retries=3 --timeout=30s CMD python ./src/cli.py health
 # Expose port for health check
@@ -76,6 +71,8 @@ FROM base AS executable
 
 ARG APP_USER
 ARG APP_GROUP
+ARG PROJECT_VERSION
+ENV PROJECT_VERSION=$PROJECT_VERSION
 
 # Copy the virtual environment from the builder stage
 COPY --chown=root:$APP_GROUP --chmod=550 --from=builder /opt/venv /opt/venv
@@ -100,6 +97,8 @@ FROM base AS executable-dev
 
 ARG APP_USER
 ARG APP_GROUP
+ARG PROJECT_VERSION
+ENV PROJECT_VERSION=$PROJECT_VERSION
 
 COPY --chown=root:$APP_GROUP --chmod=550 --from=builder-dev /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -124,6 +123,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY --chown=root:$APP_GROUP --chmod=750 ./src ./src
 COPY --chown=root:$APP_GROUP --chmod=750 ./tests ./tests
 COPY --chown=root:$APP_GROUP --chmod=550 ./setup.py ./setup.py
+COPY --chown=root:$APP_GROUP --chmod=550 ./.coveragerc ./.coveragerc
 
 # Create and set permissions for project information folder
 RUN mkdir -p ./src/pyramid.egg-info && \
