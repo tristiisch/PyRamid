@@ -204,7 +204,9 @@ jobs:
           provenance: mode=max
           build-args: |
             PROJECT_VERSION=${{ needs.info.outputs.project_version }}
-          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          outputs: |
+            type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+            type=oci,dest=./pyramid-oci.tar
 
       - name: Export image digest
         run: |
@@ -219,6 +221,63 @@ jobs:
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
+
+    #   - name: Export image
+    #     run: |
+    #       docker save pyramid:${{ steps.prepare.outputs.platform_pair }} -o "./pyramid.tar"
+
+      - name: Upload image as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ steps.prepare.outputs.platform_pair }}
+          path: ./pyramid-oci.tar
+          if-no-files-found: error
+          retention-days: 1
+
+  security_scanner:
+    name: "Security scan"
+    needs: ["docker_image_build"]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+
+    steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "platform_pair=${platform//\//-}" >> $GITHUB_OUTPUT
+        id: prepare
+
+      - name: Download tests image
+        uses: actions/download-artifact@v4
+        with:
+          name: image-${{ steps.prepare.outputs.platform_pair }}
+
+    #   - name: Load Docker image
+    #     run: |
+    #         loaded_image=$(docker load -i "./pyramid.tar" | grep -oP '(?<=Loaded image: ).*')
+    #         echo "image_with_tag=$loaded_image" >> $GITHUB_OUTPUT
+    #     id: docker_load_image
+
+    #   - name: Verify loaded image
+    #     run: |
+    #       echo "Loaded image tag: ${{ steps.docker_load_image.outputs.image_with_tag }}"
+
+      - name: Untar OCI Image
+        run: |
+          mkdir -p ./pyramid-oci
+          tar -xvf ./pyramid-oci.tar -C ./pyramid-oci
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          input: './pyramid-oci'
+          format: 'github'
+          github-pat: '${{ secrets.GITHUB_TOKEN }}'
 
   docker_image_test_build:
     name: "Build Tests"
