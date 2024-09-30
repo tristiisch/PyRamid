@@ -291,6 +291,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: tristiisch/PyRamid
           files: ./coverage/result
+          fail_ci_if_error: true
 
   docker_image_push:
     name: "Push"
