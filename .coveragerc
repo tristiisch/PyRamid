@@ -1,2 +1,18 @@
 [run]
+source =
+    ./src
+	./tests
 data_file = ./coverage/result
+
+[xml]
+output = ./coverage/coverage.xml
+
+[json]
+output = ./coverage/coverage.json
+pretty_print = True
+
+[report]
+; show_missing = True
+
+[html]
+directory = ./coverage/htmlcov
