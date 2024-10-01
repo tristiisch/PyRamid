@@ -17,14 +17,14 @@ class ServiceRegister:
 
 	@classmethod
 	def enable(cls):
-		cls.__import_services()
+		cls.import_services()
 		cls.__create_services()
 		cls.__determine_service_order()
 		cls.__inject_services()
 		cls.__start_services()
 
 	@classmethod
-	def __import_services(cls):
+	def import_services(cls):
 		package_name = "pyramid.services"
 		package = importlib.import_module(package_name)
 
