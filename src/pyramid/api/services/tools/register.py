@@ -13,9 +13,18 @@ class ServiceRegister:
 
 	__SERVICES_REGISTRED: dict[str, type[ServiceInjector]] = {}
 	__SERVICES_INSTANCES: dict[str, ServiceInjector] = {}
+	__ORDERED_SERVICES: list[str] | None = None
 
 	@classmethod
-	def import_services(cls):
+	def enable(cls):
+		cls.__import_services()
+		cls.__create_services()
+		cls.__determine_service_order()
+		cls.__inject_services()
+		cls.__start_services()
+
+	@classmethod
+	def __import_services(cls):
 		package_name = "pyramid.services"
 		package = importlib.import_module(package_name)
 
@@ -37,18 +46,12 @@ class ServiceRegister:
 		cls.__SERVICES_REGISTRED[interface_name] = type
 
 	@classmethod
-	def create_services(cls):
-		for name, service_type in cls.__SERVICES_REGISTRED.items():
-			class_instance = service_type()
-			cls.__SERVICES_INSTANCES[name] = class_instance
-
-	@classmethod
-	def inject_services(cls):
+	def __determine_service_order(cls):
 		# Step 1: Create a graph of dependencies
 		dependency_graph = defaultdict(list)
 		indegree = defaultdict(int)  # To track the number of dependencies
 
-		# Create instances but delay injecting dependencies
+		# Parse dependencies but delay injecting
 		for name, service_type in cls.__SERVICES_REGISTRED.items():
 			class_instance = cls.__SERVICES_INSTANCES[name]
 
@@ -60,8 +63,7 @@ class ServiceRegister:
 				dependency_name = method_parameter.annotation.__name__
 				if dependency_name not in cls.__SERVICES_INSTANCES:
 					raise ServiceNotRegisterException(
-						"Cannot register %s as a dependency for %s because the dependency is not registered."
-						% (dependency_name, name)
+						f"Cannot register {dependency_name} as a dependency for {name} because the dependency is not registered."
 					)
 				# Add an edge in the dependency graph
 				dependency_graph[dependency_name].append(name)
@@ -83,12 +85,18 @@ class ServiceRegister:
 		if len(sorted_services) != len(cls.__SERVICES_REGISTRED):
 			unresolved_services = set(cls.__SERVICES_REGISTRED) - set(sorted_services)
 			raise ServiceCicularDependencyException(
-				"Circular dependency detected! The following services are involved in a circular dependency: %s"
-				% ', '.join(unresolved_services)
+				f"Circular dependency detected! The following services are involved in a circular dependency: {', '.join(unresolved_services)}"
 			)
 
-		# Step 4: Inject dependencies in the correct order
-		for service_name in sorted_services:
+		cls.__ORDERED_SERVICES = sorted_services
+
+	@classmethod
+	def __inject_services(cls):
+		if not cls.__ORDERED_SERVICES:
+			raise Exception("Failed to determine service startup order.")
+
+		# Inject dependencies in the correct order
+		for service_name in cls.__ORDERED_SERVICES:
 			class_instance = cls.__SERVICES_INSTANCES[service_name]
 			signature = inspect.signature(class_instance.injectService)
 			method_parameters = list(signature.parameters.values())
@@ -100,6 +108,21 @@ class ServiceRegister:
 				services_dependencies.append(dependency_instance)
 
 			class_instance.injectService(*services_dependencies)
+
+	@classmethod
+	def __create_services(cls):
+		for name, service_type in cls.__SERVICES_REGISTRED.items():
+			class_instance = service_type()
+			cls.__SERVICES_INSTANCES[name] = class_instance
+
+	@classmethod
+	def __start_services(cls):
+		if not cls.__ORDERED_SERVICES:
+			raise Exception("Failed to determine service startup order.")
+
+		for service_name in cls.__ORDERED_SERVICES:
+			class_instance = cls.__SERVICES_INSTANCES[service_name]
+			class_instance.start()
 
 	@classmethod
 	def get_dependency_tree(cls):
@@ -144,11 +167,6 @@ class ServiceRegister:
 			build_tree(root)
 
 		return "Services tree :\n" + "\n".join(buffer)
-
-	@classmethod
-	def start_services(cls):
-		for name, class_instance in cls.__SERVICES_INSTANCES.items():
-			class_instance.start()
 
 	@classmethod
 	def get_service_registred(cls, class_name: str) -> type[ServiceInjector]:
