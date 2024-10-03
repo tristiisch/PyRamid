@@ -30,6 +30,7 @@ class Main:
 			sys.exit(0)
 
 	def start(self):
+		ServiceRegister.import_services()
 		ServiceRegister.enable()
 
 		MainQueue.init()

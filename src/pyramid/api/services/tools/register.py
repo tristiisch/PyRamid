@@ -3,25 +3,17 @@ from collections import defaultdict, deque
 import importlib
 import inspect
 import pkgutil
-from typing import Any, Type, TypeVar
-from pyramid.api.services.tools.exceptions import ServiceNotRegisterException, ServiceAlreadyRegisterException, ServiceCicularDependencyException
+from typing import Any, Type, TypeVar, get_type_hints
+from pyramid.api.services.tools.exceptions import ServiceNotRegisteredException, ServiceAlreadyRegisterException, ServiceCicularDependencyException, ServiceWasNotOrdedException
 from pyramid.api.services.tools.injector import ServiceInjector
 
 T = TypeVar('T')
 
 class ServiceRegister:
 
-	__SERVICES_REGISTRED: dict[str, type[ServiceInjector]] = {}
-	__SERVICES_INSTANCES: dict[str, ServiceInjector] = {}
-	__ORDERED_SERVICES: list[str] | None = None
-
-	@classmethod
-	def enable(cls):
-		cls.import_services()
-		cls.__create_services()
-		cls.__determine_service_order()
-		cls.__inject_services()
-		cls.__start_services()
+	SERVICES_REGISTRED: dict[str, type[ServiceInjector]] = {}
+	SERVICES_INSTANCES: dict[str, ServiceInjector] = {}
+	ORDERED_SERVICES: list[str] | None = None
 
 	@classmethod
 	def import_services(cls):
@@ -37,32 +29,45 @@ class ServiceRegister:
 		type_name = type.__name__
 		if not issubclass(type, ServiceInjector):
 			raise TypeError("Service %s is not a subclass of ServiceInjector and cannot be initialized." % type_name)
-		if interface_name in cls.__SERVICES_REGISTRED:
-			already_class_name = cls.__SERVICES_REGISTRED[interface_name].__name__
+		if interface_name in cls.SERVICES_REGISTRED:
+			already_class_name = cls.SERVICES_REGISTRED[interface_name].__module__ + ' ' + cls.SERVICES_REGISTRED[interface_name].__name__
 			raise ServiceAlreadyRegisterException(
 				"Cannot register service %s with %s, it is already registered with the class %s."
 				% (interface_name, type_name, already_class_name)
 			)
-		cls.__SERVICES_REGISTRED[interface_name] = type
+		cls.SERVICES_REGISTRED[interface_name] = type
 
 	@classmethod
-	def __determine_service_order(cls):
+	def enable(cls):
+		cls.create_services()
+		cls.determine_service_order()
+		cls.inject_services()
+		cls.start_services()
+
+	@classmethod
+	def determine_service_order(cls):
+		"""This method is not recommended.
+
+		Please call the `enable` method instead, which takes care of performing
+		the actions in the correct order.
+		"""
 		# Step 1: Create a graph of dependencies
 		dependency_graph = defaultdict(list)
 		indegree = defaultdict(int)  # To track the number of dependencies
 
 		# Parse dependencies but delay injecting
-		for name, service_type in cls.__SERVICES_REGISTRED.items():
-			class_instance = cls.__SERVICES_INSTANCES[name]
+		for name, service_type in cls.SERVICES_REGISTRED.items():
+			class_instance = cls.SERVICES_INSTANCES[name]
 
 			# Step 2: Parse dependencies for each service
 			signature = inspect.signature(class_instance.injectService)
 			method_parameters = list(signature.parameters.values())
+			type_hints = get_type_hints(class_instance.injectService)
 
 			for method_parameter in method_parameters:
-				dependency_name = method_parameter.annotation.__name__
-				if dependency_name not in cls.__SERVICES_INSTANCES:
-					raise ServiceNotRegisterException(
+				dependency_name = type_hints[method_parameter.name].__name__
+				if dependency_name not in cls.SERVICES_INSTANCES:
+					raise ServiceNotRegisteredException(
 						f"Cannot register {dependency_name} as a dependency for {name} because the dependency is not registered."
 					)
 				# Add an edge in the dependency graph
@@ -71,7 +76,7 @@ class ServiceRegister:
 
 		# Step 3: Perform a topological sort to determine the order of instantiation
 		sorted_services = []
-		queue = deque([service for service in cls.__SERVICES_REGISTRED if indegree[service] == 0])
+		queue = deque([service for service in cls.SERVICES_REGISTRED if indegree[service] == 0])
 
 		while queue:
 			service = queue.popleft()
@@ -82,59 +87,76 @@ class ServiceRegister:
 				if indegree[dependent] == 0:
 					queue.append(dependent)
 
-		if len(sorted_services) != len(cls.__SERVICES_REGISTRED):
-			unresolved_services = set(cls.__SERVICES_REGISTRED) - set(sorted_services)
+		if len(sorted_services) != len(cls.SERVICES_REGISTRED):
+			unresolved_services = set(cls.SERVICES_REGISTRED) - set(sorted_services)
 			raise ServiceCicularDependencyException(
 				f"Circular dependency detected! The following services are involved in a circular dependency: {', '.join(unresolved_services)}"
 			)
 
-		cls.__ORDERED_SERVICES = sorted_services
+		cls.ORDERED_SERVICES = sorted_services
 
 	@classmethod
-	def __inject_services(cls):
-		if not cls.__ORDERED_SERVICES:
-			raise Exception("Failed to determine service startup order.")
+	def inject_services(cls):
+		"""This method is not recommended.
+
+		Please call the `enable` method instead, which takes care of performing
+		the actions in the correct order.
+		"""
+		if not cls.ORDERED_SERVICES:
+			raise ServiceWasNotOrdedException("Failed to determine service startup order.")
 
 		# Inject dependencies in the correct order
-		for service_name in cls.__ORDERED_SERVICES:
-			class_instance = cls.__SERVICES_INSTANCES[service_name]
+		for service_name in cls.ORDERED_SERVICES:
+			class_instance = cls.SERVICES_INSTANCES[service_name]
 			signature = inspect.signature(class_instance.injectService)
 			method_parameters = list(signature.parameters.values())
+			type_hints = get_type_hints(class_instance.injectService)
 
 			services_dependencies = []
 			for method_parameter in method_parameters:
-				dependency_name = method_parameter.annotation.__name__
-				dependency_instance = cls.__SERVICES_INSTANCES[dependency_name]
+				dependency_name = type_hints[method_parameter.name].__name__
+				dependency_instance = cls.SERVICES_INSTANCES[dependency_name]
 				services_dependencies.append(dependency_instance)
 
 			class_instance.injectService(*services_dependencies)
 
 	@classmethod
-	def __create_services(cls):
-		for name, service_type in cls.__SERVICES_REGISTRED.items():
+	def create_services(cls):
+		"""This method is not recommended.
+
+		Please call the `enable` method instead, which takes care of performing
+		the actions in the correct order.
+		"""
+		for name, service_type in cls.SERVICES_REGISTRED.items():
 			class_instance = service_type()
-			cls.__SERVICES_INSTANCES[name] = class_instance
+			cls.SERVICES_INSTANCES[name] = class_instance
 
 	@classmethod
-	def __start_services(cls):
-		if not cls.__ORDERED_SERVICES:
-			raise Exception("Failed to determine service startup order.")
+	def start_services(cls):
+		"""This method is not recommended.
 
-		for service_name in cls.__ORDERED_SERVICES:
-			class_instance = cls.__SERVICES_INSTANCES[service_name]
+		Please call the `enable` method instead, which takes care of performing
+		the actions in the correct order.
+		"""
+		if not cls.ORDERED_SERVICES:
+			raise ServiceWasNotOrdedException("Failed to determine service startup order.")
+
+		for service_name in cls.ORDERED_SERVICES:
+			class_instance = cls.SERVICES_INSTANCES[service_name]
 			class_instance.start()
 
 	@classmethod
 	def get_dependency_tree(cls):
 		# Step 1: Build dependency graph
 		dependency_graph = defaultdict(list)
-		for name, class_instance in cls.__SERVICES_INSTANCES.items():
+		for name, class_instance in cls.SERVICES_INSTANCES.items():
 
 			signature = inspect.signature(class_instance.injectService)
 			method_parameters = list(signature.parameters.values())
+			type_hints = get_type_hints(class_instance.injectService)
 
 			for method_parameter in method_parameters:
-				dependency_name = method_parameter.annotation.__name__
+				dependency_name = type_hints[method_parameter.name].__name__
 				dependency_graph[dependency_name].append(name)
 
 		# Step 2: Internal buffer for storing the tree structure
@@ -155,7 +177,7 @@ class ServiceRegister:
 				build_tree(child, prefix, i == len(children) - 1)
 
 		# Step 4: Find root services (those with no dependencies)
-		all_services = set(cls.__SERVICES_REGISTRED.keys())
+		all_services = set(cls.SERVICES_REGISTRED.keys())
 		dependent_services = set(dep for deps in dependency_graph.values() for dep in deps)
 		root_services = all_services - dependent_services
 
@@ -170,13 +192,17 @@ class ServiceRegister:
 
 	@classmethod
 	def get_service_registred(cls, class_name: str) -> type[ServiceInjector]:
-		if class_name not in cls.__SERVICES_REGISTRED:
-			raise ServiceNotRegisterException(
+		if class_name not in cls.SERVICES_REGISTRED:
+			raise ServiceNotRegisteredException(
 				"Cannot get %s because the service is not registered." % (class_name)
 			)
-		return cls.__SERVICES_REGISTRED[class_name]
+		return cls.SERVICES_REGISTRED[class_name]
 
 	@classmethod
 	def get_service(cls, class_type: Type[T]) -> T:
 		class_name = class_type.__name__
-		return cls.__SERVICES_INSTANCES[class_name]
+		if class_name not in cls.SERVICES_INSTANCES:
+			raise ServiceNotRegisteredException(
+				"Cannot get %s because the service is not started." % (class_name)
+			)
+		return cls.SERVICES_INSTANCES[class_name] # type: ignore
