@@ -279,6 +279,9 @@ jobs:
           format: 'github'
           output: 'dependency-results.sbom.json'
           github-pat: '${{ secrets.GITHUB_TOKEN }}'
+        env:
+          TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
+          TRIVY_JAVA_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-java-db:1'
 
       - name: Upload trivy report as a Github artifact
         uses: actions/upload-artifact@v4
