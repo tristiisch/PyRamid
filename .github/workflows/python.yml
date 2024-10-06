@@ -243,7 +243,7 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-        #   - linux/arm64
+          - linux/arm64
 
     steps:
       - name: Prepare
@@ -276,8 +276,16 @@ jobs:
         uses: aquasecurity/trivy-action@0.24.0
         with:
           input: './pyramid-oci'
-        #   format: 'github'
+          format: 'github'
+          output: 'dependency-results.sbom.json'
           github-pat: '${{ secrets.GITHUB_TOKEN }}'
+
+      - name: Upload trivy report as a Github artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-sbom-report
+          path: '${{ github.workspace }}/dependency-results.sbom.json'
+          retention-days: 90
 
   docker_image_test_build:
     name: "Build Tests"
