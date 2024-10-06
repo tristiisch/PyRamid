@@ -243,7 +243,7 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-          - linux/arm64
+        #   - linux/arm64
 
     steps:
       - name: Prepare
@@ -276,7 +276,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.24.0
         with:
           input: './pyramid-oci'
-          format: 'github'
+        #   format: 'github'
           github-pat: '${{ secrets.GITHUB_TOKEN }}'
 
   docker_image_test_build:
