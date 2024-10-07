@@ -5,25 +5,9 @@ import traceback
 from collections import deque
 from concurrent.futures import CancelledError
 from threading import Event, Lock, Thread
-from typing import Any, Callable, Deque, List
+from typing import Callable, Deque, List
 
-
-class QueueItem:
-	def __init__(
-		self,
-		name,
-		func: Callable,
-		loop: asyncio.AbstractEventLoop | None = None,
-		func_sucess: Callable | None = None,
-		func_error: Callable[[Exception], Any] | None = None,
-		**kwargs,
-	) -> None:
-		self.name = name
-		self.func: Callable = func
-		self.loop = loop
-		self.func_sucess = func_sucess
-		self.func_error = func_error
-		self.kwargs = kwargs
+from pyramid.data.queue_item import QueueItem
 
 
 def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):

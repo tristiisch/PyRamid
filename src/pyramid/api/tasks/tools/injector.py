@@ -11,6 +11,3 @@ class TaskInjector(ABC):
 
 	async def stop_asyc(self):
 		pass
-
-	# def worker(self):
-	# 	pass

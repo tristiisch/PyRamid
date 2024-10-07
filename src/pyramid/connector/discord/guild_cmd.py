@@ -9,7 +9,7 @@ from pyramid.data.guild_data import GuildData
 from pyramid.data.source_type import SourceType
 from pyramid.data.music.track_minimal import TrackMinimal
 from pyramid.connector.discord.guild_cmd_tools import GuildCmdTools
-from pyramid.connector.discord.guild_queue import GuildQueue
+from pyramid.connector.discord.music_queue import MusicQueue
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
 from pyramid.data.exceptions import DiscordMessageException
 from pyramid.data.a_guild_cmd import AGuildCmd
@@ -21,7 +21,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		self,
 		logger: Logger,
 		guild_data: GuildData,
-		guild_queue: GuildQueue,
+		guild_queue: MusicQueue,
 		engine_source: ISourceService,
 	):
 		self.logger = logger

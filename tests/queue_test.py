@@ -1,7 +1,8 @@
 import time
 import unittest
 
-from pyramid.tools.custom_queue import Queue, QueueItem  # noqa: E402
+from pyramid.data.queue_item import QueueItem
+from pyramid.tools.custom_queue import Queue
 
 
 class SimpleQueue(unittest.TestCase):

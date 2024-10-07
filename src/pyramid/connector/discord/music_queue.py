@@ -9,10 +9,10 @@ from pyramid.data.tracklist import TrackList
 from pyramid.data.guild_data import GuildData
 from pyramid.connector.discord.music.player_interface import MusicPlayerInterface
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
-from pyramid.data.a_guid_queue import AGuildQueue
+from pyramid.data.music_queue import IMusicQueue
 
 
-class GuildQueue(AGuildQueue):
+class MusicQueue(IMusicQueue):
 	def __init__(self, data: GuildData, ffmpeg_path: str, mpi: MusicPlayerInterface):
 		self.data: GuildData = data
 		self.ffmpeg = ffmpeg_path

@@ -44,7 +44,6 @@ class DiscordBotService(IDiscordService, ServiceInjector):
 		self.__source_service = source_service
 
 	def start(self):
-
 		intents = discord.Intents.default()
 		# intents.members = True
 		intents.message_content = True

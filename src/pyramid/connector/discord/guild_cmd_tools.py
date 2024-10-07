@@ -11,7 +11,7 @@ from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
 from pyramid.data.music.track_minimal import TrackMinimal
 from pyramid.data.guild_data import GuildData
 from pyramid.data.tracklist import TrackList
-from pyramid.connector.discord.guild_queue import GuildQueue
+from pyramid.connector.discord.music_queue import MusicQueue
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
 
 
@@ -19,7 +19,7 @@ class GuildCmdTools:
 	def __init__(
 		self,
 		guild_data: GuildData,
-		guild_queue: GuildQueue,
+		guild_queue: MusicQueue,
 		engine_source: ISourceService,
 	):
 		self.engine_source = engine_source
