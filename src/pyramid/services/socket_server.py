@@ -1,4 +1,4 @@
-import asyncio
+import select
 import socket
 from socket import socket as sock
 from typing import Any
@@ -20,7 +20,7 @@ class SocketServerService(ISocketServerService, ServiceInjector):
 		self.__host = "0.0.0.0"
 		self.__port = self.__common.port
 		self.is_running = False
-		self.server_socket: sock | None = None
+		self.server: sock | None = None
 
 	def injectService(self,
 			logger_service: ILoggerService
@@ -28,57 +28,70 @@ class SocketServerService(ISocketServerService, ServiceInjector):
 		self.__logger = logger_service
 
 	async def open(self):
-		self.server_socket = sock(socket.AF_INET, socket.SOCK_STREAM)
-		# self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.server_socket.bind((self.__host, self.__port))
-		self.server_socket.listen(10)
+		self.server = sock(socket.AF_INET, socket.SOCK_STREAM)
+		self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		self.server.bind((self.__host, self.__port))
+		self.server.listen(10)
+		self.server.setblocking(False)
 
 		self.__logger.info("Socket server open on %s:%d", self.__host, self.__port)
 
 		self.is_running = True
-		client_socket: sock | None = None
-		client_address: Any = None
-		client_ip: Any = None
-		client_port: Any = None
 
 		while self.is_running:
-			try:
-				client_socket, client_address = self.server_socket.accept()
-				client_ip = client_address[0]
-				client_port = client_address[1]
-				response_to_send = await self.__handle_client(client_socket, client_ip, client_port)
-				if response_to_send:
-					# Convert the response data to JSON
-					response_json = SocketCommon.serialize(
-						response_to_send.to_json(SocketCommon.serialize)
-					)
+			client_socket: sock | None = None
+			client_address: Any = None
+			client_ip: Any = None
+			client_port: Any = None
+			response_to_send: SocketResponse | None = None
+			response_json: str | None = None
+			readable: list[sock]
+			readable, writable, exceptional = select.select([self.server], [], [], None)
 
-					# Send the JSON response back to the client
-					# self.__logger.debug("[%s:%d] <- %s", client_ip, client_port, response_json)
-					self.__common.send_chunk(client_socket, response_json)
-			except Exception as err:
-				if isinstance(err, OSError):
-					if err.errno == 9:
+			if not self.is_socket_open(self.server):
+				self.__logger.info("Socket server queue closed, stopping...")
+				break
+	
+			if self.server in readable:
+				try:
+					client_socket, client_address = self.server.accept()
+					client_socket.setblocking(False)
+					client_ip, client_port = client_address
+
+					response_to_send = await self.__handle_client(client_socket, client_ip, client_port)
+					if response_to_send:
+						response_json = SocketCommon.serialize(
+							response_to_send.to_json(SocketCommon.serialize)
+						)
+						# Send the JSON response back to the client
+						# self.__logger.debug("[%s:%d] <- %s", client_ip, client_port, response_json)
+						self.__common.send_chunk(client_socket, response_json)
+				except Exception as err:
+					if isinstance(err, OSError) and err.errno == 9:
 						self.__logger.warning("Socket: [Errno 9] Bad file descriptor")
-						continue
-				if client_ip is not None and client_port is not None:
-					self.__logger.warning("[%s:%d] %s", client_ip, client_port, err, exc_info=True)
-			finally:
-				if client_socket is not None:
-					client_socket.close()
-				client_socket = None
-				client_address = None
-				client_ip = None
-				client_port = None
+					elif client_ip is not None and client_port is not None:
+						self.__logger.warning("[%s:%d] %s", client_ip, client_port, err, exc_info=True)
+					else:
+						raise err
+				finally:
+					if client_socket is not None:
+						client_socket.close()
 		self.__logger.info("Socket server closed")
 
 	def close(self):
 		self.is_running = False
-		if self.server_socket is None:
+		if not self.server or not self.is_socket_open(self.server):
+			self.__logger.warning("Socket server already stopped")
 			return
-		# self.server_socket.shutdown(socket.SHUT_RDWR)
-		self.server_socket.close()
-		self.server_socket = None
+
+		try:
+			self.server.shutdown(socket.SHUT_RDWR)
+		except OSError as err:
+			if err.errno != 9:
+				self.__logger.warning("Error during socket shutdown: %s", err)
+			else:
+				raise err
+		self.server.close()
 		self.__logger.info("Socket server stop")
 
 	async def __handle_client(self, client_socket: sock, client_ip, client_port) -> SocketResponse | None:
@@ -111,3 +124,11 @@ class SocketServerService(ISocketServerService, ServiceInjector):
 			"[%s:%d] <- Unknown action '%s'", client_ip, client_port, json_data.action
 		)
 		return response
+
+	@classmethod
+	def is_socket_open(cls, sock: sock):
+		try:
+			sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+			return True
+		except socket.error:
+			return False
