@@ -76,7 +76,7 @@ class SocketServerService(ISocketServerService, ServiceInjector):
 		self.is_running = False
 		if self.server_socket is None:
 			return
-		self.server_socket.shutdown(socket.SHUT_RDWR)
+		# self.server_socket.shutdown(socket.SHUT_RDWR)
 		self.server_socket.close()
 		self.server_socket = None
 		self.__logger.info("Socket server stop")

@@ -4,7 +4,7 @@ from typing import Optional
 from pyramid.data.music.track import Track
 
 
-class AGuildQueue(ABC):
+class IMusicQueue(ABC):
 	@abstractmethod
 	def is_playing(self) -> bool:
 		pass

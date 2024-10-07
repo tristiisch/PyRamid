@@ -49,13 +49,27 @@ class TaskRegister:
 
 	@classmethod
 	def __handle_signal(cls, signum: int, frame):
-		logging.info("Received signal %d. shutting down ..." % signum)
+		logging.info("Received signal %d." % signum)
+		cls.stop()
 
+	@classmethod
+	def stop(cls):
+		logging.info("Shutting down tasks ...")
+		test = cls
+		loop = asyncio.get_event_loop()
 		for name, parameters in cls.__TASKS_REGISTERED.items():
 			async def shutdown(loop: asyncio.AbstractEventLoop):
+				if loop.is_closed():
+					logging.warning("Loop of task %s is already closed." % name)
+					return
+				logging.info("Task %s stopping..." % name)
 				await parameters.cls_instance.stop_asyc()
 				loop.stop()
-			asyncio.run_coroutine_threadsafe(shutdown(parameters.loop), parameters.loop)
+			if (name == "DiscordTask"):
+				asyncio.run_coroutine_threadsafe(shutdown(parameters.loop), parameters.loop)
+			else:
+				result = loop.run_until_complete(shutdown(parameters.loop))
+			logging.info("Task %s have been asked to stop." % name)
 
 	@classmethod
 	def start_tasks(cls):
@@ -79,7 +93,9 @@ class TaskRegister:
 			parameters.thread.start()
 
 		for name, parameters in cls.__TASKS_REGISTERED.items():
+			logging.info("JOIN %s" % name)
 			parameters.thread.join()
+			logging.info("STOP JOIN %s" % name)
 
 		signal.signal(signal.SIGTERM, previous_handler)
 		logging.info("All registered tasks are stopped")
