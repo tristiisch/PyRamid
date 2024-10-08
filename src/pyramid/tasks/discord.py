@@ -3,7 +3,7 @@ from pyramid.api.tasks.tools.annotation import pyramid_task
 from pyramid.api.tasks.tools.injector import TaskInjector
 from pyramid.api.tasks.tools.parameters import ParametersTask
 
-@pyramid_task(parameters=ParametersTask())
+@pyramid_task(parameters=ParametersTask(stop_own_loop = True))
 class DiscordTask(TaskInjector):
 
 	def injectService(self, discord_service: IDiscordService):
