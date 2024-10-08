@@ -269,7 +269,7 @@ jobs:
           TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
           TRIVY_JAVA_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-java-db:1'
 
-      - name: Run Trivy vulnerability scanner
+      - name: Print Trivy result in humain format
         uses: aquasecurity/trivy-action@0.26.0
         with:
           input: './pyramid-oci'
