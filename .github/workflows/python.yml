@@ -206,10 +206,10 @@ jobs:
             PROJECT_VERSION=${{ needs.info.outputs.project_version }}
           outputs: |
             type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
-            type=oci,dest=./pyramid-oci.tar
 
       - name: Export image digest
         run: |
+          echo "Digest: ${{ steps.build.outputs.digest }}"
           mkdir -p /tmp/digests
           digest="${{ steps.build.outputs.digest }}"
           touch "/tmp/digests/${digest#sha256:}"
@@ -221,6 +221,22 @@ jobs:
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
+
+      - name: Export image to tar
+        uses: docker/build-push-action@v6
+        with:
+          file: ./.docker/Dockerfile
+          target: executable
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          build-args: |
+            PROJECT_VERSION=${{ needs.info.outputs.project_version }}
+          outputs: |
+            type=oci,dest=./pyramid-oci.tar
 
       - name: Upload image as artifact
         uses: actions/upload-artifact@v4
