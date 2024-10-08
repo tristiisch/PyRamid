@@ -1,5 +1,0 @@
-# TODO 
-Verify stop of tasks
-- Message Queue Task should be ok
-- Discord is ok but his stop is not like other. Add it to params to handle it properly
-- Socket server sometimes never stop. Look into it

@@ -7,6 +7,7 @@ import pkgutil
 import signal
 from threading import Thread
 from typing import TypeVar
+
 from pyramid.api.services.tools.register import ServiceRegister
 from pyramid.api.tasks.tools.injector import TaskInjector
 from pyramid.api.tasks.tools.parameters import ParametersTask
@@ -62,10 +63,10 @@ class TaskRegister:
 				if loop.is_closed():
 					logging.warning("Loop of task %s is already closed." % name)
 					return
-				logging.info("Task %s stopping..." % name)
+				logging.info("Task %s ask to stopping..." % name)
 				await parameters.cls_instance.stop_asyc()
 				loop.stop()
-			if (name == "DiscordTask"):
+			if parameters.stop_own_loop:
 				asyncio.run_coroutine_threadsafe(shutdown(parameters.loop), parameters.loop)
 			else:
 				result = loop.run_until_complete(shutdown(parameters.loop))
@@ -93,9 +94,7 @@ class TaskRegister:
 			parameters.thread.start()
 
 		for name, parameters in cls.__TASKS_REGISTERED.items():
-			logging.info("JOIN %s" % name)
 			parameters.thread.join()
-			logging.info("STOP JOIN %s" % name)
 
 		signal.signal(signal.SIGTERM, previous_handler)
 		logging.info("All registered tasks are stopped")
