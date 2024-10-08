@@ -222,10 +222,6 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-    #   - name: Export image
-    #     run: |
-    #       docker save pyramid:${{ steps.prepare.outputs.platform_pair }} -o "./pyramid.tar"
-
       - name: Upload image as artifact
         uses: actions/upload-artifact@v4
         with:
@@ -257,23 +253,13 @@ jobs:
         with:
           name: image-${{ steps.prepare.outputs.platform_pair }}
 
-    #   - name: Load Docker image
-    #     run: |
-    #         loaded_image=$(docker load -i "./pyramid.tar" | grep -oP '(?<=Loaded image: ).*')
-    #         echo "image_with_tag=$loaded_image" >> $GITHUB_OUTPUT
-    #     id: docker_load_image
-
-    #   - name: Verify loaded image
-    #     run: |
-    #       echo "Loaded image tag: ${{ steps.docker_load_image.outputs.image_with_tag }}"
-
       - name: Untar OCI Image
         run: |
           mkdir -p ./pyramid-oci
           tar -xvf ./pyramid-oci.tar -C ./pyramid-oci
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.26.0
         with:
           input: './pyramid-oci'
           format: 'github'
@@ -283,10 +269,22 @@ jobs:
           TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
           TRIVY_JAVA_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-java-db:1'
 
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.26.0
+        with:
+          input: './pyramid-oci'
+          format: 'table'
+          exit-code: '1'
+        #   ignore-unfixed: true
+          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
+        env:
+          TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
+          TRIVY_JAVA_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-java-db:1'
+
       - name: Upload trivy report as a Github artifact
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-sbom-report
+          name: trivy-sbom-${{ steps.prepare.outputs.platform_pair }}-report
           path: '${{ github.workspace }}/dependency-results.sbom.json'
           retention-days: 90
 
