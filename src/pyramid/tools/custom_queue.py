@@ -5,25 +5,9 @@ import traceback
 from collections import deque
 from concurrent.futures import CancelledError
 from threading import Event, Lock, Thread
-from typing import Any, Callable, Deque, List
+from typing import Callable, Deque, List
 
-
-class QueueItem:
-	def __init__(
-		self,
-		name,
-		func: Callable,
-		loop: asyncio.AbstractEventLoop | None = None,
-		func_sucess: Callable | None = None,
-		func_error: Callable[[Exception], Any] | None = None,
-		**kwargs,
-	) -> None:
-		self.name = name
-		self.func: Callable = func
-		self.loop = loop
-		self.func_sucess = func_sucess
-		self.func_error = func_error
-		self.kwargs = kwargs
+from pyramid.data.queue_item import QueueItem
 
 
 def worker(q: Deque[QueueItem], thread_id: int, lock: Lock, event: Event):
@@ -86,7 +70,6 @@ def run_task(func: Callable, loop: asyncio.AbstractEventLoop | None, **kwargs):
 		result = func(**kwargs)
 	return result
 
-
 class Queue:
 	all_queue = deque()
 
@@ -97,10 +80,12 @@ class Queue:
 		self.__threads_list: List[Thread] = []
 		self.__lock = Lock()
 		self.__worker = worker
+		self.__name = name
 
+	def create_threads(self):
 		for thread_id in range(1, self.__threads + 1):
 			thread = Thread(
-				name=f"{name} n°{thread_id}",
+				name="%s n°%d" % (self.__name, thread_id),
 				target=self.__worker,
 				args=(self.__queue, thread_id, self.__lock, self.__event),
 				daemon=True,

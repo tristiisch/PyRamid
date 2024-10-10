@@ -41,6 +41,7 @@ def clear_directory(directory):
 	if not os.path.exists(directory):
 		return
 
+	i = 0
 	for filename in os.listdir(directory):
 		if filename in ['.gitignore', '.gitkeep', '.dockerignore']:
 			continue
@@ -48,8 +49,10 @@ def clear_directory(directory):
 		try:
 			if os.path.isfile(file_path):
 				os.unlink(file_path)
+				i = i + 1
 		except Exception as e:
-			logging.warning("Failed to delete %s due to %s", file_path, e)
+			logging.warning("Failed to delete file '%s' due to %s", file_path, e)
+	logging.info("Cleared %d files from folder '%s'." % (i, directory))
 
 
 def split_string_by_length(
@@ -293,7 +296,7 @@ def count_public_variables(obj):
 	return len(public_variables)
 
 
-def format_bytes_speed(bytes_per_second):
+def format_bytes_speed(bytes_per_second: float):
 	units = ["bps", "Kbps", "Mbps", "Gbps", "Tbps"]
 	factor = 1000
 	for unit in units:

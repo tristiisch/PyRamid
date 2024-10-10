@@ -5,7 +5,7 @@ DOCKER_COMPOSE_FILE_PREPROD		:=	./.docker/docker-compose.preprod.yml
 DOCKER_SERVICE_PREPROD			:=	pyramid_preprod_pyramid
 DOCKER_CONTEXT_PREPROD			:=	cookie-pulsheberg
 
-.PHONY: logs
+# Basics
 
 all: up-b logs
 
@@ -45,6 +45,8 @@ logs:
 exec:
 	@docker compose exec $(COMPOSE_SERVICE) sh
 
+# Other envs
+
 exec-pp:
 	@scripts/docker_service_exec.sh $(DOCKER_SERVICE_PREPROD) $(DOCKER_CONTEXT_PREPROD)
 
@@ -55,6 +57,14 @@ tests:
 	@docker build -f ./.docker/Dockerfile --target tests -t pyramid:tests .
 	@mkdir -p ./coverage && chmod 777 ./coverage
 	@docker run --rm --env-file ./.env -v ./coverage:/app/coverage -it pyramid:tests
+
+healthcheck:
+	@docker compose exec $(COMPOSE_SERVICE) sh -c "python ./src/startup_cli.py health"
+
+healthcheck-dev:
+	@docker compose exec $(COMPOSE_SERVICE) sh -c "python -Xfrozen_modules=off ./src/startup_cli_dev.py health"
+
+# Pythons scripts
 
 img-b:
 	@python scripts/environnement.py --build
@@ -68,4 +78,6 @@ img-c:
 clean:
 	@python scripts/environnement.py --clean
 
-.PHONY: build tests
+# Other
+
+.PHONY: build tests logs

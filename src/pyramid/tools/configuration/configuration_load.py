@@ -1,11 +1,11 @@
 import os
 import re
 from abc import ABC
-from logging import Logger
 from typing import Any, Callable, List, Optional
 
 import yaml
 from pyramid.data.environment import Environment
+from pyramid.api.services.logger import ILoggerService
 
 
 class ConfigurationFromEnv(ABC):
@@ -51,8 +51,9 @@ class ConfigurationFromEnv(ABC):
 
 
 class ConfigurationFromYAML(ABC):
-	def __init__(self, logger: Logger):
-		self.__logger = logger
+
+	def set_logger(self, logger: ILoggerService):
+		self.logger = logger
 
 	def _get_file_vars(self, file_name: str) -> dict[str, str]:
 		# Load from YAML file
@@ -127,7 +128,7 @@ class ConfigurationFromYAML(ABC):
 						continue
 					elif isinstance(self_value, int) and self_value != 0:
 						continue
-				self.__logger.warning(f"'{key_with_dot}' in {type} is not set")
+				self.logger.warning(f"'{key_with_dot}' in {type} is not set")
 				continue
 			errors_msg.append(f"'{key_with_dot}' with value '{value}' : {err}")
 
@@ -138,7 +139,7 @@ class ConfigurationFromYAML(ABC):
 			]
 
 			if len(key_not_used) != 0:
-				self.__logger.warning(
+				self.logger.warning(
 					"Keys '%s' in %s configuration are not used", ", ".join(key_not_used), type
 				)
 
@@ -150,9 +151,9 @@ class ConfigurationFromYAML(ABC):
 			"\n- ".join(errors_msg),
 		)
 		if ignore is True:
-			self.__logger.warning(full_error)
+			self.logger.warning(full_error)
 			return True
-		self.__logger.critical(full_error)
+		self.logger.critical(full_error)
 		return False
 
 	def __check(

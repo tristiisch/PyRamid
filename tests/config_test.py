@@ -1,21 +1,14 @@
 import logging
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-from pyramid.tools.configuration.configuration import Configuration
+from pyramid.api.services.configuration import IConfigurationService
+from pyramid.api.services.tools.tester import ServiceStandalone
 
 class ConfigurationTest(unittest.TestCase):
 	def setUp(self):
-		self.config = Configuration()
-
-	def test_default_logger(self):
-		self.assertIsNotNone(logging.getLogger("config"))
-		self.assertEqual(logging.getLogger("config").name, "config")
-
-	def test_custom_logger(self):
-		custom_logger = MagicMock()
-		self.config = Configuration(logger=custom_logger)
-		self.assertEqual(getattr(self.config, "_Configuration__logger"), custom_logger)
+		ServiceStandalone.import_services()
+		self.config = ServiceStandalone.get_service(IConfigurationService)
 
 	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromEnv._get_env_vars")
 	@patch("pyramid.tools.configuration.configuration_load.ConfigurationFromYAML._get_file_vars")

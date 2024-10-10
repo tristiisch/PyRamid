@@ -1,8 +1,10 @@
 import os
 import random
 
-import pyramid.tools.utils as tools
-from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
+from pyramid.tools import utils
+from pyramid.data.music.track import Track
+from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
+from pyramid.data.music.track_minimal import TrackMinimal
 
 
 class TrackList:
@@ -88,7 +90,7 @@ class TrackList:
 			return f"{length} track"
 
 	def get_duration(self) -> str:
-		return tools.time_to_duration(sum(t.duration_seconds for t in self.__tracks))
+		return utils.time_to_duration(sum(t.duration_seconds for t in self.__tracks))
 
 
 def to_str(list_of_track: list[TrackMinimal] | list[TrackMinimalDeezer] | list[Track]) -> str:
@@ -97,5 +99,5 @@ def to_str(list_of_track: list[TrackMinimal] | list[TrackMinimalDeezer] | list[T
 		for i, track in enumerate(list_of_track)
 	]
 	columns = ["n°", "Author", "Title", "Album"]
-	hsa = tools.human_string_array(data, columns, 50)
+	hsa = utils.human_string_array(data, columns, 50)
 	return hsa

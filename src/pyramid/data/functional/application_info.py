@@ -1,23 +1,26 @@
-import json
 import os
 import platform
 import subprocess
-
+import time
 
 class ApplicationInfo:
 	def __init__(self):
 		self.__name = "pyramid"
 		self.__os = self.__detect_os().lower()
 		self.__version = os.getenv("PROJECT_VERSION")
+		self.__started_at = time.time()
 
 	def get_name(self):
 		return self.__name.capitalize()
 
 	def get_version(self):
-		return f"v{self.__version}"
+		return self.__version
 
 	def get_os(self):
 		return self.__os
+
+	def get_started_at(self):
+		return self.__started_at
 
 	def __detect_os(self) -> str:
 		os_name = platform.system()
@@ -46,3 +49,6 @@ class ApplicationInfo:
 			except FileNotFoundError:
 				pass
 			return "Linux distribution information not available."
+
+	def __str__(self):
+		return f"{self.__name.capitalize()} {self.get_version()} on {self.get_os()}"

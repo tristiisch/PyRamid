@@ -32,6 +32,30 @@
                 {
                     "localRoot": "${workspaceFolder}",
                     "remoteRoot": "/app"
+                },
+                {
+                    "localRoot": "${workspaceFolder}/.venv",
+                    "remoteRoot": "/opt/venv"
+                },
+                {
+                    "localRoot": "/usr/lib/python3.12",
+                    "remoteRoot": "/usr/local/lib/python3.12"
+                }
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Remote Attach CLI",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5679
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/app"
                 }
             ],
             "justMyCode": false

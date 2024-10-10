@@ -1,15 +1,8 @@
 from typing import Any, Self
 from pyramid.client.a_socket import ASocket
-from pyramid.client.common import ResponseCode
+from pyramid.client.common import ResponseCode, SocketCommon
+from pyramid.client.responses.a_response_header import ResponseHeader
 # from pyramid.client.common import ResponseCode, SocketHeader
-
-
-# class ReponseHeader(SocketHeader):
-class ResponseHeader:
-	def __init__(self, code: ResponseCode, message: str | None) -> None:
-		# super().__init__(self.__class__)
-		self.code = code
-		self.message = message
 
 
 class SocketResponse(ASocket):
@@ -44,6 +37,12 @@ class SocketResponse(ASocket):
 			"data": serializer(self.data) if self.data else None,
 			"error_data": serializer(self.error_data) if self.error_data else None,
 		}
+
+	@classmethod
+	def from_str(cls, data: str) -> Self:
+		json = SocketCommon.deserialize(data)
+		self = cls.from_json(json)
+		return self
 
 	@classmethod
 	def from_json(cls, json_dict: dict) -> Self:

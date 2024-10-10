@@ -3,13 +3,14 @@ from logging import Logger
 from discord import Interaction, Member, User, VoiceChannel
 import discord
 
+from pyramid.api.services.source_service import ISourceService
 from pyramid.data import tracklist as utils_list_track
 from pyramid.data.guild_data import GuildData
-from pyramid.data.track import TrackMinimal
+from pyramid.data.source_type import SourceType
+from pyramid.data.music.track_minimal import TrackMinimal
 from pyramid.connector.discord.guild_cmd_tools import GuildCmdTools
-from pyramid.connector.discord.guild_queue import GuildQueue
+from pyramid.connector.discord.music_queue import MusicQueue
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
-from pyramid.data.functional.engine_source import EngineSource, SourceType
 from pyramid.data.exceptions import DiscordMessageException
 from pyramid.data.a_guild_cmd import AGuildCmd
 from pyramid.data.select_view import SelectView
@@ -20,8 +21,8 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		self,
 		logger: Logger,
 		guild_data: GuildData,
-		guild_queue: GuildQueue,
-		engine_source: EngineSource,
+		guild_queue: MusicQueue,
+		engine_source: ISourceService,
 	):
 		self.logger = logger
 		self.engine_source = engine_source
@@ -51,7 +52,6 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		return await self._execute_play(ms, voice_channel, track, at_end=at_end)
 
 	async def stop(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
-		ctx.channel
 		voice_channel: VoiceChannel | None = await self._verify_voice_channel(ms, ctx.user, ms.txt_channel)
 		if not voice_channel or not await self._verify_bot_channel(ms, voice_channel):
 			return False
@@ -194,22 +194,6 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 			return False
 
 		ms.add_code_message(queue, prefix="Here's the music in the queue :")
-		return True
-
-	async def searchV1(
-		self, ms: MessageSenderQueued, input: str, engine: SourceType | None = None
-	) -> bool:
-		try:
-			tracks, tracks_unfindable = await self.data.search_engine.search_tracks(input, engine)
-		except DiscordMessageException as err:
-			ms.add_message(err.msg)
-			return False
-
-		hsa = utils_list_track.to_str(tracks)
-		if tracks_unfindable:
-			hsa = utils_list_track.to_str(tracks_unfindable)
-			ms.add_code_message(hsa, prefix=":warning: Can't find the audio for these tracks :")
-		ms.add_code_message(hsa, prefix="Here are the results of your search :")
 		return True
 
 	async def search(
