@@ -5,10 +5,10 @@ from typing import Optional, List
 import requests
 
 class DeezerTokenEmptyException(Exception):
-	pass
+    pass
 
 class DeezerTokenOverflowException(Exception):
-	pass
+    pass
 
 class DeezerToken:
     def __init__(self, 
@@ -93,6 +93,15 @@ class DeezerTokenProvider:
         response = requests.get(self._url, headers=headers)
         self._soup = BeautifulSoup(response.content, 'html.parser')
 
+    @classmethod
+    def _parse_date(cls, date_string):
+        date_format = '%Y-%m-%d %H:%M:%S' if len(date_string) > 10 else '%Y-%m-%d'
+        try:
+            parsed_date = datetime.strptime(date_string, date_format).date()
+        except ValueError:
+            parsed_date = datetime.min
+        return parsed_date
+
     def _parse(self) -> List[DeezerToken]:
         h3_element: Optional[BeautifulSoup] = self._soup.find('h3', id=self._settings['h3_id'])
 
@@ -116,7 +125,7 @@ class DeezerTokenProvider:
             subscription: str = cells[1].get_text(strip=True)
 
             date_string: str = cells[2].get_text(strip=True)
-            date_value: date = datetime.strptime(date_string, '%Y-%m-%d').date()
+            date_value: date = self._parse_date(date_string)
             repeat_img = cells[2].find('img', alt='repeat')
             repeat: bool = True if repeat_img else False
 
@@ -137,7 +146,6 @@ class DeezerTokenProvider:
 
         return tokens
 
-# Usage example
 if __name__ == '__main__':
 
     tokenProvider = DeezerTokenProvider()
