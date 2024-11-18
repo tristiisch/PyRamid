@@ -1,0 +1,34 @@
+services:
+  discord:
+    image: tristiisch/pyramid:staging
+    volumes:
+      - pyramid_logs_staging:/app/logs
+      - pyramid_songs_staging:/app/songs
+    environment:
+      MODE: development
+      GENERAL__LIMIT_TRACKS: 100
+      DISCORD__FFMPEG: /usr/bin/ffmpeg
+      DEEZER__FOLDER: ./songs
+    deploy:
+      mode: replicated
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 30s
+      rollback_config:
+        parallelism: 1
+        delay: 0s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+
+volumes:
+  pyramid_logs_staging:
+  pyramid_songs_staging:
