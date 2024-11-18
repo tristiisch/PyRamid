@@ -1,5 +1,12 @@
 coverage:
   status:
     project:
-      default:
-        if_ci_failed: ignore
+      tests:
+        paths:
+          - "tests/"
+        target: 100%
+      source:
+        paths:
+          - "src/"
+        target: 97%
+        threshold: 0.002
