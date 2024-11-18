@@ -1,7 +1,7 @@
 class CustomException(Exception):
 	def __init__(self, *args: object):
-		self.msg = str(args[0]) % args[1:]
-		super().__init__(*args)
+		msg = str(args[0]) % args[1:]
+		super().__init__(msg)
 
 
 class DiscordMessageException(CustomException):
@@ -14,3 +14,15 @@ class EngineSourceNotFoundException(DiscordMessageException):
 
 class TrackNotFoundException(DiscordMessageException):
 	pass
+
+class DeezerTokenException(CustomException):
+    pass
+
+class DeezerTokenInvalidException(DeezerTokenException):
+	pass
+
+class DeezerTokensUnavailableException(DeezerTokenException):
+    pass
+
+class DeezerTokenOverflowException(DeezerTokenException):
+    pass

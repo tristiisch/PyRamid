@@ -1,14 +1,16 @@
+import logging
+import traceback
 from typing import Union
 from discord.abc import Messageable
 from discord import Member, StageChannel, TextChannel, User, VoiceChannel, VoiceClient, VoiceState
 
+from pyramid.data.exceptions import DeezerTokenException
 from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
 from pyramid.data.guild_data import GuildData
 from pyramid.data.tracklist import TrackList
 from pyramid.connector.discord.guild_queue import GuildQueue
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
 from pyramid.data.functional.engine_source import EngineSource
-from pyramid.tools.generate_token import DeezerTokenEmptyException
 
 
 class GuildCmdTools:
@@ -127,11 +129,11 @@ class GuildCmdTools:
 		for i, track in enumerate(tracks):
 			try:
 				track_downloaded: Track | None = await self.engine_source.download_track(track)
-			except DeezerTokenEmptyException:
-				ms.add_message("😥 There are currently no music accounts available. Try again later.")
+			except DeezerTokenException as err:
+				ms.add_message("😥 **There are currently no music accounts available**. Try again later.")
 				return False
-			except Exception:
-				ms.add_message("😓 Unable to connect to music API. Try again later.")
+			except Exception as err:
+				ms.add_message("😓 **Unable to connect to music API**. Try again later.")
 				return False
 			if not track_downloaded:
 				ms.add_message(content=f"ERROR > **{track.get_full_name()}** can't be downloaded.")
@@ -168,11 +170,11 @@ class GuildCmdTools:
 
 		try:
 			track_downloaded: Track | None = await self.engine_source.download_track(track)
-		except DeezerTokenEmptyException:
-			ms.add_message("😥 There are currently no music accounts available. Try again later.")
+		except DeezerTokenException as err:
+			ms.add_message("😥 **There are currently no music accounts available**. Try again later.")
 			return False
-		except Exception:
-			ms.add_message("😓 Unable to connect to music API. Try again later.")
+		except Exception as err:
+			ms.add_message("😓 **Unable to connect to music API**. Try again later.")
 			return False
 
 		if not track_downloaded:

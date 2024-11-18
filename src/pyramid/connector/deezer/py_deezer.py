@@ -9,7 +9,7 @@ import aiohttp
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from pyramid.data.exceptions import CustomException
+from pyramid.data.exceptions import CustomException, DeezerTokenInvalidException
 
 with warnings.catch_warnings():
 	warnings.simplefilter("ignore")
@@ -17,7 +17,7 @@ with warnings.catch_warnings():
 
 from pydeezer import Deezer, util
 from pydeezer.constants import api_methods, api_urls, networking_settings, track_formats
-from pydeezer.exceptions import APIRequestError, DownloadLinkDecryptionError, LoginError
+from pydeezer.exceptions import APIRequestError, DownloadLinkDecryptionError
 from pydeezer.ProgressHandler import BaseProgressHandler, DefaultProgressHandler
 
 
@@ -289,7 +289,7 @@ class PyDeezer(Deezer):
 		self.token = data["checkForm"]
 
 		if not data["USER"]["USER_ID"]:
-			raise LoginError(f"Arl ${self.arl} is invalid.")
+			raise DeezerTokenInvalidException("ARL invalid : %s", self.arl)
 
 		raw_user = data["USER"]
 

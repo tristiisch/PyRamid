@@ -4,11 +4,7 @@ from datetime import date, timedelta, datetime
 from typing import Optional, List
 import requests
 
-class DeezerTokenEmptyException(Exception):
-    pass
-
-class DeezerTokenOverflowException(Exception):
-    pass
+from pyramid.data.exceptions import DeezerTokensUnavailableException, DeezerTokenOverflowException
 
 class DeezerToken:
     def __init__(self, 
@@ -88,9 +84,9 @@ class DeezerTokenProvider:
             self.generate(True)
             token = self.pop_token()
         if not token and not refreshed:
-            raise DeezerTokenOverflowException("No tokens are available, you can regenerate them.")
+            raise DeezerTokenOverflowException("No valids tokens are available in cache, you can regenerate them.")
         if not token:
-            raise DeezerTokenEmptyException("No tokens are available")
+            raise DeezerTokensUnavailableException("No valids tokens are available")
         return token
 
     def _fetch(self) -> None:
