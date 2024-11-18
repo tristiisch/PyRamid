@@ -75,7 +75,7 @@ jobs:
               projectVersion = `${shortSha}`;
             } else {
               dockerTag = 'dev';
-              gitEnvironment = 'development';
+              gitEnvironment = 'staging';
               projectVersion = `${shortSha}`;
             }
 
