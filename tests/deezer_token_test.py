@@ -21,7 +21,7 @@ class DeezerTokenTest(unittest.IsolatedAsyncioTestCase):
 		try:
 			await self.deezer_downloader.get_client()
 		except (DeezerTokenInvalidException, DeezerTokensUnavailableException) as err:
-			self.fail(err.args)
+			self.fail(err.msg)
 
 
 if __name__ == "__main__":
