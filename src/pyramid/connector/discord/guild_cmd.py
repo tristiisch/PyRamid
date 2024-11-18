@@ -139,7 +139,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 
 		if number_in_queue <= 0:
 			ms.add_message(
-				content=f"Unable to remove element with the number {number_in_queue} in the queue"
+				content="Unable to remove element at position %d in the queue" % number_in_queue
 			)
 			return False
 
@@ -152,7 +152,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		track_deleted = self.queue.remove(number_in_queue - 1)
 		if track_deleted is None:
 			ms.add_message(
-				content=f"There is no element with the number {number_in_queue} in the queue"
+				content="There is no element at position %d in the queue" % number_in_queue
 			)
 			return False
 
@@ -166,7 +166,7 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 
 		if number_in_queue <= 0:
 			ms.add_message(
-				content=f"Unable to go to element with number {number_in_queue} in the queue"
+				content="Unable to access the element at position %d in the queue." % number_in_queue
 			)
 			return False
 
@@ -179,12 +179,12 @@ class GuildCmd(AGuildCmd, GuildCmdTools):
 		tracks_removed = self.queue.goto(number_in_queue - 1)
 		if tracks_removed <= 0:
 			ms.add_message(
-				content=f"There is no element with the number {number_in_queue} in the queue"
+				content="There is no element at position %d in the queue" % number_in_queue
 			)
 			return False
 
 		# +1 for current track
-		ms.add_message(f"f{tracks_removed + 1} tracks has been skipped")
+		ms.add_message(f"{tracks_removed + 1} tracks has been skipped")
 		return True
 
 	def queue_list(self, ms: MessageSenderQueued, ctx: Interaction) -> bool:
