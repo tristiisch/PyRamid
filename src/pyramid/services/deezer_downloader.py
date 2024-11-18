@@ -40,7 +40,7 @@ class DeezerDownloaderService(IDeezerDownloaderService, ServiceInjector):
 		self.music_format = track_formats.MP3_128
 
 	async def dl_track_by_id(self, track_id) -> Track | None:
-		client = await self._get_client()
+		client = await self.get_client()
 		# try:
 		track_info = await client.get_track_info(track_id)
 		# except APIRequestError as err:
@@ -66,7 +66,7 @@ class DeezerDownloaderService(IDeezerDownloaderService, ServiceInjector):
 
 	async def __dl_track(self, track_info, file_name: str) -> bool:
 		try:
-			client = await self._get_client()
+			client = await self.get_client()
 			await client.download_track(
 				track_info,
 				self.__configuration_service.deezer__folder,
@@ -96,8 +96,8 @@ class DeezerDownloaderService(IDeezerDownloaderService, ServiceInjector):
 			track = Track(track_info, None)
 			self.__logger.warning("Unable to dl track %s", track, exc_info=True)
 			return False
-	
-	async def _get_client(self) -> PyDeezer:
+
+	async def get_client(self) -> PyDeezer:
 		return await self._define_client()
 	
 	async def _define_client(self) -> PyDeezer:
