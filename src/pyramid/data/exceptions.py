@@ -1,6 +1,7 @@
 class CustomException(Exception):
 	def __init__(self, *args: object):
 		msg = str(args[0]) % args[1:]
+		self.msg = msg
 		super().__init__(msg)
 
 
