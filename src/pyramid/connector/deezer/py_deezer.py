@@ -289,7 +289,7 @@ class PyDeezer(Deezer):
 		self.token = data["checkForm"]
 
 		if not data["USER"]["USER_ID"]:
-			raise LoginError("Arl is invalid.")
+			raise LoginError(f"Arl ${self.arl} is invalid.")
 
 		raw_user = data["USER"]
 

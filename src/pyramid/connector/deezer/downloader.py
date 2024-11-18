@@ -20,13 +20,13 @@ class DeezerDownloader:
 	def __init__(self, folder: str, arl: Optional[str] = None):
 		self.folder_path = folder
 		if arl is not None and arl != "":
-			self.__deezer_dl_api = PyDeezer(arl)
-			self.__token_provider = None
+			self.__arls = [arl]
 		else:
-			self.__deezer_dl_api = None
-			self.__token_provider = DeezerTokenProvider()
+			self.__arls = None
+		self.__token_provider = DeezerTokenProvider()
 		self.music_format = track_formats.MP3_128
 		os.makedirs(self.folder_path, exist_ok=True)
+		self.__deezer_dl_api = None
 
 	async def check_credentials(self):
 		if not self.__deezer_dl_api:
@@ -96,34 +96,49 @@ class DeezerDownloader:
 			return False
 	
 	async def _get_client(self) -> PyDeezer:
-		i = 0
-		max_error = 10
+		if not self.__deezer_dl_api:
+			self.__deezer_dl_api = await self._define_client()
+		return self.__deezer_dl_api
+	
+	async def _define_client(self) -> PyDeezer:
+		last_err = None
+		if self.__arls:
+			for arl in self.__arls:
+				deezer_dl_api = PyDeezer(arl)
+				try:
+					await deezer_dl_api.get_user_data()
+					return deezer_dl_api
+				except LoginError as err:
+					last_err = err
+					continue
+			if last_err is not None:
+				raise last_err
 
-		if self.__deezer_dl_api:
-			return self.__deezer_dl_api
-		if not self.__token_provider:
-			raise Exception("token_provider not init")
-		
-		while True:
+		last_err = None
+		already_overflow = False
+		while self.__token_provider.count_valids_tokens() != 0:
 			try:
 				token = self.__token_provider.next()
-				self.__deezer_dl_api = PyDeezer(token.token)
-				await self.check_credentials()
-				break
+				deezer_dl_api = PyDeezer(token.token)
+				await deezer_dl_api.get_user_data()
+				return deezer_dl_api
 
 			except DeezerTokenEmptyException as err:
-				if i > max_error:
-					raise err
-				self.__token_provider = DeezerTokenProvider()
+				last_err = err
+				break
 
 			except DeezerTokenOverflowException as err:
-				if i > max_error:
-					raise err
+				last_err = err
+				if already_overflow is True:
+					break
+				already_overflow = True
 				self.__token_provider = DeezerTokenProvider()
+				continue
 
 			except LoginError as err:
-				if i > max_error:
-					raise err
-			i += 1
+				last_err = err
+				continue
 
-		return self.__deezer_dl_api
+		if last_err is not None:
+			raise last_err
+		raise Exception("Unknown exit")
