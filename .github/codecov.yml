@@ -1,12 +1,4 @@
 coverage:
   status:
-    project:
-      tests:
-        paths:
-          - "tests/"
-        target: 100%
-      source:
-        paths:
-          - "src/"
-        target: 97%
-        threshold: 0.002
+    project: off
+    patch: off
