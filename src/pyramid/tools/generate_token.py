@@ -4,11 +4,7 @@ from datetime import date, timedelta, datetime
 from typing import Optional, List
 import requests
 
-class DeezerTokenEmptyException(Exception):
-    pass
-
-class DeezerTokenOverflowException(Exception):
-    pass
+from pyramid.data.exceptions import DeezerTokensUnavailableException, DeezerTokenOverflowException
 
 class DeezerToken:
     def __init__(self, 
@@ -55,7 +51,7 @@ class DeezerTokenProvider:
         now = datetime.now().date()
         
         if max_duration is not None:
-            valid_tokens = [token for token in self._tokens if max_duration >= token.expire - now]
+            valid_tokens = [token for token in self._tokens if max_duration >= token.expire - now and token.expire > now]
         else:
             valid_tokens = [token for token in self._tokens if token.expire > now]
         if not valid_tokens:
@@ -64,6 +60,13 @@ class DeezerTokenProvider:
         sorted_tokens = sorted(valid_tokens, key=lambda token: token.expire, reverse=True)
 
         return sorted_tokens
+
+    def count_valids_tokens(self, max_duration: Optional[timedelta] = timedelta(days=365)) -> int:
+        tokens = self.get_tokens_valides(max_duration)
+        if tokens is None:
+            return -1
+        tokens_len = len(tokens)
+        return tokens_len
 
     def pop_token(self, max_duration: Optional[timedelta] = timedelta(days=365)) -> Optional[DeezerToken]:
         tokens = self.get_tokens_valides(max_duration)
@@ -81,9 +84,9 @@ class DeezerTokenProvider:
             self.generate(True)
             token = self.pop_token()
         if not token and not refreshed:
-            raise DeezerTokenOverflowException()
+            raise DeezerTokenOverflowException("No valids tokens are available in cache, you can regenerate them.")
         if not token:
-            raise DeezerTokenEmptyException("No tokens are available")
+            raise DeezerTokensUnavailableException("No valids tokens are available")
         return token
 
     def _fetch(self) -> None:
@@ -96,10 +99,10 @@ class DeezerTokenProvider:
     @classmethod
     def _parse_date(cls, date_string):
         date_format = '%Y-%m-%d %H:%M:%S' if len(date_string) > 10 else '%Y-%m-%d'
-        try:
-            parsed_date = datetime.strptime(date_string, date_format).date()
-        except ValueError:
-            parsed_date = datetime.min
+        # try:
+        parsed_date = datetime.strptime(date_string, date_format).date()
+        # except ValueError:
+            # parsed_date = datetime.min
         return parsed_date
 
     def _parse(self) -> List[DeezerToken]:

@@ -365,7 +365,7 @@ jobs:
       - name: Run unit tests
         run: |
           mkdir -p ./coverage && chmod 777 ./coverage
-          docker run --rm -v ./coverage:/app/coverage -e SPOTIFY__CLIENT_ID=${{ secrets.CONFIG_SPOTIFY_CLIENT_ID }} -e SPOTIFY__CLIENT_SECRET=${{ secrets.CONFIG_SPOTIFY_CLIENT_SECRET }} pyramid:tests
+          docker run --rm -v ./coverage:/app/coverage -e DEEZER__ARL=${{ secrets.CONFIG_DEEZER_ARL }} -e SPOTIFY__CLIENT_ID=${{ secrets.CONFIG_SPOTIFY_CLIENT_ID }} -e SPOTIFY__CLIENT_SECRET=${{ secrets.CONFIG_SPOTIFY_CLIENT_SECRET }} pyramid:tests
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.5.0

@@ -1,7 +1,10 @@
+import logging
+import traceback
 from typing import Union
 from discord.abc import Messageable
 from discord import Member, StageChannel, TextChannel, User, VoiceChannel, VoiceClient, VoiceState
 
+from pyramid.data.exceptions import DeezerTokenException
 from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
 from pyramid.data.guild_data import GuildData
 from pyramid.data.tracklist import TrackList
@@ -124,7 +127,14 @@ class GuildCmdTools:
 
 		cant_dl = 0
 		for i, track in enumerate(tracks):
-			track_downloaded: Track | None = await self.engine_source.download_track(track)
+			try:
+				track_downloaded: Track | None = await self.engine_source.download_track(track)
+			except DeezerTokenException as err:
+				ms.add_message("😥 **There are currently no music accounts available**. Try again later.")
+				return False
+			except Exception as err:
+				ms.add_message("😓 **Unable to connect to music API**. Try again later.")
+				return False
 			if not track_downloaded:
 				ms.add_message(content=f"ERROR > **{track.get_full_name()}** can't be downloaded.")
 				cant_dl += 1
@@ -158,7 +168,15 @@ class GuildCmdTools:
 		tl: TrackList = self.data.track_list
 		ms.edit_message(f"**{track.get_full_name()}** found ! Downloading ...", "download")
 
-		track_downloaded: Track | None = await self.engine_source.download_track(track)
+		try:
+			track_downloaded: Track | None = await self.engine_source.download_track(track)
+		except DeezerTokenException as err:
+			ms.add_message("😥 **There are currently no music accounts available**. Try again later.")
+			return False
+		except Exception as err:
+			ms.add_message("😓 **Unable to connect to music API**. Try again later.")
+			return False
+
 		if not track_downloaded:
 			ms.add_message(f"ERROR > **{track.get_full_name()}** can't be downloaded.")
 			return False
