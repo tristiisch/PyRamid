@@ -368,7 +368,7 @@ jobs:
           docker run --rm -v ./coverage:/app/coverage -e DEEZER__ARL=${{ secrets.CONFIG_DEEZER_ARL }} -e SPOTIFY__CLIENT_ID=${{ secrets.CONFIG_SPOTIFY_CLIENT_ID }} -e SPOTIFY__CLIENT_SECRET=${{ secrets.CONFIG_SPOTIFY_CLIENT_SECRET }} pyramid:tests
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.5.0
+        uses: codecov/codecov-action@v5.0.7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: tristiisch/PyRamid
