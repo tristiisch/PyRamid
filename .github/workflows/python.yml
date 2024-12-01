@@ -275,7 +275,7 @@ jobs:
           tar -xvf ./pyramid-oci.tar -C ./pyramid-oci
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.26.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           input: './pyramid-oci'
           format: 'github'
@@ -286,7 +286,7 @@ jobs:
           TRIVY_JAVA_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-java-db:1'
 
       - name: Print Trivy result in humain format
-        uses: aquasecurity/trivy-action@0.26.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           input: './pyramid-oci'
           format: 'table'
