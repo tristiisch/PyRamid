@@ -66,7 +66,7 @@ class SpotifySearchTest(unittest.IsolatedAsyncioTestCase):
 
 	async def test_url_playlist(self):
 		tracks = await self.spotify_search.get_by_url(
-			"https://open.spotify.com/playlist/37i9dQZF1DZ06evO1ymAtQ"
+			"https://open.spotify.com/playlist/2CEwnRwSNdIvPn7u6E3whG"
 		)
 		self.assertIsNotNone(tracks)
 
