@@ -1,6 +1,6 @@
 import asyncio
 
-import pyramid.tools.utils as tools
+from pyramid.tools import utils
 from discord import Interaction, Message, WebhookMessage
 from discord.utils import MISSING
 from discord.abc import Messageable
@@ -97,7 +97,7 @@ class MessageSender:
 		max_length -= len(sep) * 2
 		first_max_length = max_length - (len(prefix) if prefix is not None else 0)
 
-		substrings_generator = tools.split_string_by_length(content, max_length, first_max_length)
+		substrings_generator = utils.split_string_by_length(content, max_length, first_max_length)
 
 		first_substring = next(substrings_generator, None)
 		if first_substring is None:
@@ -167,7 +167,7 @@ class MessageSender:
 	def _tuncate_msg_if_overflow(self, content: str) -> str:
 		if content == MISSING or content == "":
 			return content
-		new_content, is_used = tools.substring_with_end_msg(
+		new_content, is_used = utils.substring_with_end_msg(
 			content, MAX_MSG_LENGTH, "`{} more characters...`"
 		)
 		if not is_used:

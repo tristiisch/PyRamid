@@ -27,7 +27,7 @@ class SocketClient:
 
 		try:
 			# Convert the request data to JSON
-			json_request = self.__common.serialize(req.ask)
+			json_request = SocketCommon.serialize(req.ask)
 
 			# Connect to the server
 			self.__logger.info("Connect to %s:%d", self.__host, self.__port)
@@ -35,17 +35,16 @@ class SocketClient:
 
 			# Send the JSON request to the server
 			self.__logger.debug("Send '%s'", json_request)
-			self.__common.send_chunk(client_socket, json_request)
+			SocketCommon.send_chunk(client_socket, json_request)
 
 			# Receive the response from the server
 			response_str = self.__common.receive_chunk(client_socket)
 			if not response_str:
 				self.__logger.warning("Received empty request")
 				return False
-
 			self.__logger.debug("Received '%s'", response_str)
-			self.receive(req, response_str)
-			return True
+			result = self.receive(req, response_str)
+			return result
 
 		except OverflowError:
 			self.__logger.warning(
@@ -67,8 +66,8 @@ class SocketClient:
 			client_socket.close()
 		return False
 
-	def receive(self, action: ARequest, response_str: str):
-		response: SocketResponse = SocketResponse.from_json(self.__common.deserialize(response_str))
+	def receive(self, action: ARequest, response_str: str) -> bool:
+		response: SocketResponse = SocketResponse.from_str(response_str)
 
 		if not response.header:
 			raise ValueError("No header received")
@@ -76,4 +75,5 @@ class SocketClient:
 			raise ValueError("No data received")
 
 		response_data = action.load_data(**(self.__common.deserialize(response.data)))
-		action.client_receive(response.header, response_data)
+		result = action.client_receive(response.header, response_data)
+		return result

@@ -2,9 +2,9 @@ from abc import abstractmethod
 from typing import Any
 
 # from pyramid.client.common import SocketHeader
-from pyramid.client.responses.a_response import ResponseHeader
 from pyramid.client.a_socket import ASocket
 from pyramid.client.requests.ask_request import AskRequest
+from pyramid.client.responses.a_response_header import ResponseHeader
 
 
 class ARequest(ASocket):
@@ -17,5 +17,5 @@ class ARequest(ASocket):
 		pass
 
 	@abstractmethod
-	def client_receive(self, header: ResponseHeader, data: Any):
+	def client_receive(self, header: ResponseHeader, data: Any) -> bool:
 		pass

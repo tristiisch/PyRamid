@@ -28,14 +28,16 @@ class SocketCommon:
 			return None
 		return received_data.decode("utf-8")
 
-	def send_chunk(self, client_socket: sock, response: str):
+	@classmethod
+	def send_chunk(cls, client_socket: sock, response: str):
 		# for chunk in [
 		# 	response[i : i + self.buffer_size] for i in range(0, len(response), self.buffer_size)
 		# ]:
 		# 	client_socket.send(chunk.encode("utf-8"))
 		client_socket.send(response.encode("utf-8"))
 
-	def serialize(self, obj):
+	@classmethod
+	def serialize(cls, obj):
 		def default(obj):
 			if hasattr(obj, "__dict__"):
 				# if isinstance(obj, SocketResponse):
@@ -46,7 +48,8 @@ class SocketCommon:
 
 		return json.dumps(obj, default=default)
 
-	def deserialize(self, obj: str, object_hook=None):
+	@classmethod
+	def deserialize(cls, obj: str, object_hook=None):
 		return json.loads(obj, object_hook=object_hook)
 
 

@@ -41,7 +41,7 @@ ARG APP_GROUP
 LABEL org.opencontainers.image.source="https://github.com/tristiisch/PyRamid" \
       org.opencontainers.image.authors="tristiisch"
 
-HEALTHCHECK --interval=30s --retries=3 --timeout=30s CMD python ./src/cli.py health
+# HEALTHCHECK --interval=30s --retries=3 --timeout=30s CMD python ./src/startup_cli.py health
 # Expose port for health check
 EXPOSE 49150
 
@@ -100,6 +100,8 @@ ARG APP_GROUP
 ARG PROJECT_VERSION
 ENV PROJECT_VERSION=$PROJECT_VERSION
 
+# HEALTHCHECK --interval=30s --retries=3 --timeout=30s CMD python -Xfrozen_modules=off ./src/startup_cli_dev.py health
+
 COPY --chown=root:$APP_GROUP --chmod=550 --from=builder-dev /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -107,7 +109,7 @@ COPY --chown=root:$APP_GROUP --chmod=750 ./src ./src
 
 USER $APP_USER
 
-CMD ["python", "-Xfrozen_modules=off", "./src/dev.py"]
+CMD ["python", "-Xfrozen_modules=off", "./src/startup_dev.py"]
 
 # ============================ Test Image ============================
 FROM base AS tests

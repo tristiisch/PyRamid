@@ -5,20 +5,22 @@ from discord.abc import Messageable
 from discord import Member, StageChannel, TextChannel, User, VoiceChannel, VoiceClient, VoiceState
 
 from pyramid.data.exceptions import DeezerTokenException
-from pyramid.data.track import Track, TrackMinimal, TrackMinimalDeezer
+from pyramid.api.services.source_service import ISourceService
+from pyramid.data.music.track import Track
+from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
+from pyramid.data.music.track_minimal import TrackMinimal
 from pyramid.data.guild_data import GuildData
 from pyramid.data.tracklist import TrackList
-from pyramid.connector.discord.guild_queue import GuildQueue
+from pyramid.connector.discord.music_queue import MusicQueue
 from pyramid.data.functional.messages.message_sender_queued import MessageSenderQueued
-from pyramid.data.functional.engine_source import EngineSource
 
 
 class GuildCmdTools:
 	def __init__(
 		self,
 		guild_data: GuildData,
-		guild_queue: GuildQueue,
-		engine_source: EngineSource,
+		guild_queue: MusicQueue,
+		engine_source: ISourceService,
 	):
 		self.engine_source = engine_source
 		self.data = guild_data
