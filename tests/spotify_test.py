@@ -48,25 +48,25 @@ class SpotifySearchTest(unittest.IsolatedAsyncioTestCase):
 
 	async def test_url_artist(self):
 		tracks = await self.spotify_search.get_by_url(
-			"https://open.spotify.com/intl-fr/artist/2HALYSe657tNJ1iKVXP2xA?si=e5x_arTGSqWtnRrJjCCTdQ"
+			"https://open.spotify.com/intl-fr/artist/2HALYSe657tNJ1iKVXP2xA"
 		)
 		self.assertIsNotNone(tracks)
 
 	async def test_url_album(self):
 		tracks = await self.spotify_search.get_by_url(
-			"https://open.spotify.com/album/1mhVZVEHbIYUN7b5DkXF7d?si=U9HaPDJtRdSnT9qZaQxjXA"
+			"https://open.spotify.com/album/1mhVZVEHbIYUN7b5DkXF7d"
 		)
 		self.assertIsNotNone(tracks)
 
 	async def test_url_track(self):
 		tracks = await self.spotify_search.get_by_url(
-			"https://open.spotify.com/intl-fr/track/1mzZP8UA2RZUXDw33QNmn4?si=4c27f893cd7c4055"
+			"https://open.spotify.com/intl-fr/track/1mzZP8UA2RZUXDw33QNmn4"
 		)
 		self.assertIsNotNone(tracks)
 
 	async def test_url_playlist(self):
 		tracks = await self.spotify_search.get_by_url(
-			"https://open.spotify.com/playlist/37i9dQZF1DZ06evO1ymAtQ?si=5c4b6ff36a0d4c98"
+			"https://open.spotify.com/playlist/37i9dQZF1DZ06evO1ymAtQ"
 		)
 		self.assertIsNotNone(tracks)
 
