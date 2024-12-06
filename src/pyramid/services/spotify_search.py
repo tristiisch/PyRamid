@@ -126,7 +126,7 @@ class SpotifySearchService(ISpotifySearchService, ServiceInjector):
 
 	@classmethod
 	def extract_from_url(cls, url) -> tuple[str, SpotifyType | None] | tuple[None, None]:
-		pattern = r"^(?:https?:\/\/)?(?:www\.)?open\.spotify\.com\/(?:\w{2}\/)?(?P<type>\w+)\/(?P<id>\w+)"
+		pattern = r"^(?:https?:\/\/)?(?:www\.)?open\.spotify\.com\/(?:intl-\w+\/)?(?:\w+\/)?(?P<type>\w+)\/(?P<id>\w+)"
 		match = re.search(pattern, url)
 		if not match:
 			return None, None
