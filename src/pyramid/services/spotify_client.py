@@ -133,14 +133,15 @@ class SpotifyClientService(Spotify, ISpotifyClientService, ServiceInjector):
 						msg = await response.text() or None
 						reason = None
 
-					logger.error(
-						"HTTP Error for %s to %s with Params: %s returned %s due to %s",
-						method,
-						url,
-						args.get("params"),
-						response.status,
-						msg,
-					)
+					if response.status != 404 and response.status != 400:
+						logger.error(
+							"HTTP Error for %s to %s with Params: %s returned %s due to %s",
+							method,
+							url,
+							args.get("params"),
+							response.status,
+							msg,
+						)
 					raise SpotifyException(
 						response.status,
 						-1,

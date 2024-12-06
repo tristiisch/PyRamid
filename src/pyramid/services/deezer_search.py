@@ -1,17 +1,19 @@
 import asyncio
 import logging
+import re
 
+import aiohttp
 import deezer
 from pyramid.api.services.configuration import IConfigurationService
 from pyramid.api.services.deezer_client import IDeezerClientService
 from pyramid.api.services.deezer_search import IDeezerSearchService
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
-from pyramid.connector.deezer.client.exceptions import CliDeezerNoDataException, CliDeezerRateLimitError
+from pyramid.connector.deezer.client.exceptions import CliDeezerErrorResponse, CliDeezerNoDataException, CliDeezerRateLimitError
 from pyramid.connector.deezer.client.list_paginated import DeezerListPaginated
 from pyramid.connector.deezer.deezer_type import DeezerType
-from pyramid.connector.deezer.tools import DeezerTools
 from pyramid.data.a_search import ASearch, ASearchId
+from pyramid.data.exceptions import RessourceBadFormatException, RessourceNotExistsException
 from pyramid.data.music.track_minimal_deezer import TrackMinimalDeezer
 
 
@@ -151,31 +153,35 @@ class DeezerSearchService(IDeezerSearchService, ASearchId, ASearch, ServiceInjec
 	async def get_by_url(
 		self, url
 	) -> tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None:
-		id, type = await DeezerTools.extract_from_url(url)
+		id, type = await self.extract_from_url(url)
 
 		if id is None:
 			return None
 		if type is None:
-			raise NotImplementedError(f"The type of deezer info '{url}' is not implemented")
+			raise RessourceBadFormatException("❌ Deezer **%s** is not recognized.", url)
 
 		tracks: (
 			tuple[list[TrackMinimalDeezer], list[TrackMinimalDeezer]] | TrackMinimalDeezer | None
 		)
-
-		if type == DeezerType.PLAYLIST:
-			# future = asyncio.get_event_loop().run_in_executor(
-			# 	None, self.get_playlist_tracks_by_id, id
-			# )
-			# tracks = await asyncio.wrap_future(future)
-			tracks = await self.get_playlist_tracks_by_id(id)
-		elif type == DeezerType.ARTIST:
-			tracks = await self.get_top_artist_by_id(id)
-		elif type == DeezerType.ALBUM:
-			tracks = await self.get_album_tracks_by_id(id)
-		elif type == DeezerType.TRACK:
-			tracks = await self.get_track_by_id(id)
-		else:
-			raise NotImplementedError(f"The type of deezer info '{type}' can't be resolve")
+		try:
+			if type == DeezerType.PLAYLIST:
+				# future = asyncio.get_event_loop().run_in_executor(
+				# 	None, self.get_playlist_tracks_by_id, id
+				# )
+				# tracks = await asyncio.wrap_future(future)
+				tracks = await self.get_playlist_tracks_by_id(id)
+			elif type == DeezerType.ARTIST:
+				tracks = await self.get_top_artist_by_id(id)
+			elif type == DeezerType.ALBUM:
+				tracks = await self.get_album_tracks_by_id(id)
+			elif type == DeezerType.TRACK:
+				tracks = await self.get_track_by_id(id)
+			else:
+				raise RessourceBadFormatException("❌ Deezer **%s** is not fully implemented. Try later.", type.name.lower())
+		# except CliDeezerErrorResponse as e:
+		# 	raise RessourceNotExistsException("❌ Deezer **%s** is not accessible.", url)
+		except CliDeezerNoDataException as e:
+			raise RessourceBadFormatException("❌ Deezer **%s** is a wrong URL format.", url)
 
 		return tracks
 
@@ -254,3 +260,34 @@ class DeezerSearchService(IDeezerSearchService, ASearchId, ASearch, ServiceInjec
 
 		return "".join(result)
 
+	@classmethod
+	async def extract_from_url(cls, url) -> tuple[int, DeezerType | None] | tuple[None, None]:
+
+		# Resolve if URL is a deezer.page.link URL
+		pattern = r"^(https?:\/\/)?deezer\.page\.link"
+		if re.match(pattern, url):
+			async with aiohttp.ClientSession() as session:
+				async with session.get(url, allow_redirects=True) as response:
+					url = str(response.url)
+					if not url:
+						raise RessourceBadFormatException("❌ Deezer shortcut **%s** is a wrong URL format.", url)
+
+		# Extract ID and type using regex
+		pattern = r"^(?:https?:\/\/)?(?:www\.)?deezer\.com\/(?:\w{2}\/)?(?P<type>\w+)\/(?P<id>\d+)"
+		match = re.search(pattern, url)
+		if not match:
+			return None, None
+		deezer_type_str = match.group("type").upper()
+		if deezer_type_str == "PLAYLIST":
+			deezer_type = DeezerType.PLAYLIST
+		elif deezer_type_str == "ARTIST":
+			deezer_type = DeezerType.ARTIST
+		elif deezer_type_str == "ALBUM":
+			deezer_type = DeezerType.ALBUM
+		elif deezer_type_str == "TRACK":
+			deezer_type = DeezerType.TRACK
+		else:
+			deezer_type = None
+
+		deezer_id = int(match.group("id"))
+		return deezer_id, deezer_type

@@ -63,7 +63,7 @@ class SourceService(ISourceService, ServiceInjector):
 				break
 
 		if not result:
-			raise TrackNotFoundException("URL **%s** not found.", url)
+			raise TrackNotFoundException("❌ URL **%s** not found. Only Deezer and Spotify are supported.", url)
 
 		if isinstance(result, tuple):
 			tracks, tracks_unfindable = result

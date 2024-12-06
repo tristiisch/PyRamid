@@ -1,3 +1,4 @@
+import re
 from pyramid.api.services.configuration import IConfigurationService
 from pyramid.api.services.spotify_client import ISpotifyClientService
 from pyramid.api.services.spotify_search import ISpotifySearchService
@@ -5,9 +6,10 @@ from pyramid.api.services.spotify_search_base import ISpotifySearchBaseService
 from pyramid.api.services.spotify_search_id import ISpotifySearchIdService
 from pyramid.api.services.tools.annotation import pyramid_service
 from pyramid.api.services.tools.injector import ServiceInjector
-from pyramid.connector.spotify.spotify_tools import SpotifyTools
 from pyramid.connector.spotify.spotify_type import SpotifyType
+from pyramid.data.exceptions import DiscordMessageException, RessourceBadFormatException, RessourceNotExistsException
 from pyramid.data.music.track_minimal_spotify import TrackMinimalSpotify
+from spotipy.exceptions import SpotifyException
 
 
 @pyramid_service(interface=ISpotifySearchService)
@@ -91,26 +93,54 @@ class SpotifySearchService(ISpotifySearchService, ServiceInjector):
 	async def get_by_url(
 		self, url
 	) -> tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | TrackMinimalSpotify | None:
-		id, type = SpotifyTools.extract_from_url(url)
+		id, type = self.extract_from_url(url)
 
 		if id is None:
 			return None
 		if type is None:
-			raise NotImplementedError(f"The type of spotify info '{url}' is not implemented")
+			raise RessourceBadFormatException("❌ Spotify **%s** is not recognized.", url)
 
 		tracks: (
 			tuple[list[TrackMinimalSpotify], list[TrackMinimalSpotify]] | TrackMinimalSpotify | None
 		)
+		try:
+			if type == SpotifyType.PLAYLIST:
+				tracks = await self.__spotify_search_id.get_playlist_tracks_by_id(id)
+			elif type == SpotifyType.ARTIST:
+				tracks = await self.__spotify_search_id.get_top_artist_by_id(id)
+			elif type == SpotifyType.ALBUM:
+				tracks = await self.__spotify_search_id.get_album_tracks_by_id(id)
+			elif type == SpotifyType.TRACK:
+				tracks = await self.__spotify_search_id.get_track_by_id(id)
+			else:
+				raise RessourceBadFormatException("❌ Spotify **%s** is not fully implemented. Try later.", type.name.lower())
 
-		if type == SpotifyType.PLAYLIST:
-			tracks = await self.__spotify_search_id.get_playlist_tracks_by_id(id)
-		elif type == SpotifyType.ARTIST:
-			tracks = await self.__spotify_search_id.get_top_artist_by_id(id)
-		elif type == SpotifyType.ALBUM:
-			tracks = await self.__spotify_search_id.get_album_tracks_by_id(id)
-		elif type == SpotifyType.TRACK:
-			tracks = await self.__spotify_search_id.get_track_by_id(id)
-		else:
-			raise NotImplementedError(f"The type of spotify info '{type}' can't be resolve")
-
+		except SpotifyException as err:
+			if err.http_status == 400:
+				raise RessourceBadFormatException("❌ Spotify **%s** is a wrong URL format.", url)
+			elif err.http_status == 404:
+				raise RessourceNotExistsException("❌ Spotify **%s** is not accessible.", url)
+			else:
+				raise err
 		return tracks
+
+	@classmethod
+	def extract_from_url(cls, url) -> tuple[str, SpotifyType | None] | tuple[None, None]:
+		pattern = r"^(?:https?:\/\/)?(?:www\.)?open\.spotify\.com\/(?:\w{2}\/)?(?P<type>\w+)\/(?P<id>\w+)"
+		match = re.search(pattern, url)
+		if not match:
+			return None, None
+		type_str = match.group("type").upper()
+		if type_str == "PLAYLIST":
+			type = SpotifyType.PLAYLIST
+		elif type_str == "ARTIST":
+			type = SpotifyType.ARTIST
+		elif type_str == "ALBUM":
+			type = SpotifyType.ALBUM
+		elif type_str == "TRACK":
+			type = SpotifyType.TRACK
+		else:
+			type = None
+
+		id = match.group("id")
+		return id, type

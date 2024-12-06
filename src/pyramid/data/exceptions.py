@@ -12,7 +12,6 @@ class DiscordMessageException(CustomException):
 class EngineSourceNotFoundException(DiscordMessageException):
 	pass
 
-
 class TrackNotFoundException(DiscordMessageException):
 	pass
 
@@ -27,3 +26,9 @@ class DeezerTokensUnavailableException(DeezerTokenException):
 
 class DeezerTokenOverflowException(DeezerTokenException):
     pass
+
+class RessourceNotExistsException(DiscordMessageException):
+	pass
+
+class RessourceBadFormatException(DiscordMessageException):
+	pass
