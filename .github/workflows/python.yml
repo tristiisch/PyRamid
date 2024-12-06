@@ -7,10 +7,11 @@ on:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
     paths:
-      - "src/**/*.py"
+      - "src/**"
+      - "tests/**"
       - "requirements.txt"
       - ".dockerignore"
-      - "./.docker/Dockerfile"
+      - ".docker/Dockerfile"
       - "docker-compose*.yml"
       - ".github/workflows/python.yml"
   pull_request:
@@ -18,11 +19,11 @@ on:
     branches:
       - "*"
     paths:
-      - "src/**/*.py"
-      - "tests/**/*.py"
+      - "src/**"
+      - "tests/**"
       - "requirements.txt"
       - ".dockerignore"
-      - "./.docker/Dockerfile"
+      - ".docker/Dockerfile"
       - "docker-compose*.yml"
       - ".github/workflows/python.yml"
   workflow_dispatch:
